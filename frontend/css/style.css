@@ -1,0 +1,249 @@
+/* Global Styles */
+:root {
+    --primary-color: #007bff;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #e9ecef;
+    font-weight: 600;
+}
+
+/* Tab Styles */
+.nav-tabs {
+    border-bottom: 2px solid #e9ecef;
+}
+
+.nav-link {
+    color: #6c757d;
+    border: none;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.nav-link.active {
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+    background-color: transparent;
+}
+
+/* Table Styles */
+.table {
+    background-color: white;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f0f0f0;
+}
+
+.table-dark {
+    background-color: #343a40;
+}
+
+/* Button Styles */
+.btn {
+    border-radius: 5px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Modal Styles */
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #e9ecef;
+}
+
+/* Form Styles */
+.form-control, .form-select {
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* QR Scanner */
+#qr-scanner {
+    border-radius: 8px;
+    background-color: #000;
+}
+
+.qr-result {
+    background-color: #e7f3ff;
+    border-left: 4px solid var(--info-color);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* Alert Styles */
+.alert {
+    border-radius: 5px;
+    border: none;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Status Badge */
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.badge-active {
+    background-color: var(--success-color);
+}
+
+.badge-returned {
+    background-color: #6c757d;
+}
+
+.badge-overdue {
+    background-color: var(--danger-color);
+}
+
+/* Loading Spinner */
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 123, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Dashboard Cards */
+.card.bg-success, .card.bg-warning, .card.bg-info, .card.bg-danger {
+    border: none;
+}
+
+.card.bg-success:hover, .card.bg-warning:hover, .card.bg-info:hover, .card.bg-danger:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 15px;
+    }
+
+    .nav-tabs {
+        flex-wrap: wrap;
+    }
+
+    .table {
+        font-size: 0.85rem;
+    }
+
+    .card {
+        margin-bottom: 15px;
+    }
+}
+
+/* QR Code Display */
+.qr-code-container {
+    text-align: center;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.qr-code-container img {
+    max-width: 200px;
+    height: auto;
+}
+
+/* Status Colors */
+.status-active {
+    color: var(--success-color);
+}
+
+.status-returned {
+    color: #6c757d;
+}
+
+.status-overdue {
+    color: var(--danger-color);
+}
+
+/* Animations */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

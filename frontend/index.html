@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HulamKo - Inventory & Lending Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --accent: #0ea5e9;
+            --dark: #1f2937;
+            --light: #f9fafb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+
+        .main-container {
+            display: flex;
+            min-height: 100vh;
+            background: white;
+        }
+
+        /* ===== SIDEBAR NAVIGATION ===== */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(102, 126, 234, 0.3);
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-logo i {
+            font-size: 2rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .sidebar-logo h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .sidebar-logo p {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0 1rem;
+        }
+
+        .nav-item {
+            margin-bottom: 1rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            cursor: pointer;
+            border-left: 4px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: var(--accent);
+            transform: translateX(5px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-left-color: var(--accent);
+        }
+
+        .nav-link i {
+            font-size: 1.2rem;
+            width: 1.5rem;
+            text-align: center;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .content-wrapper {
+            flex: 1;
+            margin-left: 280px;
+            padding: 2rem;
+            overflow-y: auto;
+            background: linear-gradient(180deg, #f8fafb 0%, #ffffff 100%);
+        }
+
+        /* ===== PARALLAX BACKGROUND ===== */
+        .page-header {
+            position: relative;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 20px;
+            color: white;
+            margin-bottom: 2rem;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(240, 147, 251, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: parallax-float 6s ease-in-out infinite;
+        }
+
+        @keyframes parallax-float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, 30px); }
+        }
+
+        .page-header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .page-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .page-header p {
+            font-size: 1rem;
+            opacity: 0.95;
+            margin: 0;
+        }
+
+        /* ===== DASHBOARD STATS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.8rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* ===== CARDS ===== */
+        .tool-card, .borrower-card, .user-card, .activity-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.8rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-card:hover, .borrower-card:hover, .user-card:hover, .activity-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-primary, .btn-success, .btn-danger, .btn-secondary {
+            border: none;
+            border-radius: 10px;
+            padding: 0.7rem 1.8rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #38a169);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.4);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #e53e3e);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(245, 101, 101, 0.4);
+            color: white;
+        }
+
+        .btn-small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            gap: 0.3rem;
+        }
+
+        /* ===== FORM ===== */
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            padding: 0.8rem 1.2rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        /* ===== MODAL ===== */
+        .modal-content {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 20px 20px 0 0;
+            padding: 2rem;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .modal-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #e2e8f0;
+            padding: 1.5rem 2rem;
+        }
+
+        /* ===== BADGES ===== */
+        .badge {
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+
+        .badge-success {
+            background: linear-gradient(135deg, rgba(72, 187, 120, 0.2), rgba(56, 161, 105, 0.2));
+            color: #22543d;
+        }
+
+        .badge-danger {
+            background: linear-gradient(135deg, rgba(245, 101, 101, 0.2), rgba(229, 62, 62, 0.2));
+            color: #742a2a;
+        }
+
+        .badge-warning {
+            background: linear-gradient(135deg, rgba(237, 137, 54, 0.2), rgba(213, 63, 0, 0.2));
+            color: #7c2d12;
+        }
+
+        /* ===== SEARCH ===== */
+        .search-box {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .search-box input {
+            padding-left: 2.8rem;
+            border-radius: 12px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .empty-state h4 {
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        /* ===== ACTIVITY TIMELINE ===== */
+        .activity-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .activity-item {
+            position: relative;
+            padding-left: 2rem;
+            padding-bottom: 1.5rem;
+        }
+
+        .activity-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px #e2e8f0;
+        }
+
+        .activity-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: -1.94rem;
+            top: 12px;
+            width: 2px;
+            height: calc(100% + 0.5rem);
+            background: #e2e8f0;
+        }
+
+        /* ===== QR CODE ===== */
+        .qr-code {
+            max-width: 150px;
+            margin: 1rem 0;
+            border-radius: 12px;
+            padding: 0.8rem;
+            background: white;
+            border: 2px solid #e2e8f0;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+        }
+
+        /* ===== DETAIL ROWS ===== */
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #999;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 1rem;
+            }
+
+            .content-wrapper {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .nav-menu {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                padding: 0;
+            }
+
+            .nav-link {
+                flex: 1;
+                min-width: 120px;
+                margin-bottom: 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header h2 {
+                font-size: 1.8rem;
+            }
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        .text-muted {
+            color: #999 !important;
+        }
+
+        /* ===== ACTION BUTTONS ===== */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .action-buttons .btn {
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fas fa-boxes"></i>
+                    <div>
+                        <h1>HulamKo</h1>
+                        <p>Inventory System</p>
+                    </div>
+                </div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link active" onclick="switchTab('dashboard')" data-tab="dashboard">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="switchTab('tools')" data-tab="tools">
+                        <i class="fas fa-hammer"></i>
+                        <span>Tools</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="switchTab('borrowers')" data-tab="borrowers">
+                        <i class="fas fa-handshake"></i>
+                        <span>Borrowers</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="switchTab('users')" data-tab="users">
+                        <i class="fas fa-users"></i>
+                        <span>Users</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="content-wrapper">
+            <!-- DASHBOARD TAB -->
+            <div id="dashboard" class="tab-content">
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h2><i class="fas fa-chart-line"></i> Dashboard</h2>
+                        <p>Overview of your inventory and lending activities</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: var(--primary);">
+                            <i class="fas fa-hammer"></i>
+                        </div>
+                        <div class="stat-number" id="totalTools">0</div>
+                        <div class="stat-label">Total Tools</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: var(--info);">
+                            <i class="fas fa-hand-paper"></i>
+                        </div>
+                        <div class="stat-number" id="activeBorrowings">0</div>
+                        <div class="stat-label">Active Borrowings</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: var(--danger);">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="stat-number" id="overdueItems">0</div>
+                        <div class="stat-label">Overdue Items</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: var(--success);">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-number" id="totalUsers">0</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                </div>
+
+                <div class="activity-card">
+                    <h3><i class="fas fa-history"></i> Recent Activity</h3>
+                    <div id="recentActivity" class="activity-timeline">
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h4>No Activity Yet</h4>
+                            <p>Start managing your inventory</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOOLS TAB -->
+            <div id="tools" class="tab-content" style="display: none;">
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h2><i class="fas fa-hammer"></i> Tools Management</h2>
+                        <p>Manage and track your tools inventory</p>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addToolModal">
+                    <i class="fas fa-plus"></i> Add New Tool
+                </button>
+
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="form-control" id="toolSearch" placeholder="Search tools by name or brand...">
+                </div>
+
+                <div id="toolsList"></div>
+            </div>
+
+            <!-- BORROWERS TAB -->
+            <div id="borrowers" class="tab-content" style="display: none;">
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h2><i class="fas fa-handshake"></i> Borrowings</h2>
+                        <p>Track tool borrowings and returns</p>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addBorrowerModal">
+                    <i class="fas fa-plus"></i> Record Borrowing
+                </button>
+
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="form-control" id="borrowerSearch" placeholder="Search borrowings...">
+                </div>
+
+                <div id="borrowersList"></div>
+            </div>
+
+            <!-- USERS TAB -->
+            <div id="users" class="tab-content" style="display: none;">
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h2><i class="fas fa-users"></i> Users Management</h2>
+                        <p>Manage system users and permissions</p>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="fas fa-plus"></i> Add New User
+                </button>
+
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="form-control" id="userSearch" placeholder="Search users...">
+                </div>
+
+                <div id="usersList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD TOOL MODAL -->
+    <div class="modal fade" id="addToolModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-hammer"></i> Add New Tool</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="toolForm">
+                        <div class="mb-3">
+                            <label class="form-label">Tool Name *</label>
+                            <input type="text" class="form-control" id="toolName" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Brand</label>
+                                <input type="text" class="form-control" id="toolBrand">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Quantity *</label>
+                                <input type="number" class="form-control" id="toolQuantity" min="1" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="toolCategory">
+                                <option value="">Select Category</option>
+                                <option value="Hand Tools">Hand Tools</option>
+                                <option value="Power Tools">Power Tools</option>
+                                <option value="Safety Equipment">Safety Equipment</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="toolDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveTool()">
+                        <i class="fas fa-save"></i> Save Tool
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD BORROWER MODAL -->
+    <div class="modal fade" id="addBorrowerModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-handshake"></i> Record Borrowing</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="borrowerForm">
+                        <div class="mb-3">
+                            <label class="form-label">Tool *</label>
+                            <select class="form-select" id="borrowerTool" required>
+                                <option value="">Select a tool</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Borrower Name *</label>
+                            <input type="text" class="form-control" id="borrowerName" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Borrow Date *</label>
+                                <input type="date" class="form-control" id="borrowDate" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Expected Return *</label>
+                                <input type="date" class="form-control" id="returnDate" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reason for Borrowing</label>
+                            <textarea class="form-control" id="borrowReason" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveBorrower()">
+                        <i class="fas fa-save"></i> Record Borrowing
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD USER MODAL -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus"></i> Add New User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="userForm">
+                        <div class="mb-3">
+                            <label class="form-label">Name *</label>
+                            <input type="text" class="form-control" id="userName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="userEmail" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Username *</label>
+                                <input type="text" class="form-control" id="userUsername" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Role *</label>
+                                <select class="form-select" id="userRole" required>
+                                    <option value="">Select Role</option>
+                                    <option value="Admin">Administrator</option>
+                                    <option value="Teacher">Teacher</option>
+                                    <option value="Assistant">Assistant</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveUser()">
+                        <i class="fas fa-save"></i> Save User
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT TOOL MODAL -->
+    <div class="modal fade" id="editToolModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-hammer"></i> Edit Tool</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editToolForm">
+                        <input type="hidden" id="editToolId">
+                        <div class="mb-3">
+                            <label class="form-label">Tool Name *</label>
+                            <input type="text" class="form-control" id="editToolName" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Brand</label>
+                                <input type="text" class="form-control" id="editToolBrand">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Quantity *</label>
+                                <input type="number" class="form-control" id="editToolQuantity" min="1" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="editToolCategory">
+                                <option value="">Select Category</option>
+                                <option value="Hand Tools">Hand Tools</option>
+                                <option value="Power Tools">Power Tools</option>
+                                <option value="Safety Equipment">Safety Equipment</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateTool()">
+                        <i class="fas fa-save"></i> Update Tool
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        const USE_BACKEND = false; // Set to true when backend is running
+        let currentTab = 'dashboard';
+        let allTools = [];
+        let allBorrowers = [];
+        let allUsers = [];
+        let activityLog = [];
+
+        // Initialize App
+        async function initializeApp() {
+            if (USE_BACKEND) {
+                try {
+                    await loadFromBackend();
+                } catch (error) {
+                    console.log('Backend unavailable, loading from localStorage');
+                    loadFromStorage();
+                }
+            } else {
+                loadFromStorage();
+            }
+            updateDashboard();
+            renderTools();
+            renderBorrowers();
+            renderUsers();
+        }
+
+        // Load from Backend API
+        async function loadFromBackend() {
+            try {
+                const [tools, borrowers, users] = await Promise.all([
+                    fetch(`${API_BASE_URL}/tools`).then(r => r.json()),
+                    fetch(`${API_BASE_URL}/borrowers`).then(r => r.json()),
+                    fetch(`${API_BASE_URL}/users`).then(r => r.json())
+                ]);
+                allTools = tools;
+                allBorrowers = borrowers;
+                allUsers = users;
+                saveToStorage();
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Load from Local Storage
+        function loadFromStorage() {
+            allTools = JSON.parse(localStorage.getItem('tools')) || [
+                { id: 1, name: 'Hammer', brand: 'Stanley', quantity: 5, category: 'Hand Tools', description: 'Claw hammer' },
+                { id: 2, name: 'Screwdriver Set', brand: 'DeWalt', quantity: 8, category: 'Hand Tools', description: 'Multi-bit screwdriver' },
+                { id: 3, name: 'Wrench Set', brand: 'Craftsman', quantity: 3, category: 'Hand Tools', description: 'Socket wrench set' }
+            ];
+            allBorrowers = JSON.parse(localStorage.getItem('borrowers')) || [];
+            allUsers = JSON.parse(localStorage.getItem('users')) || [
+                { id: 1, name: 'Admin', email: 'admin@hulam.ko', username: 'admin', role: 'Admin' },
+                { id: 2, name: 'Teacher One', email: 'teacher1@hulam.ko', username: 'teacher1', role: 'Teacher' }
+            ];
+            activityLog = JSON.parse(localStorage.getItem('activity')) || [];
+        }
+
+        // Save to Local Storage
+        function saveToStorage() {
+            localStorage.setItem('tools', JSON.stringify(allTools));
+            localStorage.setItem('borrowers', JSON.stringify(allBorrowers));
+            localStorage.setItem('users', JSON.stringify(allUsers));
+            localStorage.setItem('activity', JSON.stringify(activityLog));
+        }
+
+        // Save Tool
+        async function saveTool() {
+            const toolData = {
+                id: Math.max(...allTools.map(t => t.id), 0) + 1,
+                name: document.getElementById('toolName').value,
+                brand: document.getElementById('toolBrand').value,
+                quantity: parseInt(document.getElementById('toolQuantity').value),
+                category: document.getElementById('toolCategory').value,
+                description: document.getElementById('toolDescription').value
+            };
+
+            allTools.push(toolData);
+            addActivity(`Tool "${toolData.name}" created`);
+            saveToStorage();
+            document.getElementById('toolForm').reset();
+            bootstrap.Modal.getInstance(document.getElementById('addToolModal')).hide();
+            renderTools();
+            updateDashboard();
+            updateToolSelect();
+        }
+
+        // Update Tool
+        function updateTool() {
+            const toolId = parseInt(document.getElementById('editToolId').value);
+            const tool = allTools.find(t => t.id === toolId);
+            
+            if (tool) {
+                tool.name = document.getElementById('editToolName').value;
+                tool.brand = document.getElementById('editToolBrand').value;
+                tool.quantity = parseInt(document.getElementById('editToolQuantity').value);
+                tool.category = document.getElementById('editToolCategory').value;
+                
+                addActivity(`Tool "${tool.name}" updated`);
+                saveToStorage();
+                bootstrap.Modal.getInstance(document.getElementById('editToolModal')).hide();
+                renderTools();
+                updateDashboard();
+            }
+        }
+
+        // Delete Tool
+        function deleteTool(toolId) {
+            if (confirm('Are you sure you want to delete this tool?')) {
+                const tool = allTools.find(t => t.id === toolId);
+                allTools = allTools.filter(t => t.id !== toolId);
+                addActivity(`Tool "${tool.name}" deleted`);
+                saveToStorage();
+                renderTools();
+                updateDashboard();
+            }
+        }
+
+        // Save Borrower
+        function saveBorrower() {
+            const borrowerData = {
+                id: Math.max(...allBorrowers.map(b => b.id), 0) + 1,
+                tool_id: parseInt(document.getElementById('borrowerTool').value),
+                borrower_name: document.getElementById('borrowerName').value,
+                borrow_date: document.getElementById('borrowDate').value,
+                return_date: document.getElementById('returnDate').value,
+                reason: document.getElementById('borrowReason').value,
+                returned: false,
+                returned_date: null
+            };
+
+            const tool = allTools.find(t => t.id === borrowerData.tool_id);
+            if (tool && tool.quantity > 0) {
+                tool.quantity -= 1;
+                allBorrowers.push(borrowerData);
+                addActivity(`${borrowerData.borrower_name} borrowed "${tool.name}"`);
+                saveToStorage();
+                document.getElementById('borrowerForm').reset();
+                bootstrap.Modal.getInstance(document.getElementById('addBorrowerModal')).hide();
+                renderBorrowers();
+                renderTools();
+                updateDashboard();
+            } else {
+                alert('Tool not available!');
+            }
+        }
+
+        // Return Borrower
+        function returnBorrower(borrowerId) {
+            const borrower = allBorrowers.find(b => b.id === borrowerId);
+            if (borrower && !borrower.returned) {
+                borrower.returned = true;
+                borrower.returned_date = new Date().toISOString().split('T')[0];
+                const tool = allTools.find(t => t.id === borrower.tool_id);
+                tool.quantity += 1;
+                addActivity(`${borrower.borrower_name} returned "${tool.name}"`);
+                saveToStorage();
+                renderBorrowers();
+                renderTools();
+                updateDashboard();
+            }
+        }
+
+        // Save User
+        function saveUser() {
+            const userData = {
+                id: Math.max(...allUsers.map(u => u.id), 0) + 1,
+                name: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                username: document.getElementById('userUsername').value,
+                role: document.getElementById('userRole').value
+            };
+
+            allUsers.push(userData);
+            addActivity(`User "${userData.name}" created`);
+            saveToStorage();
+            document.getElementById('userForm').reset();
+            bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+            renderUsers();
+            updateDashboard();
+        }
+
+        // Delete User
+        function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete this user?')) {
+                const user = allUsers.find(u => u.id === userId);
+                allUsers = allUsers.filter(u => u.id !== userId);
+                addActivity(`User "${user.name}" deleted`);
+                saveToStorage();
+                renderUsers();
+                updateDashboard();
+            }
+        }
+
+        // Render Tools
+        function renderTools() {
+            const toolsList = document.getElementById('toolsList');
+            const searchTerm = document.getElementById('toolSearch')?.value.toLowerCase() || '';
+            const filtered = allTools.filter(tool => 
+                tool.name.toLowerCase().includes(searchTerm) || 
+                tool.brand.toLowerCase().includes(searchTerm)
+            );
+
+            if (filtered.length === 0) {
+                toolsList.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h4>No Tools</h4><p>Add your first tool to get started</p></div>`;
+                return;
+            }
+
+            toolsList.innerHTML = filtered.map(tool => `
+                <div class="tool-card">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4>${tool.name}</h4>
+                            <div class="detail-row">
+                                <span class="detail-label">Brand:</span>
+                                <span class="detail-value">${tool.brand || 'N/A'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Category:</span>
+                                <span class="detail-value">${tool.category || 'N/A'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Quantity Available:</span>
+                                <span class="detail-value"><span class="badge badge-success">${tool.quantity}</span></span>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary btn-small" onclick="editToolForm(${tool.id})" data-bs-toggle="modal" data-bs-target="#editToolModal">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-danger btn-small" onclick="deleteTool(${tool.id})">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div id="qr-tool-${tool.id}"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Generate QR codes
+            filtered.forEach(tool => {
+                try {
+                    new QRCode(document.getElementById(`qr-tool-${tool.id}`), {
+                        text: JSON.stringify(tool),
+                        width: 128,
+                        height: 128,
+                        colorDark: '#667eea',
+                        colorLight: '#f7fafc'
+                    });
+                } catch (e) {
+                    console.log('QR code generation skipped');
+                }
+            });
+        }
+
+        // Edit Tool Form
+        function editToolForm(toolId) {
+            const tool = allTools.find(t => t.id === toolId);
+            if (tool) {
+                document.getElementById('editToolId').value = tool.id;
+                document.getElementById('editToolName').value = tool.name;
+                document.getElementById('editToolBrand').value = tool.brand || '';
+                document.getElementById('editToolQuantity').value = tool.quantity;
+                document.getElementById('editToolCategory').value = tool.category || '';
+            }
+        }
+
+        // Render Borrowers
+        function renderBorrowers() {
+            const borrowersList = document.getElementById('borrowersList');
+            const searchTerm = document.getElementById('borrowerSearch')?.value.toLowerCase() || '';
+            const filtered = allBorrowers.filter(b => 
+                b.borrower_name.toLowerCase().includes(searchTerm)
+            );
+
+            if (filtered.length === 0) {
+                borrowersList.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h4>No Borrowings</h4><p>Record your first borrowing</p></div>`;
+                return;
+            }
+
+            borrowersList.innerHTML = filtered.map(borrower => {
+                const tool = allTools.find(t => t.id === borrower.tool_id);
+                const returnDate = new Date(borrower.return_date);
+                const isOverdue = returnDate < new Date() && !borrower.returned;
+                let status = borrower.returned ? 'Returned' : isOverdue ? 'Overdue' : 'Active';
+                let badgeClass = borrower.returned ? 'badge-success' : isOverdue ? 'badge-danger' : 'badge-warning';
+
+                return `
+                    <div class="borrower-card">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h4>${borrower.borrower_name}</h4>
+                                <div class="detail-row">
+                                    <span class="detail-label">Tool:</span>
+                                    <span class="detail-value">${tool?.name || 'Unknown'}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Borrow Date:</span>
+                                    <span class="detail-value">${new Date(borrower.borrow_date).toLocaleDateString()}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Return Date:</span>
+                                    <span class="detail-value">${returnDate.toLocaleDateString()}</span>
+                                </div>
+                                ${borrower.reason ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Reason:</span>
+                                    <span class="detail-value">${borrower.reason}</span>
+                                </div>
+                                ` : ''}
+                                ${!borrower.returned ? `
+                                <div class="action-buttons">
+                                    <button class="btn btn-success btn-small" onclick="returnBorrower(${borrower.id})">
+                                        <i class="fas fa-check"></i> Mark Returned
+                                    </button>
+                                </div>
+                                ` : ''}
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <span class="badge ${badgeClass}">
+                                    ${status}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render Users
+        function renderUsers() {
+            const usersList = document.getElementById('usersList');
+            const searchTerm = document.getElementById('userSearch')?.value.toLowerCase() || '';
+            const filtered = allUsers.filter(u => 
+                u.name.toLowerCase().includes(searchTerm) || 
+                u.username.toLowerCase().includes(searchTerm)
+            );
+
+            if (filtered.length === 0) {
+                usersList.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h4>No Users</h4><p>Add your first user</p></div>`;
+                return;
+            }
+
+            usersList.innerHTML = filtered.map(user => `
+                <div class="user-card">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4>${user.name}</h4>
+                            <div class="detail-row">
+                                <span class="detail-label">Email:</span>
+                                <span class="detail-value">${user.email}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Username:</span>
+                                <span class="detail-value">@${user.username}</span>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-danger btn-small" onclick="deleteUser(${user.id})">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge badge-success">${user.role}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update Dashboard
+        function updateDashboard() {
+            document.getElementById('totalTools').textContent = allTools.length;
+            document.getElementById('activeBorrowings').textContent = allBorrowers.filter(b => !b.returned).length;
+            document.getElementById('overdueItems').textContent = allBorrowers.filter(b => !b.returned && new Date(b.return_date) < new Date()).length;
+            document.getElementById('totalUsers').textContent = allUsers.length;
+            renderActivity();
+        }
+
+        // Render Activity
+        function renderActivity() {
+            const activityDiv = document.getElementById('recentActivity');
+            if (activityLog.length === 0) {
+                activityDiv.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h4>No Activity Yet</h4><p>Start managing your inventory</p></div>`;
+                return;
+            }
+
+            activityDiv.innerHTML = activityLog.slice(0, 10).map(log => `
+                <div class="activity-item">
+                    <strong>${log.action}</strong>
+                    <div class="text-muted" style="font-size: 0.85rem;">${new Date(log.timestamp).toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+
+        // Add Activity
+        function addActivity(action) {
+            activityLog.unshift({
+                action: action,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Switch Tab
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.getElementById(tab).style.display = 'block';
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+
+            if (tab === 'tools') {
+                renderTools();
+                updateToolSelect();
+            } else if (tab === 'borrowers') {
+                renderBorrowers();
+            } else if (tab === 'users') {
+                renderUsers();
+            }
+        }
+
+        // Update tool select in borrower form
+        function updateToolSelect() {
+            const select = document.getElementById('borrowerTool');
+            select.innerHTML = '<option value="">Select a tool</option>';
+            allTools.forEach(tool => {
+                select.innerHTML += `<option value="${tool.id}">${tool.name} (${tool.quantity} available)</option>`;
+            });
+        }
+
+        // Search functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('toolSearch')?.addEventListener('keyup', renderTools);
+            document.getElementById('borrowerSearch')?.addEventListener('keyup', renderBorrowers);
+            document.getElementById('userSearch')?.addEventListener('keyup', renderUsers);
+            initializeApp();
+        });
+    </script>
+</body>
+</html>
