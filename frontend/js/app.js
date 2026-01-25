@@ -1,692 +1,1009 @@
-// HulamKo Application - Main JavaScript
+// HulamKo Enhanced Application - Main JavaScript
+// This file contains improved functionality with better error handling and UX
 
-// Global Variables
-let currentUser = 'Admin';
-let qrScanning = false;
-let qrCanvas = null;
-let qrCanvasContext = null;
+// Global State
+const appState = {
+    currentTab: 'dashboard',
+    allTools: [],
+    allBorrowers: [],
+    allUsers: [],
+    activityLog: [],
+    lastUpdate: null,
+    isProcessing: false,
+    isLoggedIn: false,
+    currentUser: null
+};
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('HulamKo Application Loaded');
-    initializeApp();
+    console.log('HulamKo Application Initializing...');
+    
+    // Check if user is logged in
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+        appState.isLoggedIn = true;
+        appState.currentUser = savedUser;
+        showMainApp();
+        loadApplicationState();
+        setupEventListeners();
+        updateDashboard();
+        renderTools();
+        renderBorrowers();
+        renderUsers();
+        setupAutosave();
+        console.log('HulamKo Ready!');
+    } else {
+        showLoginPage();
+    }
 });
 
-function initializeApp() {
-    loadDashboard();
-    loadTools();
-    loadBorrowers();
-    loadUsers();
+// ==================== AUTHENTICATION ====================
+function showLoginPage() {
+    document.getElementById('loginPage').style.display = 'flex';
+    document.getElementById('mainApp').style.display = 'none';
+}
+
+function showMainApp() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'flex';
+    const userElement = document.getElementById('currentUser');
+    if (userElement) {
+        userElement.textContent = appState.currentUser.split('@')[0];
+    }
+}
+
+function handleLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    
+    if (!email || !password) {
+        showAlert('Please enter both email and password', 'warning');
+        return;
+    }
+    
+    if (!email.includes('@')) {
+        showAlert('Please enter a valid email address', 'warning');
+        return;
+    }
+    
+    // Validate against default credentials
+    const validEmail = 'admin@hulamko.com';
+    const validPassword = 'password123';
+    
+    if (email !== validEmail || password !== validPassword) {
+        showAlert('Invalid email or password. Use admin@hulamko.com / password123', 'danger');
+        return;
+    }
+    
+    // Authentication successful
+    appState.isLoggedIn = true;
+    appState.currentUser = email;
+    localStorage.setItem('currentUser', email);
+    
+    // Clear login form
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    
+    showAlert('Welcome back, ' + email.split('@')[0] + '!', 'success');
+    
+    loadApplicationState();
     setupEventListeners();
+    updateDashboard();
+    renderTools();
+    renderBorrowers();
+    renderUsers();
+    setupAutosave();
+    
+    // Delay showing main app for animation
+    setTimeout(() => {
+        showMainApp();
+    }, 600);
+}
+
+function showForgotPassword(e) {
+    e.preventDefault();
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    document.querySelector('.login-form').style.display = 'none';
+    document.getElementById('forgotPasswordForm').classList.add('active');
+}
+
+function backToLogin() {
+    document.querySelector('.login-form').style.display = 'block';
+    document.getElementById('forgotPasswordForm').classList.remove('active');
+    document.getElementById('resetEmail').value = '';
+}
+
+function handlePasswordReset() {
+    const email = document.getElementById('resetEmail').value.trim();
+    
+    if (!email || !email.includes('@')) {
+        showAlert('Please enter a valid email address', 'warning');
+        return;
+    }
+    
+    showAlert('Password reset link has been sent to ' + email, 'success');
+    setTimeout(() => {
+        backToLogin();
+    }, 2000);
+}
+
+function logout() {
+    localStorage.removeItem('currentUser');
+    appState.isLoggedIn = false;
+    appState.currentUser = null;
+    showAlert('You have been logged out', 'info');
+    
+    setTimeout(() => {
+        showLoginPage();
+    }, 1000);
+}
+
+// Load State from Storage
+function loadApplicationState() {
+    appState.allTools = JSON.parse(localStorage.getItem('tools')) || [];
+    appState.allBorrowers = JSON.parse(localStorage.getItem('borrowers')) || [];
+    appState.allUsers = JSON.parse(localStorage.getItem('users')) || [];
+    appState.activityLog = JSON.parse(localStorage.getItem('activity')) || [];
+    appState.lastUpdate = localStorage.getItem('lastUpdate');
+}
+
+// Save State to Storage
+function saveApplicationState() {
+    localStorage.setItem('tools', JSON.stringify(appState.allTools));
+    localStorage.setItem('borrowers', JSON.stringify(appState.allBorrowers));
+    localStorage.setItem('users', JSON.stringify(appState.allUsers));
+    localStorage.setItem('activity', JSON.stringify(appState.activityLog));
+    localStorage.setItem('lastUpdate', new Date().toISOString());
+}
+
+// Auto-save every 30 seconds
+function setupAutosave() {
+    setInterval(() => {
+        if (!appState.isProcessing) {
+            saveApplicationState();
+        }
+    }, 30000);
+}
+
+// Add Activity Log
+function addActivity(action) {
+    appState.activityLog.unshift({
+        action: action,
+        timestamp: new Date().toISOString()
+    });
+    if (appState.activityLog.length > 100) {
+        appState.activityLog.pop();
+    }
 }
 
 // ==================== DASHBOARD ====================
-function loadDashboard() {
-    console.log('Loading Dashboard');
+function updateDashboard() {
+    const totalTools = appState.allTools.length;
+    const totalAvailable = appState.allTools.reduce((sum, t) => sum + t.quantity, 0);
+    const activeBorrowings = appState.allBorrowers.filter(b => !b.returned).length;
+    const overdue = appState.allBorrowers.filter(b => !b.returned && new Date(b.return_date) < new Date()).length;
     
-    // Get statistics
-    const tools = JSON.parse(localStorage.getItem('tools')) || [];
-    const borrowers = JSON.parse(localStorage.getItem('borrowers')) || [];
-    const users = JSON.parse(localStorage.getItem('users')) || [];
+    document.getElementById('totalTools').textContent = totalTools;
+    document.getElementById('activeBorrowings').textContent = activeBorrowings;
+    document.getElementById('overdueItems').textContent = overdue;
+    document.getElementById('totalUsers').textContent = appState.allUsers.length;
     
-    // Calculate stats
-    document.getElementById('totalToolsCount').textContent = tools.length;
-    document.getElementById('totalUsersCount').textContent = users.length;
-    
-    const activeBorrowings = borrowers.filter(b => !b.returnedDate).length;
-    document.getElementById('activeBorrowingsCount').textContent = activeBorrowings;
-    
-    const today = new Date();
-    const overdue = borrowers.filter(b => {
-        if (b.returnedDate) return false;
-        const expectedDate = new Date(b.expectedReturnDate);
-        return expectedDate < today;
-    }).length;
-    document.getElementById('overdueItemsCount').textContent = overdue;
-    
-    loadRecentActivity();
+    renderActivity();
 }
 
-function loadRecentActivity() {
-    const borrowers = JSON.parse(localStorage.getItem('borrowers')) || [];
-    const tools = JSON.parse(localStorage.getItem('tools')) || [];
-    const tbody = document.getElementById('recentActivityTable');
-    
-    if (borrowers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center">No activity yet</td></tr>';
+function renderActivity() {
+    const activityDiv = document.getElementById('recentActivity');
+    if (appState.activityLog.length === 0) {
+        activityDiv.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h4>No Activity Yet</h4><p>Start managing your inventory</p></div>`;
         return;
     }
     
-    // Get last 10 activities
-    const recent = borrowers.slice(-10).reverse();
-    tbody.innerHTML = '';
-    
-    recent.forEach(activity => {
-        const tool = tools.find(t => t.id == activity.toolId);
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${tool ? tool.name : 'Unknown'}</td>
-            <td>${activity.returnedDate ? 'Returned' : 'Borrowed'}</td>
-            <td>${activity.borrowerName}</td>
-            <td>${new Date(activity.borrowedDate).toLocaleString()}</td>
-        `;
-        tbody.appendChild(row);
-    });
+    activityDiv.innerHTML = appState.activityLog.slice(0, 10).map(log => `
+        <div class="activity-item">
+            <strong>${log.action}</strong>
+            <div class="text-muted" style="font-size: 0.85rem;">${new Date(log.timestamp).toLocaleString()}</div>
+        </div>
+    `).join('');
 }
 
-// ==================== TOOLS ====================
-function loadTools() {
-    console.log('Loading Tools');
-    const tools = JSON.parse(localStorage.getItem('tools')) || [];
-    const tbody = document.getElementById('toolsTable');
-    const selectTool = document.getElementById('selectTool');
+// ==================== TOOLS MANAGEMENT ====================
+function saveTool() {
+    const form = document.getElementById('toolForm');
+    if (!form.checkValidity()) {
+        showAlert('Please fill in all required fields', 'warning');
+        return false;
+    }
     
-    tbody.innerHTML = '';
-    selectTool.innerHTML = '<option value="">Choose a tool...</option>';
+    // Show loading state
+    const loadingId = showLoadingState('Adding tool...');
+    appState.isProcessing = true;
+    
+    try {
+        const toolData = {
+            id: Math.max(...appState.allTools.map(t => t.id || 0), 0) + 1,
+            name: document.getElementById('toolName').value.trim(),
+            brand: document.getElementById('toolBrand').value.trim(),
+            description: document.getElementById('toolDescription').value.trim(),
+            quantity: parseInt(document.getElementById('toolQuantity').value),
+            category: document.getElementById('toolCategory').value,
+            createdDate: new Date().toISOString()
+        };
+        
+        if (!toolData.name) {
+            hideLoadingState(loadingId);
+            showAlert('Tool name is required', 'warning');
+            appState.isProcessing = false;
+            return false;
+        }
+        
+        // Simulate API delay (remove if using real API)
+        setTimeout(() => {
+            appState.allTools.push(toolData);
+            addActivity(`Tool "${toolData.name}" created`);
+            saveApplicationState();
+            
+            hideLoadingState(loadingId);
+            form.reset();
+            bootstrap.Modal.getInstance(document.getElementById('addToolModal')).hide();
+            showAlert(`Tool "${toolData.name}" added successfully!`, 'success');
+            showSaveSuccess();
+            renderTools();
+            updateDashboard();
+            appState.isProcessing = false;
+        }, 400);
+    } catch (error) {
+        hideLoadingState(loadingId);
+        handleError(error, 'Failed to add tool');
+        appState.isProcessing = false;
+    }
+    updateToolSelect();
+    
+    appState.isProcessing = false;
+    return false;
+}
+
+function editToolForm(toolId) {
+    const tool = appState.allTools.find(t => t.id === toolId);
+    if (!tool) return;
+    
+    document.getElementById('editToolId').value = tool.id;
+    document.getElementById('editToolName').value = tool.name;
+    document.getElementById('editToolBrand').value = tool.brand || '';
+    document.getElementById('editToolQuantity').value = tool.quantity;
+    document.getElementById('editToolCategory').value = tool.category || '';
+}
+
+function updateTool() {
+    const toolId = parseInt(document.getElementById('editToolId').value);
+    const tool = appState.allTools.find(t => t.id === toolId);
+    
+    if (!tool) {
+        showAlert('Tool not found', 'danger');
+        return false;
+    }
+    
+    tool.name = document.getElementById('editToolName').value.trim();
+    tool.brand = document.getElementById('editToolBrand').value.trim();
+    tool.quantity = parseInt(document.getElementById('editToolQuantity').value);
+    tool.category = document.getElementById('editToolCategory').value;
+    
+    addActivity(`Tool "${tool.name}" updated`);
+    saveApplicationState();
+    
+    bootstrap.Modal.getInstance(document.getElementById('editToolModal')).hide();
+    showAlert(`"${tool.name}" updated successfully!`, 'success');
+    renderTools();
+    updateDashboard();
+    
+    return false;
+}
+
+function deleteTool(toolId) {
+    const tool = appState.allTools.find(t => t.id === toolId);
+    if (!tool) return;
+    
+    if (!confirm(`Are you sure you want to delete "${tool.name}"? This action cannot be undone.`)) {
+        return false;
+    }
+    
+    const loadingId = showLoadingState('Deleting tool...');
+    
+    setTimeout(() => {
+        try {
+            appState.allTools = appState.allTools.filter(t => t.id !== toolId);
+            addActivity(`Tool "${tool.name}" deleted`);
+            saveApplicationState();
+            
+            hideLoadingState(loadingId);
+            showAlert(`"${tool.name}" deleted successfully!`, 'success');
+            showSaveSuccess();
+            renderTools();
+            updateDashboard();
+        } catch (error) {
+            hideLoadingState(loadingId);
+            handleError(error, 'Failed to delete tool');
+        }
+    }, 400);
+}
+
+function filterTools() {
+    const searchTerm = (document.getElementById('toolSearch')?.value || '').toLowerCase();
+    const categoryTerm = document.getElementById('toolCategory')?.value || '';
+    
+    const filtered = appState.allTools.filter(tool => {
+        const matchesSearch = tool.name.toLowerCase().includes(searchTerm) || 
+                            tool.brand.toLowerCase().includes(searchTerm) ||
+                            (tool.description && tool.description.toLowerCase().includes(searchTerm));
+        const matchesCategory = !categoryTerm || tool.category === categoryTerm;
+        return matchesSearch && matchesCategory;
+    });
+
+    renderFilteredTools(filtered);
+}
+
+function renderTools() {
+    renderFilteredTools(appState.allTools);
+}
+
+function renderFilteredTools(tools) {
+    const toolsList = document.getElementById('toolsList');
     
     if (tools.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No tools added yet</td></tr>';
+        toolsList.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h4>No Tools Found</h4><p>${appState.allTools.length === 0 ? 'Add your first tool' : 'Try a different search'}</p></div>`;
         return;
     }
-    
-    tools.forEach(tool => {
-        // Add to table
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>
-                <div class="qr-code-container">
-                    <img src="${generateQRCode(tool.id)}" alt="QR" style="width: 50px;">
+
+    toolsList.innerHTML = tools.map(tool => `
+        <div class="tool-card">
+            <div class="row">
+                <div class="col-md-8">
+                    <h4>${tool.name}</h4>
+                    <div class="detail-row">
+                        <span class="detail-label">Brand:</span>
+                        <span class="detail-value">${tool.brand || 'N/A'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Category:</span>
+                        <span class="detail-value"><span class="badge bg-info">${tool.category || 'Uncategorized'}</span></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Available:</span>
+                        <span class="detail-value"><span class="badge bg-success">${tool.quantity}</span></span>
+                    </div>
+                    ${tool.description ? `
+                    <div class="detail-row">
+                        <span class="detail-label">Description:</span>
+                        <span class="detail-value" style="font-size: 0.9rem;">${tool.description}</span>
+                    </div>
+                    ` : ''}
+                    <div class="action-buttons">
+                        <button class="btn btn-primary btn-small" onclick="editToolForm(${tool.id})" data-bs-toggle="modal" data-bs-target="#editToolModal">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-danger btn-small" onclick="confirmDeleteTool(${tool.id})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
                 </div>
-            </td>
-            <td>${tool.name}</td>
-            <td>${tool.brand}</td>
-            <td>${tool.description}</td>
-            <td><span class="badge bg-success">${tool.availableQty}</span></td>
-            <td>${tool.quantity}</td>
-            <td>
-                <button class="btn btn-sm btn-info" onclick="editTool(${tool.id})">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteTool(${tool.id})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
-        
-        // Add to select dropdown
-        const option = document.createElement('option');
-        option.value = tool.id;
-        option.textContent = `${tool.name} (${tool.availableQty} available)`;
-        selectTool.appendChild(option);
+                <div class="col-md-4 text-center">
+                    <div id="qr-tool-${tool.id}" style="padding: 10px;"></div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    tools.forEach(tool => {
+        try {
+            const elem = document.getElementById(`qr-tool-${tool.id}`);
+            if (elem && elem.childNodes.length === 0) {
+                new QRCode(elem, {
+                    text: JSON.stringify({id: tool.id, name: tool.name}),
+                    width: 120,
+                    height: 120,
+                    colorDark: '#667eea',
+                    colorLight: '#f7fafc'
+                });
+            }
+        } catch (e) {
+            console.log('QR code generation skipped for tool', tool.id);
+        }
     });
 }
 
-function saveTool() {
-    const name = document.getElementById('toolName').value;
-    const brand = document.getElementById('toolBrand').value;
-    const description = document.getElementById('toolDescription').value;
-    const quantity = parseInt(document.getElementById('toolQuantity').value);
-    const category = document.getElementById('toolCategory').value;
-    
-    if (!name || !brand || !quantity) {
+// ==================== BORROWERS MANAGEMENT ====================
+function saveBorrower() {
+    const form = document.getElementById('borrowerForm');
+    if (!form.checkValidity()) {
         showAlert('Please fill in all required fields', 'warning');
-        return;
+        return false;
+    }
+
+    const loadingId = showLoadingState('Recording borrowing...');
+    
+    try {
+        const toolId = parseInt(document.getElementById('borrowerTool').value);
+        const tool = appState.allTools.find(t => t.id === toolId);
+        
+        if (!tool) {
+            hideLoadingState(loadingId);
+            showAlert('Please select a valid tool', 'warning');
+            return false;
+        }
+        
+        if (tool.quantity <= 0) {
+            hideLoadingState(loadingId);
+            showAlert(`"${tool.name}" is not available`, 'warning');
+            return false;
+        }
+        
+        const borrowerData = {
+            id: Math.max(...appState.allBorrowers.map(b => b.id || 0), 0) + 1,
+            tool_id: toolId,
+            borrower_name: document.getElementById('borrowerName').value.trim(),
+            borrow_date: document.getElementById('borrowDate').value,
+            return_date: document.getElementById('returnDate').value,
+            reason: document.getElementById('borrowReason').value.trim(),
+            returned: false,
+            returned_date: null
+        };
+        
+        if (!borrowerData.borrower_name) {
+            hideLoadingState(loadingId);
+            showAlert('Borrower name is required', 'warning');
+            return false;
+        }
+        
+        if (new Date(borrowerData.return_date) <= new Date(borrowerData.borrow_date)) {
+            hideLoadingState(loadingId);
+            showAlert('Return date must be after borrow date', 'warning');
+            return false;
+        }
+        
+        setTimeout(() => {
+            tool.quantity -= 1;
+            appState.allBorrowers.push(borrowerData);
+            addActivity(`${borrowerData.borrower_name} borrowed "${tool.name}"`);
+            saveApplicationState();
+            
+            hideLoadingState(loadingId);
+            form.reset();
+            bootstrap.Modal.getInstance(document.getElementById('addBorrowerModal')).hide();
+            showAlert(`Borrowing recorded successfully!`, 'success');
+            showSaveSuccess();
+            renderBorrowers();
+            renderTools();
+            updateDashboard();
+            updateToolSelect();
+        }, 400);
+    } catch (error) {
+        hideLoadingState(loadingId);
+        handleError(error, 'Failed to record borrowing');
     }
     
-    const tool = {
-        id: Date.now(),
-        name: name,
-        brand: brand,
-        description: description,
-        quantity: quantity,
-        availableQty: quantity,
-        category: category,
-        createdDate: new Date().toISOString()
-    };
-    
-    let tools = JSON.parse(localStorage.getItem('tools')) || [];
-    tools.push(tool);
-    localStorage.setItem('tools', JSON.stringify(tools));
-    
-    // Reset form
-    document.getElementById('addToolForm').reset();
-    bootstrap.Modal.getInstance(document.getElementById('addToolModal')).hide();
-    
-    showAlert('Tool added successfully!', 'success');
-    loadTools();
-    loadDashboard();
+    return false;
 }
 
-function editTool(id) {
-    const tools = JSON.parse(localStorage.getItem('tools')) || [];
-    const tool = tools.find(t => t.id == id);
+function returnBorrower(borrowerId) {
+    const borrower = appState.allBorrowers.find(b => b.id === borrowerId);
+    if (!borrower || borrower.returned) return;
     
+    const tool = appState.allTools.find(t => t.id === borrower.tool_id);
+    
+    borrower.returned = true;
+    borrower.returned_date = new Date().toISOString();
     if (tool) {
-        document.getElementById('toolName').value = tool.name;
-        document.getElementById('toolBrand').value = tool.brand;
-        document.getElementById('toolDescription').value = tool.description;
-        document.getElementById('toolQuantity').value = tool.quantity;
-        document.getElementById('toolCategory').value = tool.category;
-        
-        // Show modal
-        new bootstrap.Modal(document.getElementById('addToolModal')).show();
+        tool.quantity += 1;
     }
-}
-
-function deleteTool(id) {
-    if (confirm('Are you sure you want to delete this tool?')) {
-        let tools = JSON.parse(localStorage.getItem('tools')) || [];
-        tools = tools.filter(t => t.id != id);
-        localStorage.setItem('tools', JSON.stringify(tools));
-        
-        showAlert('Tool deleted successfully!', 'success');
-        loadTools();
-        loadDashboard();
-    }
-}
-
-// ==================== BORROWERS ====================
-function loadBorrowers() {
-    console.log('Loading Borrowers');
-    const borrowers = JSON.parse(localStorage.getItem('borrowers')) || [];
-    const tools = JSON.parse(localStorage.getItem('tools')) || [];
-    const tbody = document.getElementById('borrowersTable');
     
-    tbody.innerHTML = '';
+    addActivity(`${borrower.borrower_name} returned "${tool?.name || 'item'}"`);
+    saveApplicationState();
+    
+    showAlert(`Item returned successfully!`, 'success');
+    renderBorrowers();
+    renderTools();
+    updateDashboard();
+    updateToolSelect();
+}
+
+function filterBorrowers() {
+    const searchTerm = (document.getElementById('borrowerSearch')?.value || '').toLowerCase();
+    const statusTerm = document.getElementById('filterStatus')?.value || '';
+    
+    const filtered = appState.allBorrowers.filter(b => {
+        const tool = appState.allTools.find(t => t.id === b.tool_id);
+        const matchesSearch = b.borrower_name.toLowerCase().includes(searchTerm) ||
+                            (tool && tool.name.toLowerCase().includes(searchTerm));
+        
+        let status = b.returned ? 'returned' : (new Date(b.return_date) < new Date() ? 'overdue' : 'active');
+        const matchesStatus = !statusTerm || status === statusTerm;
+        
+        return matchesSearch && matchesStatus;
+    });
+
+    renderFilteredBorrowers(filtered);
+}
+
+function renderBorrowers() {
+    renderFilteredBorrowers(appState.allBorrowers);
+}
+
+function renderFilteredBorrowers(borrowers) {
+    const borrowersList = document.getElementById('borrowersList');
     
     if (borrowers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No borrowing records yet</td></tr>';
+        borrowersList.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h4>No Borrowings Found</h4><p>${appState.allBorrowers.length === 0 ? 'Record your first borrowing' : 'Try a different filter'}</p></div>`;
         return;
     }
-    
-    borrowers.forEach(borrower => {
-        const tool = tools.find(t => t.id == borrower.toolId);
-        const status = getStatus(borrower);
-        const statusClass = status === 'active' ? 'badge-active' : status === 'returned' ? 'badge-returned' : 'badge badge-danger';
-        
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${tool ? tool.name : 'Unknown'}</td>
-            <td>${borrower.borrowerName}</td>
-            <td>${borrower.reason}</td>
-            <td>${new Date(borrower.borrowedDate).toLocaleDateString()}</td>
-            <td>${new Date(borrower.borrowedDate).toLocaleTimeString()}</td>
-            <td>${borrower.returnedDate ? new Date(borrower.returnedDate).toLocaleDateString() : '-'}</td>
-            <td><span class="badge ${statusClass}">${status.toUpperCase()}</span></td>
-            <td>
-                ${!borrower.returnedDate ? `
-                    <button class="btn btn-sm btn-success" onclick="recordReturn(${borrower.id})">
-                        <i class="fas fa-check"></i> Return
-                    </button>
-                ` : ''}
-                <button class="btn btn-sm btn-danger" onclick="deleteBorrower(${borrower.id})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
+
+    borrowersList.innerHTML = borrowers.map(borrower => {
+        const tool = appState.allTools.find(t => t.id === borrower.tool_id);
+        const returnDate = new Date(borrower.return_date);
+        const isOverdue = returnDate < new Date() && !borrower.returned;
+        let status = borrower.returned ? 'Returned' : isOverdue ? 'Overdue' : 'Active';
+        let badgeClass = borrower.returned ? 'badge-success' : isOverdue ? 'badge-danger' : 'badge-warning';
+
+        return `
+            <div class="borrower-card">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4>${borrower.borrower_name}</h4>
+                        <div class="detail-row">
+                            <span class="detail-label">Tool:</span>
+                            <span class="detail-value">${tool?.name || 'Unknown'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Borrow Date:</span>
+                            <span class="detail-value">${new Date(borrower.borrow_date).toLocaleDateString()}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Return Date:</span>
+                            <span class="detail-value">${returnDate.toLocaleDateString()}</span>
+                        </div>
+                        ${borrower.reason ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Reason:</span>
+                            <span class="detail-value">${borrower.reason}</span>
+                        </div>
+                        ` : ''}
+                        ${!borrower.returned ? `
+                        <div class="action-buttons">
+                            <button class="btn btn-success btn-small" onclick="confirmReturn(${borrower.id})">
+                                <i class="fas fa-check"></i> Mark Returned
+                            </button>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge ${badgeClass}">
+                            ${status}
+                        </span>
+                    </div>
+                </div>
+            </div>
         `;
-        tbody.appendChild(row);
-    });
+    }).join('');
 }
 
-function saveBorrower() {
-    const toolId = document.getElementById('selectTool').value;
-    const borrowerName = document.getElementById('borrowerName').value;
-    const reason = document.getElementById('borrowingReason').value;
-    const expectedReturnDate = document.getElementById('expectedReturnDate').value;
-    
-    if (!toolId || !borrowerName || !reason || !expectedReturnDate) {
-        showAlert('Please fill in all fields', 'warning');
-        return;
-    }
-    
-    // Update tool availability
-    let tools = JSON.parse(localStorage.getItem('tools')) || [];
-    const toolIndex = tools.findIndex(t => t.id == toolId);
-    if (toolIndex !== -1 && tools[toolIndex].availableQty > 0) {
-        tools[toolIndex].availableQty--;
-        localStorage.setItem('tools', JSON.stringify(tools));
-    } else {
-        showAlert('Tool not available or quantity is zero', 'danger');
-        return;
-    }
-    
-    const borrower = {
-        id: Date.now(),
-        toolId: parseInt(toolId),
-        borrowerName: borrowerName,
-        reason: reason,
-        borrowedDate: new Date().toISOString(),
-        expectedReturnDate: expectedReturnDate,
-        returnedDate: null
-    };
-    
-    let borrowers = JSON.parse(localStorage.getItem('borrowers')) || [];
-    borrowers.push(borrower);
-    localStorage.setItem('borrowers', JSON.stringify(borrowers));
-    
-    // Reset form
-    document.getElementById('addBorrowerForm').reset();
-    bootstrap.Modal.getInstance(document.getElementById('addBorrowerModal')).hide();
-    
-    showAlert('Borrowing recorded successfully!', 'success');
-    loadBorrowers();
-    loadTools();
-    loadDashboard();
-}
-
-function recordReturn(borrowerId) {
-    const borrowers = JSON.parse(localStorage.getItem('borrowers')) || [];
-    const borrowerIndex = borrowers.findIndex(b => b.id == borrowerId);
-    
-    if (borrowerIndex !== -1) {
-        borrowers[borrowerIndex].returnedDate = new Date().toISOString();
-        localStorage.setItem('borrowers', JSON.stringify(borrowers));
-        
-        // Update tool availability
-        let tools = JSON.parse(localStorage.getItem('tools')) || [];
-        const toolIndex = tools.findIndex(t => t.id == borrowers[borrowerIndex].toolId);
-        if (toolIndex !== -1) {
-            tools[toolIndex].availableQty++;
-            localStorage.setItem('tools', JSON.stringify(tools));
-        }
-        
-        showAlert('Item returned successfully!', 'success');
-        loadBorrowers();
-        loadTools();
-        loadDashboard();
-    }
-}
-
-function deleteBorrower(borrowerId) {
-    if (confirm('Are you sure you want to delete this record?')) {
-        let borrowers = JSON.parse(localStorage.getItem('borrowers')) || [];
-        borrowers = borrowers.filter(b => b.id != borrowerId);
-        localStorage.setItem('borrowers', JSON.stringify(borrowers));
-        
-        showAlert('Record deleted successfully!', 'success');
-        loadBorrowers();
-    }
-}
-
-function getStatus(borrower) {
-    if (borrower.returnedDate) {
-        return 'returned';
-    }
-    
-    const today = new Date();
-    const expectedDate = new Date(borrower.expectedReturnDate);
-    
-    if (expectedDate < today) {
-        return 'overdue';
-    }
-    
-    return 'active';
-}
-
-// ==================== USERS ====================
-function loadUsers() {
-    console.log('Loading Users');
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const tbody = document.getElementById('usersTable');
-    
-    tbody.innerHTML = '';
-    
-    if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No users added yet</td></tr>';
-        return;
-    }
-    
-    users.forEach(user => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${user.username}</td>
-            <td>${user.fullName}</td>
-            <td>${user.email}</td>
-            <td><span class="badge bg-primary">${user.role}</span></td>
-            <td><span class="badge bg-success">Active</span></td>
-            <td>
-                <button class="btn btn-sm btn-info" onclick="editUser(${user.id})">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
+// ==================== USERS MANAGEMENT ====================
 function saveUser() {
-    const username = document.getElementById('username').value;
-    const fullName = document.getElementById('fullName').value;
-    const email = document.getElementById('userEmail').value;
-    const password = document.getElementById('userPassword').value;
-    const role = document.getElementById('userRole').value;
-    
-    if (!username || !fullName || !email || !password || !role) {
-        showAlert('Please fill in all fields', 'warning');
-        return;
+    const form = document.getElementById('userForm');
+    if (!form.checkValidity()) {
+        showAlert('Please fill in all required fields', 'warning');
+        return false;
     }
     
-    const user = {
-        id: Date.now(),
+    const username = document.getElementById('userUsername').value.trim();
+    
+    if (appState.allUsers.some(u => u.username === username)) {
+        showAlert('Username already exists', 'danger');
+        return false;
+    }
+
+    const userData = {
+        id: Math.max(...appState.allUsers.map(u => u.id || 0), 0) + 1,
+        name: document.getElementById('userName').value.trim(),
+        email: document.getElementById('userEmail').value.trim(),
         username: username,
-        fullName: fullName,
-        email: email,
-        password: btoa(password), // Simple base64 encoding (use proper hashing in production)
-        role: role,
+        role: document.getElementById('userRole').value,
         createdDate: new Date().toISOString()
     };
+
+    appState.allUsers.push(userData);
+    addActivity(`User "${userData.name}" created`);
+    saveApplicationState();
     
-    let users = JSON.parse(localStorage.getItem('users')) || [];
-    users.push(user);
-    localStorage.setItem('users', JSON.stringify(users));
-    
-    // Reset form
-    document.getElementById('addUserForm').reset();
+    form.reset();
     bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+    showAlert(`User "${userData.name}" added successfully!`, 'success');
+    renderUsers();
+    updateDashboard();
     
-    showAlert('User added successfully!', 'success');
-    loadUsers();
-    loadDashboard();
+    return false;
 }
 
-function editUser(id) {
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const user = users.find(u => u.id == id);
+function deleteUser(userId) {
+    const user = appState.allUsers.find(u => u.id === userId);
+    if (!user) return;
     
-    if (user) {
-        document.getElementById('username').value = user.username;
-        document.getElementById('fullName').value = user.fullName;
-        document.getElementById('userEmail').value = user.email;
-        document.getElementById('userRole').value = user.role;
-        
-        new bootstrap.Modal(document.getElementById('addUserModal')).show();
+    appState.allUsers = appState.allUsers.filter(u => u.id !== userId);
+    addActivity(`User "${user.name}" deleted`);
+    saveApplicationState();
+    
+    showAlert(`User "${user.name}" deleted successfully!`, 'success');
+    renderUsers();
+    updateDashboard();
+}
+
+function filterUsers() {
+    const searchTerm = (document.getElementById('userSearch')?.value || '').toLowerCase();
+    
+    const filtered = appState.allUsers.filter(u => 
+        u.name.toLowerCase().includes(searchTerm) || 
+        u.username.toLowerCase().includes(searchTerm) ||
+        u.email.toLowerCase().includes(searchTerm)
+    );
+
+    renderFilteredUsers(filtered);
+}
+
+function renderUsers() {
+    renderFilteredUsers(appState.allUsers);
+}
+
+function renderFilteredUsers(users) {
+    const usersList = document.getElementById('usersList');
+    
+    if (users.length === 0) {
+        usersList.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h4>No Users Found</h4><p>${appState.allUsers.length === 0 ? 'Add your first user' : 'Try a different search'}</p></div>`;
+        return;
     }
+
+    usersList.innerHTML = users.map(user => `
+        <div class="user-card">
+            <div class="row">
+                <div class="col-md-8">
+                    <h4>${user.name}</h4>
+                    <div class="detail-row">
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value">${user.email}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Username:</span>
+                        <span class="detail-value">@${user.username}</span>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-danger btn-small" onclick="confirmDeleteUser(${user.id})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="badge bg-success">${user.role}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
 }
 
-function deleteUser(id) {
-    if (confirm('Are you sure you want to delete this user?')) {
-        let users = JSON.parse(localStorage.getItem('users')) || [];
-        users = users.filter(u => u.id != id);
-        localStorage.setItem('users', JSON.stringify(users));
-        
-        showAlert('User deleted successfully!', 'success');
-        loadUsers();
-    }
-}
-
-// ==================== QR CODE HANDLING ====================
-function startQRScanner() {
-    qrScanning = true;
-    const video = document.getElementById('qr-scanner');
+function updateToolSelect() {
+    const selectTool = document.getElementById('borrowerTool');
+    if (!selectTool) return;
     
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then(stream => {
-            video.srcObject = stream;
-            video.play();
-            scanQRCode(video);
-        })
-        .catch(err => {
-            showAlert('Camera access denied: ' + err.message, 'danger');
-        });
-}
-
-function stopQRScanner() {
-    qrScanning = false;
-    const video = document.getElementById('qr-scanner');
-    if (video.srcObject) {
-        video.srcObject.getTracks().forEach(track => track.stop());
-    }
-}
-
-function scanQRCode(video) {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    
-    function scan() {
-        if (!qrScanning) return;
-        
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            try {
-                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-                
-                if (code) {
-                    handleScannedQRCode(code.data);
-                    stopQRScanner();
-                    return;
-                }
-            } catch (e) {
-                // Continue scanning
-            }
+    selectTool.innerHTML = '<option value="">Select a tool</option>';
+    appState.allTools.forEach(tool => {
+        if (tool.quantity > 0) {
+            const option = document.createElement('option');
+            option.value = tool.id;
+            option.textContent = `${tool.name} (${tool.quantity} available)`;
+            selectTool.appendChild(option);
         }
-        
-        requestAnimationFrame(scan);
-    }
-    
-    scan();
+    });
 }
 
-function handleScannedQRCode(qrData) {
-    const tools = JSON.parse(localStorage.getItem('tools')) || [];
-    const tool = tools.find(t => t.id == qrData);
+// ==================== CONFIRMATION DIALOGS ====================
+function confirmDeleteTool(toolId) {
+    const tool = appState.allTools.find(t => t.id === toolId);
+    if (!tool) return;
     
-    if (tool) {
-        const scannedInfo = document.getElementById('scannedItemInfo');
-        scannedInfo.innerHTML = `
-            <strong>Tool Found!</strong><br>
-            <strong>Name:</strong> ${tool.name}<br>
-            <strong>Brand:</strong> ${tool.brand}<br>
-            <strong>Available:</strong> ${tool.availableQty}/${tool.quantity}<br>
-            <button class="btn btn-primary mt-2" onclick="borrowScannedTool(${tool.id})">
-                <i class="fas fa-plus"></i> Record Borrowing
-            </button>
-        `;
-    } else {
-        document.getElementById('scannedItemInfo').innerHTML = `
-            <span class="text-danger">Tool not found in database</span>
-        `;
+    if (confirm(`⚠️ Delete "${tool.name}"?\n\nThis action cannot be undone.`)) {
+        deleteTool(toolId);
     }
 }
 
-function borrowScannedTool(toolId) {
-    document.getElementById('selectTool').value = toolId;
-    new bootstrap.Modal(document.getElementById('addBorrowerModal')).show();
+function confirmDeleteUser(userId) {
+    const user = appState.allUsers.find(u => u.id === userId);
+    if (!user) return;
+    
+    if (confirm(`⚠️ Delete user "${user.name}"?\n\nThis action cannot be undone.`)) {
+        deleteUser(userId);
+    }
 }
 
-function generateQRCode(text) {
-    // Using QR Server API for QR code generation
-    return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${text}`;
+function confirmReturn(borrowerId) {
+    const borrower = appState.allBorrowers.find(b => b.id === borrowerId);
+    const tool = appState.allTools.find(t => t.id === borrower.tool_id);
+    
+    if (confirm(`Mark "${tool?.name || 'item'}" as returned by ${borrower.borrower_name}?`)) {
+        returnBorrower(borrowerId);
+    }
 }
 
-// ==================== UTILITY FUNCTIONS ====================
+// ==================== TAB SWITCHING ====================
+function switchTab(tab) {
+    appState.currentTab = tab;
+    
+    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    document.getElementById(tab).style.display = 'block';
+    document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+
+    if (tab === 'tools') {
+        renderTools();
+        updateToolSelect();
+    } else if (tab === 'borrowers') {
+        renderBorrowers();
+    } else if (tab === 'users') {
+        renderUsers();
+    }
+}
+
+// ==================== EVENT LISTENERS ====================
+function setupEventListeners() {
+    // Search handlers
+    const toolSearch = document.getElementById('toolSearch');
+    const toolCat = document.getElementById('toolCategory');
+    const borrowerSearch = document.getElementById('borrowerSearch');
+    const filterStatus = document.getElementById('filterStatus');
+    const userSearch = document.getElementById('userSearch');
+
+    if (toolSearch) toolSearch.addEventListener('keyup', filterTools);
+    if (toolCat) toolCat.addEventListener('change', filterTools);
+    if (borrowerSearch) borrowerSearch.addEventListener('keyup', filterBorrowers);
+    if (filterStatus) filterStatus.addEventListener('change', filterBorrowers);
+    if (userSearch) userSearch.addEventListener('keyup', filterUsers);
+
+    // Form submissions
+    const toolForm = document.getElementById('toolForm');
+    const borrowerForm = document.getElementById('borrowerForm');
+    const userForm = document.getElementById('userForm');
+    const editToolForm = document.getElementById('editToolForm');
+
+    if (toolForm) toolForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveTool();
+    });
+    if (borrowerForm) borrowerForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveBorrower();
+    });
+    if (userForm) userForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveUser();
+    });
+    if (editToolForm) editToolForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        updateTool();
+    });
+
+    // Keyboard shortcut for clear database
+    document.addEventListener('keydown', function(event) {
+        if (event.ctrlKey && event.shiftKey && event.key === 'D') {
+            event.preventDefault();
+            window.location.href = 'clear-database.html';
+        }
+    });
+
+    updateToolSelect();
+}
+
+// ==================== UTILITY ====================
 function showAlert(message, type = 'info') {
-    const alertContainer = document.getElementById('alertContainer');
+    const alertContainer = document.getElementById('alertContainer') || document.body;
     const alertId = 'alert-' + Date.now();
     
+    // Use better styling with custom CSS classes
+    const typeClass = {
+        'success': 'alert-success',
+        'error': 'alert-error',
+        'warning': 'alert-warning',
+        'info': 'alert-info'
+    }[type] || 'alert-info';
+    
     const alertHTML = `
-        <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+        <div id="${alertId}" class="alert-message ${typeClass}" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
             ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     `;
     
-    alertContainer.innerHTML += alertHTML;
+    const temp = document.createElement('div');
+    temp.innerHTML = alertHTML;
+    document.body.appendChild(temp.firstElementChild);
     
     setTimeout(() => {
         const alertElement = document.getElementById(alertId);
         if (alertElement) {
-            alertElement.remove();
+            alertElement.style.animation = 'slideInRight 0.3s ease reverse';
+            setTimeout(() => alertElement.remove(), 300);
         }
-    }, 5000);
+    }, 4000);
 }
 
-function setupEventListeners() {
-    // Search functionality
-    document.getElementById('searchTools').addEventListener('keyup', function() {
-        filterTools();
-    });
+// Show Loading State
+function showLoadingState(message = 'Processing...') {
+    const loadingId = 'loading-overlay-' + Date.now();
+    const loadingHTML = `
+        <div id="${loadingId}" class="loading-overlay">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p style="margin-top: 1rem; color: #666; font-weight: 500;">${message}</p>
+            </div>
+        </div>
+    `;
     
-    document.getElementById('filterByBrand').addEventListener('keyup', function() {
-        filterTools();
-    });
+    const temp = document.createElement('div');
+    temp.innerHTML = loadingHTML;
+    document.body.appendChild(temp.firstElementChild);
     
-    document.getElementById('searchBorrower').addEventListener('keyup', function() {
-        filterBorrowers();
-    });
-    
-    document.getElementById('filterStatus').addEventListener('change', function() {
-        filterBorrowers();
-    });
-    
-    document.getElementById('searchUser').addEventListener('keyup', function() {
-        filterUsers();
-    });
+    return loadingId; // Return ID so it can be removed later
 }
 
-function filterTools() {
-    const searchValue = document.getElementById('searchTools').value.toLowerCase();
-    const brandValue = document.getElementById('filterByBrand').value.toLowerCase();
-    const tools = JSON.parse(localStorage.getItem('tools')) || [];
-    const tbody = document.getElementById('toolsTable');
-    
-    tbody.innerHTML = '';
-    
-    const filtered = tools.filter(tool => {
-        return (tool.name.toLowerCase().includes(searchValue) || tool.description.toLowerCase().includes(searchValue)) &&
-               (tool.brand.toLowerCase().includes(brandValue) || brandValue === '');
-    });
-    
-    if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No tools found</td></tr>';
-        return;
+// Hide Loading State
+function hideLoadingState(loadingId) {
+    const loadingElement = document.getElementById(loadingId);
+    if (loadingElement) {
+        loadingElement.style.opacity = '0';
+        loadingElement.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => loadingElement.remove(), 300);
     }
-    
-    filtered.forEach(tool => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>
-                <div class="qr-code-container">
-                    <img src="${generateQRCode(tool.id)}" alt="QR" style="width: 50px;">
-                </div>
-            </td>
-            <td>${tool.name}</td>
-            <td>${tool.brand}</td>
-            <td>${tool.description}</td>
-            <td><span class="badge bg-success">${tool.availableQty}</span></td>
-            <td>${tool.quantity}</td>
-            <td>
-                <button class="btn btn-sm btn-info" onclick="editTool(${tool.id})">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteTool(${tool.id})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
 }
 
-function filterBorrowers() {
-    const searchValue = document.getElementById('searchBorrower').value.toLowerCase();
-    const statusValue = document.getElementById('filterStatus').value;
-    const borrowers = JSON.parse(localStorage.getItem('borrowers')) || [];
-    const tools = JSON.parse(localStorage.getItem('tools')) || [];
-    const tbody = document.getElementById('borrowersTable');
+// Show Save Success with Visual Feedback
+function showSaveSuccess() {
+    const savedId = 'saved-indicator-' + Date.now();
+    const savedHTML = `
+        <div id="${savedId}" class="save-indicator" style="position: fixed; bottom: 20px; right: 20px; z-index: 9998;">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Saved</span>
+        </div>
+    `;
     
-    tbody.innerHTML = '';
+    const temp = document.createElement('div');
+    temp.innerHTML = savedHTML;
+    document.body.appendChild(temp.firstElementChild);
     
-    const filtered = borrowers.filter(borrower => {
-        const matchesSearch = borrower.borrowerName.toLowerCase().includes(searchValue);
-        const matchesStatus = !statusValue || getStatus(borrower) === statusValue;
-        return matchesSearch && matchesStatus;
-    });
-    
-    if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No records found</td></tr>';
-        return;
-    }
-    
-    filtered.forEach(borrower => {
-        const tool = tools.find(t => t.id == borrower.toolId);
-        const status = getStatus(borrower);
-        const statusClass = status === 'active' ? 'badge-active' : status === 'returned' ? 'badge-returned' : 'badge badge-danger';
-        
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${tool ? tool.name : 'Unknown'}</td>
-            <td>${borrower.borrowerName}</td>
-            <td>${borrower.reason}</td>
-            <td>${new Date(borrower.borrowedDate).toLocaleDateString()}</td>
-            <td>${new Date(borrower.borrowedDate).toLocaleTimeString()}</td>
-            <td>${borrower.returnedDate ? new Date(borrower.returnedDate).toLocaleDateString() : '-'}</td>
-            <td><span class="badge ${statusClass}">${status.toUpperCase()}</span></td>
-            <td>
-                ${!borrower.returnedDate ? `
-                    <button class="btn btn-sm btn-success" onclick="recordReturn(${borrower.id})">
-                        <i class="fas fa-check"></i> Return
-                    </button>
-                ` : ''}
-                <button class="btn btn-sm btn-danger" onclick="deleteBorrower(${borrower.id})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
+    setTimeout(() => {
+        const element = document.getElementById(savedId);
+        if (element) {
+            element.style.opacity = '0';
+            element.style.transition = 'opacity 0.5s ease';
+            setTimeout(() => element.remove(), 500);
+        }
+    }, 2000);
 }
 
-function filterUsers() {
-    const searchValue = document.getElementById('searchUser').value.toLowerCase();
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const tbody = document.getElementById('usersTable');
-    
-    tbody.innerHTML = '';
-    
-    const filtered = users.filter(user => {
-        return user.username.toLowerCase().includes(searchValue) ||
-               user.fullName.toLowerCase().includes(searchValue) ||
-               user.email.toLowerCase().includes(searchValue);
-    });
-    
-    if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No users found</td></tr>';
-        return;
-    }
-    
-    filtered.forEach(user => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${user.username}</td>
-            <td>${user.fullName}</td>
-            <td>${user.email}</td>
-            <td><span class="badge bg-primary">${user.role}</span></td>
-            <td><span class="badge bg-success">Active</span></td>
-            <td>
-                <button class="btn btn-sm btn-info" onclick="editUser(${user.id})">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
+// Error State Handler
+function handleError(error, message = 'An error occurred') {
+    console.error('Error:', error);
+    showAlert(message + ' - ' + (error.message || error), 'error');
+    return false;
 }
 
+// Logout Function
 function logout() {
     if (confirm('Are you sure you want to logout?')) {
-        // Clear session
-        localStorage.removeItem('currentUser');
-        window.location.reload();
+        localStorage.setItem('currentUser', '');
+        showAlert('You have been logged out successfully', 'info');
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
     }
 }
+
+// Settings Functions
+function updateProfile() {
+    const name = document.getElementById('settingName').value;
+    const email = document.getElementById('settingEmail').value;
+    
+    localStorage.setItem('userProfile', JSON.stringify({
+        name: name,
+        email: email,
+        updatedAt: new Date().toISOString()
+    }));
+    
+    document.getElementById('currentUser').textContent = name;
+    showAlert('Profile updated successfully', 'success');
+}
+
+function saveSettings() {
+    const settings = {
+        enableNotifications: document.querySelector('input[type="checkbox"]:nth-child(1)').checked,
+        autoSave: document.querySelector('input[type="checkbox"]:nth-child(2)').checked,
+        savedAt: new Date().toISOString()
+    };
+    
+    localStorage.setItem('appSettings', JSON.stringify(settings));
+    showAlert('Settings saved successfully', 'success');
+}
+
+function exportData() {
+    const data = {
+        tools: appState.allTools,
+        borrowers: appState.allBorrowers,
+        users: appState.allUsers,
+        activity: appState.activityLog,
+        exportedAt: new Date().toISOString()
+    };
+    
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `hulam-ko-data-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    showAlert('Data exported successfully', 'success');
+}
+
+function clearAllData() {
+    if (confirm('This will delete all data. Are you absolutely sure?')) {
+        if (confirm('This action cannot be undone. Click OK to confirm.')) {
+            localStorage.clear();
+            appState.allTools = [];
+            appState.allBorrowers = [];
+            appState.allUsers = [];
+            appState.activityLog = [];
+            
+            showAlert('All data has been cleared', 'warning');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        }
+    }
+}
+
+// Category Management
+function getCategories() {
+    return ['Hand Tools', 'Power Tools', 'Electronics', 'Safety Equipment', 'Other'];
+}
+
+function addNewCategory() {
+    const newCat = prompt('Enter new category name:');
+    if (newCat && newCat.trim()) {
+        let categories = JSON.parse(localStorage.getItem('toolCategories')) || getCategories();
+        if (!categories.includes(newCat)) {
+            categories.push(newCat);
+            localStorage.setItem('toolCategories', JSON.stringify(categories));
+            updateCategorySelects();
+            showAlert(`Category "${newCat}" added successfully`, 'success');
+        } else {
+            showAlert('Category already exists', 'warning');
+        }
+    }
+}
+
+function updateCategorySelects() {
+    const categories = JSON.parse(localStorage.getItem('toolCategories')) || getCategories();
+    const selects = document.querySelectorAll('[id*="Category"]');
+    
+    selects.forEach(select => {
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">Select Category</option>';
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            select.appendChild(option);
+        });
+        select.value = currentValue;
+    });
+}
+
+// Initialize categories on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateCategorySelects();
+});
+
