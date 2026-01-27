@@ -381,6 +381,9 @@ function renderFilteredTools(tools) {
                         <button class="btn btn-primary btn-small" onclick="editToolForm(${tool.id})" data-bs-toggle="modal" data-bs-target="#editToolModal">
                             <i class="fas fa-edit"></i> Edit
                         </button>
+                        <button class="btn btn-info btn-small" onclick="exportQRCode(${tool.id}, '${tool.name}')">
+                            <i class="fas fa-download"></i> Export QR
+                        </button>
                         <button class="btn btn-danger btn-small" onclick="confirmDeleteTool(${tool.id})">
                             <i class="fas fa-trash"></i> Delete
                         </button>
@@ -947,6 +950,152 @@ function exportData() {
     
     showAlert('Data exported successfully', 'success');
 }
+
+// ==================== QR CODE SCANNING & EXPORT ====================
+let html5QrcodeScanner = null;
+
+function initializeQRScanner() {
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.render(onQRScanSuccess, onQRScanError);
+        return;
+    }
+
+    html5QrcodeScanner = new Html5Qrcode("qr-reader");
+    const qrConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
+    
+    html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        qrConfig,
+        onQRScanSuccess,
+        onQRScanError
+    ).catch(err => {
+        console.log('Error starting QR scanner:', err);
+        showAlert('Unable to access camera. Please check permissions or use manual entry.', 'warning');
+    });
+}
+
+function onQRScanSuccess(decodedText, decodedResult) {
+    try {
+        const scannedData = JSON.parse(decodedText);
+        
+        if (scannedData.id && scannedData.name) {
+            const tool = appState.allTools.find(t => t.id === scannedData.id);
+            
+            if (tool) {
+                // Show success message
+                document.getElementById('qr-result').style.display = 'block';
+                document.getElementById('scannedToolName').textContent = tool.name;
+                
+                // Auto-fill the borrowing form
+                setTimeout(() => {
+                    if (html5QrcodeScanner) {
+                        html5QrcodeScanner.stop();
+                        html5QrcodeScanner = null;
+                    }
+                    
+                    // Close scanner modal and open borrowing modal with tool selected
+                    bootstrap.Modal.getInstance(document.getElementById('scanQRModal')).hide();
+                    
+                    // Set the tool in the form
+                    document.getElementById('borrowerTool').value = tool.id;
+                    document.getElementById('borrowDate').valueAsDate = new Date();
+                    
+                    const returnDate = new Date();
+                    returnDate.setDate(returnDate.getDate() + 7); // Default 7 days
+                    document.getElementById('returnDate').valueAsDate = returnDate;
+                    
+                    // Open borrowing modal
+                    const borrowModal = new bootstrap.Modal(document.getElementById('addBorrowerModal'));
+                    borrowModal.show();
+                    
+                    showAlert(`Tool "${tool.name}" scanned! Fill in borrower details.`, 'success');
+                }, 500);
+            }
+        }
+    } catch (e) {
+        console.log('Invalid QR code data:', decodedText);
+    }
+}
+
+function onQRScanError(error) {
+    // Ignore scanning errors, just keep trying
+    console.log('QR scan error:', error);
+}
+
+function exportQRCode(toolId, toolName) {
+    const tool = appState.allTools.find(t => t.id === toolId);
+    if (!tool) return;
+    
+    // Create a temporary container
+    const tempDiv = document.createElement('div');
+    const qrContainer = document.createElement('div');
+    qrContainer.style.padding = '20px';
+    qrContainer.style.backgroundColor = 'white';
+    qrContainer.style.borderRadius = '8px';
+    tempDiv.appendChild(qrContainer);
+    
+    // Generate QR code
+    const qrData = JSON.stringify({ id: tool.id, name: tool.name });
+    new QRCode(qrContainer, {
+        text: qrData,
+        width: 300,
+        height: 300,
+        colorDark: '#667eea',
+        colorLight: '#ffffff'
+    });
+    
+    // Get the QR code image
+    setTimeout(() => {
+        const qrImage = qrContainer.querySelector('img') || qrContainer.querySelector('canvas');
+        
+        if (qrImage) {
+            let imageData;
+            
+            if (qrImage.tagName === 'CANVAS') {
+                imageData = qrImage.toDataURL('image/png');
+            } else {
+                // Convert image to canvas
+                const canvas = document.createElement('canvas');
+                canvas.width = qrImage.width;
+                canvas.height = qrImage.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(qrImage, 0, 0);
+                imageData = canvas.toDataURL('image/png');
+            }
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.href = imageData;
+            link.download = `${tool.name.replace(/\s+/g, '_')}_QR_${new Date().toISOString().split('T')[0]}.png`;
+            link.click();
+            
+            showAlert(`QR code for "${tool.name}" exported successfully!`, 'success');
+        }
+    }, 500);
+}
+
+// Setup QR Scanner when modal is shown
+document.addEventListener('show.bs.modal', function(e) {
+    if (e.target.id === 'scanQRModal') {
+        document.getElementById('qr-result').style.display = 'none';
+        setTimeout(() => {
+            initializeQRScanner();
+        }, 500);
+    }
+});
+
+// Stop QR Scanner when modal is hidden
+document.addEventListener('hide.bs.modal', function(e) {
+    if (e.target.id === 'scanQRModal') {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.stop().then(ignored => {
+                html5QrcodeScanner = null;
+            }).catch(err => {
+                console.log('Error stopping QR scanner:', err);
+            });
+        }
+    }
+});
 
 function clearAllData() {
     if (confirm('This will delete all data. Are you absolutely sure?')) {
