@@ -1042,11 +1042,23 @@ function onQRScanSuccess(decodedText, decodedResult) {
             const tool = appState.allTools.find(t => t.id === scannedData.id);
             
             if (tool) {
-                // Show success message
-                document.getElementById('qr-result').style.display = 'block';
+                // Display scanned tool details
+                document.getElementById('scanned-tool-details').style.display = 'block';
                 document.getElementById('scannedToolName').textContent = tool.name;
+                document.getElementById('scannedToolBrand').textContent = tool.brand || 'N/A';
+                document.getElementById('scannedToolCategory').textContent = tool.category || 'Uncategorized';
+                document.getElementById('scannedToolQuantity').textContent = tool.quantity || '0';
+                document.getElementById('scannedToolDescription').textContent = tool.description || 'No description available';
                 
-                // Auto-fill the borrowing form
+                // Show success animation
+                const detailsCard = document.querySelector('.scanned-item-card');
+                if (detailsCard) {
+                    detailsCard.style.animation = 'slideInUp 0.5s ease';
+                }
+                
+                showAlert(`✓ ${tool.name} scanned successfully!`, 'success');
+                
+                // Auto-fill the borrowing form after delay
                 setTimeout(() => {
                     if (html5QrcodeScanner) {
                         html5QrcodeScanner.stop();
@@ -1068,6 +1080,7 @@ function onQRScanSuccess(decodedText, decodedResult) {
                     const borrowModal = new bootstrap.Modal(document.getElementById('addBorrowerModal'));
                     borrowModal.show();
                     
+
                     showAlert(`Tool "${tool.name}" scanned! Fill in borrower details.`, 'success');
                 }, 500);
             }

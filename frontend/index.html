@@ -447,13 +447,55 @@
                 </div>
                 <div class="modal-body">
                     <div id="qr-reader" style="width: 100%; border: 2px dashed #2563eb; border-radius: 8px; padding: 20px; background: #f8f9fa; min-height: 300px;"></div>
-                    <div id="qr-result" style="margin-top: 15px; text-align: center; display: none;">
-                        <div class="alert alert-success">
-                            <i class="fas fa-check-circle"></i> Tool Scanned: <strong id="scannedToolName"></strong>
+                    
+                    <!-- Scanned Tool Details Display -->
+                    <div id="scanned-tool-details" style="margin-top: 20px; display: none;">
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <i class="fas fa-check-circle"></i> <strong>Tool Scanned Successfully!</strong>
+                        </div>
+                        
+                        <div class="scanned-item-card">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="scan-detail">
+                                        <label class="scan-label">Tool Name</label>
+                                        <p class="scan-value" id="scannedToolName"></p>
+                                    </div>
+                                    <div class="scan-detail">
+                                        <label class="scan-label">Brand</label>
+                                        <p class="scan-value" id="scannedToolBrand"></p>
+                                    </div>
+                                    <div class="scan-detail">
+                                        <label class="scan-label">Category</label>
+                                        <p class="scan-value"><span class="badge bg-info" id="scannedToolCategory"></span></p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="scan-detail">
+                                        <label class="scan-label">Available Quantity</label>
+                                        <p class="scan-value"><span class="badge bg-success" id="scannedToolQuantity"></span></p>
+                                    </div>
+                                    <div class="scan-detail">
+                                        <label class="scan-label">Description</label>
+                                        <p class="scan-value" id="scannedToolDescription" style="font-size: 0.95rem;"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 15px; text-align: center;">
+                            <p class="text-success"><i class="fas fa-info-circle"></i> This item has been scanned and is ready to borrow.</p>
                         </div>
                     </div>
+                    
+                    <div id="qr-result" style="margin-top: 15px; text-align: center; display: none;">
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> Tool Scanned: <strong id="scannedToolNameOld"></strong>
+                        </div>
+                    </div>
+                    
                     <div style="margin-top: 15px;">
-                        <p class="text-muted"><small><i class="fas fa-info-circle"></i> Point your scanner or device camera at the tool's QR code. The system will open the borrowing form with the tool pre-selected.</small></p>
+                        <p class="text-muted"><small><i class="fas fa-info-circle"></i> Point your scanner or device camera at the tool's QR code. The system will show the tool details and open the borrowing form.</small></p>
                     </div>
                 </div>
                 <div class="modal-footer">
