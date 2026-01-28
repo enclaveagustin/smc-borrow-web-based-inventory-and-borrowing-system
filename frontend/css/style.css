@@ -1000,3 +1000,207 @@ html, body {
         max-width: none;
     }
 }
+
+/* IMAGE MANAGEMENT */
+.image-upload-section {
+    border: 2px dashed #e0e7ff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    background-color: #f8fafc;
+    transition: all 0.3s ease;
+}
+
+.image-upload-section:hover {
+    border-color: var(--primary);
+    background-color: #eff6ff;
+}
+
+.image-upload-section input[type="file"] {
+    cursor: pointer;
+}
+
+.image-upload-section .form-text {
+    display: block;
+    margin-top: 0.5rem;
+    color: #6b7280;
+}
+
+#imagePreview {
+    text-align: center;
+    padding: 1rem;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+#imagePreview img {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+#imagePreview img:hover {
+    transform: scale(1.05);
+}
+
+#imagePreview .btn {
+    margin-top: 1rem;
+}
+
+/* Tool Media Section - Image and QR Code Layout */
+.tool-media-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 1rem 0;
+}
+
+.media-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+    width: 100%;
+    align-items: center;
+    justify-items: center;
+}
+
+.media-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.image-container {
+    order: 1;
+}
+
+.qr-container {
+    order: 2;
+}
+
+.tool-image-wrapper {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.tool-image-wrapper:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.tool-image {
+    max-width: 95%;
+    max-height: 95%;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: transform 0.3s ease;
+}
+
+.tool-image:hover {
+    transform: scale(1.05);
+}
+
+.no-image {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+}
+
+.no-image i {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: #d1d5db;
+}
+
+.no-image p {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.qr-code-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.qr-code-wrapper:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.qr-code-wrapper canvas {
+    display: block;
+    margin: 0 auto;
+}
+
+/* Responsive Design for Media Section */
+@media (max-width: 768px) {
+    .media-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .tool-media-section {
+        padding: 1rem 0;
+    }
+    
+    .image-container, .qr-container {
+        width: 100%;
+    }
+}
+
+/* Tool Image Display */
+.tool-card img {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tool-card img:hover {
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    transform: scale(1.02);
+}
+
+/* Image Viewer Modal */
+#imageViewerModal .modal-body {
+    background-color: #f9fafb;
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#imageViewerImg {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.modal-footer .btn-info {
+    background-color: var(--info);
+    border-color: var(--info);
+}
+
+.modal-footer .btn-info:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}

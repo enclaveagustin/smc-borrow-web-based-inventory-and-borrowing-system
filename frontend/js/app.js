@@ -220,44 +220,93 @@ function saveTool() {
     appState.isProcessing = true;
     
     try {
-        const toolData = {
-            id: Math.max(...appState.allTools.map(t => t.id || 0), 0) + 1,
-            name: document.getElementById('toolName').value.trim(),
-            brand: document.getElementById('toolBrand').value.trim(),
-            description: document.getElementById('toolDescription').value.trim(),
-            quantity: parseInt(document.getElementById('toolQuantity').value),
-            category: document.getElementById('toolCategory').value,
-            createdDate: new Date().toISOString()
-        };
+        const imageFile = document.getElementById('toolImage');
         
-        if (!toolData.name) {
-            hideLoadingState(loadingId);
-            showAlert('Tool name is required', 'warning');
-            appState.isProcessing = false;
-            return false;
-        }
-        
-        // Simulate API delay (remove if using real API)
-        setTimeout(() => {
-            appState.allTools.push(toolData);
-            addActivity(`Tool "${toolData.name}" created`);
-            saveApplicationState();
+        if (imageFile.files.length > 0) {
+            // Image file selected - convert to base64
+            const file = imageFile.files[0];
+            const reader = new FileReader();
             
-            hideLoadingState(loadingId);
-            form.reset();
-            bootstrap.Modal.getInstance(document.getElementById('addToolModal')).hide();
-            showAlert(`Tool "${toolData.name}" added successfully!`, 'success');
-            showSaveSuccess();
-            renderTools();
-            updateDashboard();
-            appState.isProcessing = false;
-        }, 400);
+            reader.onload = function(e) {
+                const toolData = {
+                    id: Math.max(...appState.allTools.map(t => t.id || 0), 0) + 1,
+                    name: document.getElementById('toolName').value.trim(),
+                    brand: document.getElementById('toolBrand').value.trim(),
+                    description: document.getElementById('toolDescription').value.trim(),
+                    quantity: parseInt(document.getElementById('toolQuantity').value),
+                    category: document.getElementById('toolCategory').value,
+                    image: e.target.result, // Base64 image data
+                    createdDate: new Date().toISOString()
+                };
+                
+                if (!toolData.name) {
+                    hideLoadingState(loadingId);
+                    showAlert('Tool name is required', 'warning');
+                    appState.isProcessing = false;
+                    return false;
+                }
+                
+                // Simulate API delay
+                setTimeout(() => {
+                    appState.allTools.push(toolData);
+                    addActivity(`Tool "${toolData.name}" created with image`);
+                    saveApplicationState();
+                    
+                    hideLoadingState(loadingId);
+                    form.reset();
+                    clearImagePreview();
+                    bootstrap.Modal.getInstance(document.getElementById('addToolModal')).hide();
+                    showAlert(`Tool "${toolData.name}" added successfully!`, 'success');
+                    showSaveSuccess();
+                    renderTools();
+                    updateDashboard();
+                    appState.isProcessing = false;
+                }, 400);
+                updateToolSelect();
+            };
+            
+            reader.readAsDataURL(file);
+        } else {
+            // No image selected
+            const toolData = {
+                id: Math.max(...appState.allTools.map(t => t.id || 0), 0) + 1,
+                name: document.getElementById('toolName').value.trim(),
+                brand: document.getElementById('toolBrand').value.trim(),
+                description: document.getElementById('toolDescription').value.trim(),
+                quantity: parseInt(document.getElementById('toolQuantity').value),
+                category: document.getElementById('toolCategory').value,
+                createdDate: new Date().toISOString()
+            };
+            
+            if (!toolData.name) {
+                hideLoadingState(loadingId);
+                showAlert('Tool name is required', 'warning');
+                appState.isProcessing = false;
+                return false;
+            }
+            
+            // Simulate API delay
+            setTimeout(() => {
+                appState.allTools.push(toolData);
+                addActivity(`Tool "${toolData.name}" created`);
+                saveApplicationState();
+                
+                hideLoadingState(loadingId);
+                form.reset();
+                bootstrap.Modal.getInstance(document.getElementById('addToolModal')).hide();
+                showAlert(`Tool "${toolData.name}" added successfully!`, 'success');
+                showSaveSuccess();
+                renderTools();
+                updateDashboard();
+                appState.isProcessing = false;
+            }, 400);
+            updateToolSelect();
+        }
     } catch (error) {
         hideLoadingState(loadingId);
         handleError(error, 'Failed to add tool');
         appState.isProcessing = false;
     }
-    updateToolSelect();
     
     appState.isProcessing = false;
     return false;
@@ -389,8 +438,19 @@ function renderFilteredTools(tools) {
                         </button>
                     </div>
                 </div>
-                <div class="col-md-4 text-center">
-                    <div id="qr-tool-${tool.id}" style="padding: 10px;"></div>
+                <div class="col-md-4">
+                    <div class="tool-media-section">
+                        <div class="media-grid">
+                            <div class="media-item image-container">
+                                <div id="tool-image-${tool.id}" class="tool-image-wrapper">
+                                    ${tool.image ? `<img src="${tool.image}" alt="${tool.name}" class="tool-image" onclick="viewToolImage('${tool.name.replace(/'/g, "\\'")}', '${tool.image.replace(/'/g, "\\'")}')" title="Click to view full size">` : '<div class="no-image"><i class="fas fa-image"></i><p>No Image</p></div>'}
+                                </div>
+                            </div>
+                            <div class="media-item qr-container">
+                                <div id="qr-tool-${tool.id}" class="qr-code-wrapper"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1112,6 +1172,61 @@ function clearAllData() {
             }, 1500);
         }
     }
+}
+
+// ==================== IMAGE MANAGEMENT ====================
+function previewToolImage(event) {
+    const file = event.target.files[0];
+    if (file) {
+        // Check file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showAlert('Image size must be less than 5MB', 'warning');
+            document.getElementById('toolImage').value = '';
+            return;
+        }
+        
+        // Check file type
+        if (!file.type.startsWith('image/')) {
+            showAlert('Please select a valid image file', 'warning');
+            document.getElementById('toolImage').value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('imagePreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function clearImagePreview() {
+    document.getElementById('toolImage').value = '';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('previewImg').src = '';
+}
+
+function viewToolImage(toolName, imageData) {
+    document.getElementById('imageViewerTitle').textContent = toolName;
+    document.getElementById('imageViewerImg').src = imageData;
+    document.getElementById('imageViewerImg').dataset.imageData = imageData;
+    document.getElementById('imageViewerImg').dataset.toolName = toolName;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('imageViewerModal')).show();
+}
+
+function downloadToolImage() {
+    const img = document.getElementById('imageViewerImg');
+    const toolName = img.dataset.toolName || 'tool-image';
+    const imageData = img.src;
+    
+    const link = document.createElement('a');
+    link.href = imageData;
+    link.download = `${toolName.replace(/\s+/g, '_')}_${new Date().getTime()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showAlert('Image downloaded successfully!', 'success');
 }
 
 // Category Management
