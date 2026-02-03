@@ -96,24 +96,56 @@ setup.bat production   # Production mode
 
 ## 👥 Recording Borrowings (Loans)
 
-### When Someone Borrows a Tool
+### Quick Scan to Borrow (New Feature)
+
+The fastest way to record a borrowing is using the barcode scanner!
 
 1. **Go to Borrowers Tab**
    - Click "Borrowers" in sidebar
 
-2. **Click "+ Add New Borrowing"**
+2. **Click "Scan to Save" Button**
    - Blue button at top right
+   - Scanner section opens inline
+
+3. **Scan or Enter Tool Barcode**
+   - Use a barcode scanner device, OR
+   - Type the tool ID/barcode and press Enter
+   - System finds the tool automatically
+
+4. **Tool Details Appear**
+   - Tool name, brand, category, and quantity shown
+   - Inline form pre-fills with:
+     - Tool selected ✓
+     - Borrow date (today) ✓
+     - Return date (7 days from today) ✓
+
+5. **Enter Borrower Name**
+   - Type borrower's name
+   - Can edit dates if needed (change from 7-day default)
+
+6. **Click "Record Borrowing"**
+   - ✅ Loan recorded instantly
+   - Tool quantity decreases automatically
+   - Scanning ready for next loan!
+
+### Manual Recording (Traditional Method)
+
+If you don't have a barcode scanner:
+
+1. **Go to Borrowers Tab**
+   - Click "Borrowers" in sidebar
+
+2. **Click "+ Record Borrowing"** Button
+   - Opens borrowing form
 
 3. **Fill in Borrowing Details**
    - **Borrower Name** ⭐ Required: "John Smith"
    - **Tool** ⭐ Required: Select from dropdown
-   - **Quantity** ⭐ Required: How many to lend
    - **Borrow Date** ⭐ Required: Today's date (auto-filled)
-   - **Due Date** ⭐ Required: When to return
-   - **Contact** (Optional): Phone number
-   - **Notes** (Optional): Any special notes
+   - **Return Date** ⭐ Required: When to return
+   - **Reason** (Optional): Why they need it
 
-4. **Click "Save Borrowing"**
+4. **Click "Record Borrowing"**
    - ✅ Green notification confirms
    - Appears in Active Borrowings list
    - Tool quantity decreases automatically
@@ -502,7 +534,40 @@ The system works great on phones and tablets!
 
 ---
 
-## 📋 Summary
+## � Production Deployment
+
+### Build Standalone .exe Executable
+
+You can build HulamKo as a standalone Windows executable (.exe) for easy distribution and installation on any Windows machine - no Python installation required!
+
+**Requirements:**
+- Python 3.7+ on your build machine (not needed for end users)
+- PyInstaller package
+
+**Build Steps:**
+
+1. **Install build dependencies:**
+   ```bash
+   pip install pyinstaller flask flask-cors
+   ```
+
+2. **Run the build script:**
+   ```bash
+   python build_exe.py
+   ```
+
+3. **Executable created at:** `release/HulamKo.exe`
+
+4. **For end users:** Simply run the .exe file
+   - No Python needed
+   - No command line needed
+   - Just double-click to launch!
+
+**See [BUILD_INSTRUCTIONS.md](BUILD_INSTRUCTIONS.md) for detailed build guide.**
+
+---
+
+## �📋 Summary
 
 **What This System Does:**
 ✅ Manage tool inventory  
