@@ -1037,6 +1037,13 @@ function openBarcodeScanner() {
     // Auto-fill event listener for barcode input
     if (!barcodeInputElement._barcodeListener) {
         barcodeInputElement.addEventListener('change', handleBarcodeInput);
+        barcodeInputElement.addEventListener('keypress', function(e) {
+            // Handle Enter key
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleBarcodeInput(e);
+            }
+        });
         barcodeInputElement._barcodeListener = true;
     }
 }
@@ -1066,6 +1073,8 @@ function handleBarcodeInput(event) {
     );
     
     if (tool) {
+        // Clear input
+        barcodeInputElement.value = '';
         displayBarcodeScannedTool(tool);
         autoFillBorrowingForm(tool);
     } else {
