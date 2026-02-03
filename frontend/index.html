@@ -247,12 +247,104 @@
                 </div>
 
                 <div class="borrowers-container">
+                    <!-- BARCODE SCANNER SECTION (Hidden by default) -->
+                    <div id="barcode-scanner-section" style="display: none; margin-bottom: 2rem;">
+                        <div class="scanner-card">
+                            <div class="scanner-header">
+                                <h4><i class="fas fa-barcode"></i> Scan Tool Barcode</h4>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="closeBarcodeScanner()">
+                                    <i class="fas fa-times"></i> Close Scanner
+                                </button>
+                            </div>
+                            
+                            <div class="scanner-body">
+                                <div class="barcode-input-group">
+                                    <input type="text" id="barcodeInput" class="form-control form-control-lg" placeholder="Point your barcode scanner here or type the barcode code..." autofocus autocomplete="off">
+                                    <small class="form-text text-muted"><i class="fas fa-info-circle"></i> Scanner will automatically detect and process barcodes</small>
+                                </div>
+                                
+                                <!-- Scanned Item Details -->
+                                <div id="scanned-barcode-details" style="display: none; margin-top: 2rem;">
+                                    <div class="alert alert-success alert-dismissible fade show">
+                                        <i class="fas fa-check-circle"></i> <strong>Tool Found!</strong>
+                                    </div>
+                                    
+                                    <div class="scanned-item-card">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="scan-detail">
+                                                    <label class="scan-label">Tool Name</label>
+                                                    <p class="scan-value" id="barcodedToolName"></p>
+                                                </div>
+                                                <div class="scan-detail">
+                                                    <label class="scan-label">Brand</label>
+                                                    <p class="scan-value" id="barcodedToolBrand"></p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="scan-detail">
+                                                    <label class="scan-label">Available Quantity</label>
+                                                    <p class="scan-value"><span class="badge bg-success" id="barcodedToolQuantity"></span></p>
+                                                </div>
+                                                <div class="scan-detail">
+                                                    <label class="scan-label">Category</label>
+                                                    <p class="scan-value"><span class="badge bg-info" id="barcodedToolCategory"></span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INLINE BORROWER FORM (Shown after barcode scan) -->
+                    <div id="inline-borrower-form" style="display: none; margin-bottom: 2rem;">
+                        <div class="borrower-form-card">
+                            <div class="form-header">
+                                <h4><i class="fas fa-edit"></i> Record Borrowing</h4>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="closeInlineForm()">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </div>
+                            
+                            <div class="form-body">
+                                <form id="inlineBorrowerForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Tool *</label>
+                                        <select class="form-select" id="inlineBorrowerTool" required>
+                                            <option value="">Select a tool</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Borrower Name *</label>
+                                        <input type="text" class="form-control" id="inlineBorrowerName" required>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Borrow Date *</label>
+                                            <input type="date" class="form-control" id="inlineBorrowDate" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Expected Return *</label>
+                                            <input type="date" class="form-control" id="inlineReturnDate" required>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Reason for Borrowing</label>
+                                        <textarea class="form-control" id="inlineBorrowReason" rows="2"></textarea>
+                                    </div>
+                                    <button type="button" class="btn btn-primary" onclick="saveInlineBorrower()">
+                                        <i class="fas fa-save"></i> Record Borrowing
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="tools-header">
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBorrowerModal">
-                            <i class="fas fa-plus"></i> Record Borrowing
-                        </button>
-                        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#scanQRModal">
-                            <i class="fas fa-qrcode"></i> Scan QR Code
+                        <button class="btn btn-primary" onclick="openBarcodeScanner()">
+                            <i class="fas fa-barcode"></i> Scan to Save
                         </button>
                     </div>
 
@@ -438,72 +530,7 @@
     </div>
 
     <!-- SCAN QR CODE MODAL -->
-    <div class="modal fade" id="scanQRModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-qrcode"></i> Scan Tool QR Code</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="qr-reader" style="width: 100%; border: 2px dashed #2563eb; border-radius: 8px; padding: 20px; background: #f8f9fa; min-height: 300px;"></div>
-                    
-                    <!-- Scanned Tool Details Display -->
-                    <div id="scanned-tool-details" style="margin-top: 20px; display: none;">
-                        <div class="alert alert-success alert-dismissible fade show">
-                            <i class="fas fa-check-circle"></i> <strong>Tool Scanned Successfully!</strong>
-                        </div>
-                        
-                        <div class="scanned-item-card">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="scan-detail">
-                                        <label class="scan-label">Tool Name</label>
-                                        <p class="scan-value" id="scannedToolName"></p>
-                                    </div>
-                                    <div class="scan-detail">
-                                        <label class="scan-label">Brand</label>
-                                        <p class="scan-value" id="scannedToolBrand"></p>
-                                    </div>
-                                    <div class="scan-detail">
-                                        <label class="scan-label">Category</label>
-                                        <p class="scan-value"><span class="badge bg-info" id="scannedToolCategory"></span></p>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="scan-detail">
-                                        <label class="scan-label">Available Quantity</label>
-                                        <p class="scan-value"><span class="badge bg-success" id="scannedToolQuantity"></span></p>
-                                    </div>
-                                    <div class="scan-detail">
-                                        <label class="scan-label">Description</label>
-                                        <p class="scan-value" id="scannedToolDescription" style="font-size: 0.95rem;"></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 15px; text-align: center;">
-                            <p class="text-success"><i class="fas fa-info-circle"></i> This item has been scanned and is ready to borrow.</p>
-                        </div>
-                    </div>
-                    
-                    <div id="qr-result" style="margin-top: 15px; text-align: center; display: none;">
-                        <div class="alert alert-success">
-                            <i class="fas fa-check-circle"></i> Tool Scanned: <strong id="scannedToolNameOld"></strong>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 15px;">
-                        <p class="text-muted"><small><i class="fas fa-info-circle"></i> Point your scanner or device camera at the tool's QR code. The system will show the tool details and open the borrowing form.</small></p>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- ADD BORROWER MODAL -->
     <div class="modal fade" id="addBorrowerModal" tabindex="-1">
@@ -666,7 +693,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.7.13/dist/quagga.min.js"></script>
     <script src="js/app.js"></script>
     </div> <!-- Close mainApp div -->
 </body>

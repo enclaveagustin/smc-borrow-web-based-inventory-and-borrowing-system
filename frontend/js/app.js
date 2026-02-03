@@ -28,6 +28,8 @@ document.addEventListener('DOMContentLoaded', function() {
         setupEventListeners();
         updateDashboard();
         renderTools();
+        updateToolSelect();
+        updateInlineToolSelect();
         renderBorrowers();
         renderUsers();
         setupAutosave();
@@ -263,6 +265,7 @@ function saveTool() {
                     appState.isProcessing = false;
                 }, 400);
                 updateToolSelect();
+                updateInlineToolSelect();
             };
             
             reader.readAsDataURL(file);
@@ -301,6 +304,7 @@ function saveTool() {
                 appState.isProcessing = false;
             }, 400);
             updateToolSelect();
+            updateInlineToolSelect();
         }
     } catch (error) {
         hideLoadingState(loadingId);
@@ -538,6 +542,7 @@ function saveBorrower() {
             renderTools();
             updateDashboard();
             updateToolSelect();
+            updateInlineToolSelect();
         }, 400);
     } catch (error) {
         hideLoadingState(loadingId);
@@ -567,6 +572,7 @@ function returnBorrower(borrowerId) {
     renderTools();
     updateDashboard();
     updateToolSelect();
+    updateInlineToolSelect();
 }
 
 function filterBorrowers() {
@@ -804,8 +810,10 @@ function switchTab(tab) {
     if (tab === 'tools') {
         renderTools();
         updateToolSelect();
+        updateInlineToolSelect();
     } else if (tab === 'borrowers') {
         renderBorrowers();
+        updateInlineToolSelect();
     } else if (tab === 'users') {
         renderUsers();
     }
@@ -858,6 +866,7 @@ function setupEventListeners() {
     });
 
     updateToolSelect();
+    updateInlineToolSelect();
 }
 
 // ==================== UTILITY ====================
@@ -1011,89 +1020,166 @@ function exportData() {
     showAlert('Data exported successfully', 'success');
 }
 
-// ==================== QR CODE SCANNING & EXPORT ====================
-let html5QrcodeScanner = null;
+// ==================== BARCODE SCANNING & AUTO-FILL ====================
+let barcodeScanner = null;
+let barcodeInputElement = null;
 
-function initializeQRScanner() {
-    if (html5QrcodeScanner) {
-        html5QrcodeScanner.render(onQRScanSuccess, onQRScanError);
+function openBarcodeScanner() {
+    const scannerSection = document.getElementById('barcode-scanner-section');
+    scannerSection.style.display = 'block';
+    
+    barcodeInputElement = document.getElementById('barcodeInput');
+    if (barcodeInputElement) {
+        barcodeInputElement.value = '';
+        barcodeInputElement.focus();
+    }
+    
+    // Auto-fill event listener for barcode input
+    if (!barcodeInputElement._barcodeListener) {
+        barcodeInputElement.addEventListener('change', handleBarcodeInput);
+        barcodeInputElement._barcodeListener = true;
+    }
+}
+
+function closeBarcodeScanner() {
+    const scannerSection = document.getElementById('barcode-scanner-section');
+    scannerSection.style.display = 'none';
+    
+    // Clear scanned details
+    document.getElementById('scanned-barcode-details').style.display = 'none';
+    
+    if (barcodeInputElement) {
+        barcodeInputElement.value = '';
+    }
+}
+
+function handleBarcodeInput(event) {
+    const barcode = event.target.value.trim();
+    
+    if (!barcode) return;
+    
+    // Try to find tool by barcode or ID
+    const tool = appState.allTools.find(t => 
+        t.id === barcode || 
+        t.id === parseInt(barcode) ||
+        (t.barcode && t.barcode === barcode)
+    );
+    
+    if (tool) {
+        displayBarcodeScannedTool(tool);
+        autoFillBorrowingForm(tool);
+    } else {
+        showAlert(`Tool with barcode "${barcode}" not found.`, 'warning');
+        barcodeInputElement.value = '';
+        barcodeInputElement.focus();
+    }
+}
+
+function displayBarcodeScannedTool(tool) {
+    const detailsDiv = document.getElementById('scanned-barcode-details');
+    detailsDiv.style.display = 'block';
+    
+    document.getElementById('barcodedToolName').textContent = tool.name;
+    document.getElementById('barcodedToolBrand').textContent = tool.brand || 'N/A';
+    document.getElementById('barcodedToolCategory').textContent = tool.category || 'Uncategorized';
+    document.getElementById('barcodedToolQuantity').textContent = tool.quantity || '0';
+    
+    showAlert(`✓ ${tool.name} scanned successfully!`, 'success');
+}
+
+function autoFillBorrowingForm(tool) {
+    // Show inline borrowing form
+    const inlineForm = document.getElementById('inline-borrower-form');
+    inlineForm.style.display = 'block';
+    
+    // Close scanner
+    closeBarcodeScanner();
+    
+    // Set tool in form
+    document.getElementById('inlineBorrowerTool').value = tool.id;
+    
+    // Set today's date
+    document.getElementById('inlineBorrowDate').valueAsDate = new Date();
+    
+    // Set return date to 7 days from today
+    const returnDate = new Date();
+    returnDate.setDate(returnDate.getDate() + 7);
+    document.getElementById('inlineReturnDate').valueAsDate = returnDate;
+    
+    // Show success notification
+    showAlert(`Tool "${tool.name}" loaded. Now enter borrower details.`, 'success');
+    
+    // Focus on borrower name field
+    setTimeout(() => {
+        const borrowerNameInput = document.getElementById('inlineBorrowerName');
+        if (borrowerNameInput) {
+            borrowerNameInput.focus();
+        }
+    }, 100);
+}
+
+function closeInlineForm() {
+    const inlineForm = document.getElementById('inline-borrower-form');
+    inlineForm.style.display = 'none';
+    
+    // Clear form
+    document.getElementById('inlineBorrowerForm').reset();
+}
+
+function saveInlineBorrower() {
+    const toolId = document.getElementById('inlineBorrowerTool').value;
+    const borrowerName = document.getElementById('inlineBorrowerName').value;
+    const borrowDate = document.getElementById('inlineBorrowDate').value;
+    const returnDate = document.getElementById('inlineReturnDate').value;
+    const borrowReason = document.getElementById('inlineBorrowReason').value;
+    
+    if (!toolId || !borrowerName || !borrowDate || !returnDate) {
+        showAlert('Please fill in all required fields', 'warning');
         return;
     }
-
-    html5QrcodeScanner = new Html5Qrcode("qr-reader");
-    const qrConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
     
-    html5QrcodeScanner.start(
-        { facingMode: "environment" },
-        qrConfig,
-        onQRScanSuccess,
-        onQRScanError
-    ).catch(err => {
-        console.log('Error starting QR scanner:', err);
-        showAlert('Unable to access camera. Please check permissions or use manual entry.', 'warning');
+    const newBorrower = {
+        id: Date.now().toString(),
+        toolId: parseInt(toolId),
+        borrowerName,
+        borrowDate,
+        returnDate,
+        borrowReason,
+        status: 'active',
+        dateRecorded: new Date().toISOString().split('T')[0]
+    };
+    
+    appState.borrowers.push(newBorrower);
+    saveAppState();
+    
+    // Clear form and close
+    closeInlineForm();
+    
+    // Refresh borrowers list
+    renderBorrowers();
+    
+    showAlert(`✓ Borrowing recorded for ${borrowerName}!`, 'success');
+}
+
+// Setup inline form tool dropdown on page load
+function updateInlineToolSelect() {
+    const toolSelect = document.getElementById('inlineBorrowerTool');
+    if (!toolSelect) return;
+    
+    toolSelect.innerHTML = '<option value="">Select a tool</option>';
+    appState.allTools.forEach(tool => {
+        if (tool.quantity > 0) {
+            const option = document.createElement('option');
+            option.value = tool.id;
+            option.textContent = `${tool.name} (${tool.quantity} available)`;
+            toolSelect.appendChild(option);
+        }
     });
 }
 
-function onQRScanSuccess(decodedText, decodedResult) {
-    try {
-        const scannedData = JSON.parse(decodedText);
-        
-        if (scannedData.id && scannedData.name) {
-            const tool = appState.allTools.find(t => t.id === scannedData.id);
-            
-            if (tool) {
-                // Display scanned tool details
-                document.getElementById('scanned-tool-details').style.display = 'block';
-                document.getElementById('scannedToolName').textContent = tool.name;
-                document.getElementById('scannedToolBrand').textContent = tool.brand || 'N/A';
-                document.getElementById('scannedToolCategory').textContent = tool.category || 'Uncategorized';
-                document.getElementById('scannedToolQuantity').textContent = tool.quantity || '0';
-                document.getElementById('scannedToolDescription').textContent = tool.description || 'No description available';
-                
-                // Show success animation
-                const detailsCard = document.querySelector('.scanned-item-card');
-                if (detailsCard) {
-                    detailsCard.style.animation = 'slideInUp 0.5s ease';
-                }
-                
-                showAlert(`✓ ${tool.name} scanned successfully!`, 'success');
-                
-                // Auto-fill the borrowing form after delay
-                setTimeout(() => {
-                    if (html5QrcodeScanner) {
-                        html5QrcodeScanner.stop();
-                        html5QrcodeScanner = null;
-                    }
-                    
-                    // Close scanner modal and open borrowing modal with tool selected
-                    bootstrap.Modal.getInstance(document.getElementById('scanQRModal')).hide();
-                    
-                    // Set the tool in the form
-                    document.getElementById('borrowerTool').value = tool.id;
-                    document.getElementById('borrowDate').valueAsDate = new Date();
-                    
-                    const returnDate = new Date();
-                    returnDate.setDate(returnDate.getDate() + 7); // Default 7 days
-                    document.getElementById('returnDate').valueAsDate = returnDate;
-                    
-                    // Open borrowing modal
-                    const borrowModal = new bootstrap.Modal(document.getElementById('addBorrowerModal'));
-                    borrowModal.show();
-                    
 
-                    showAlert(`Tool "${tool.name}" scanned! Fill in borrower details.`, 'success');
-                }, 500);
-            }
-        }
-    } catch (e) {
-        console.log('Invalid QR code data:', decodedText);
-    }
-}
+// Legacy QR code export function (kept for backward compatibility)
 
-function onQRScanError(error) {
-    // Ignore scanning errors, just keep trying
-    console.log('QR scan error:', error);
-}
 
 function exportQRCode(toolId, toolName) {
     const tool = appState.allTools.find(t => t.id === toolId);
@@ -1146,29 +1232,6 @@ function exportQRCode(toolId, toolName) {
         }
     }, 500);
 }
-
-// Setup QR Scanner when modal is shown
-document.addEventListener('show.bs.modal', function(e) {
-    if (e.target.id === 'scanQRModal') {
-        document.getElementById('qr-result').style.display = 'none';
-        setTimeout(() => {
-            initializeQRScanner();
-        }, 500);
-    }
-});
-
-// Stop QR Scanner when modal is hidden
-document.addEventListener('hide.bs.modal', function(e) {
-    if (e.target.id === 'scanQRModal') {
-        if (html5QrcodeScanner) {
-            html5QrcodeScanner.stop().then(ignored => {
-                html5QrcodeScanner = null;
-            }).catch(err => {
-                console.log('Error stopping QR scanner:', err);
-            });
-        }
-    }
-});
 
 function clearAllData() {
     if (confirm('This will delete all data. Are you absolutely sure?')) {
