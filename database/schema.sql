@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS borrowers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tool_id INT NOT NULL,
     borrower_name VARCHAR(150) NOT NULL,
+    course VARCHAR(100) NOT NULL,
+    year VARCHAR(50) NOT NULL,
     reason TEXT NOT NULL,
     borrowed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expected_return_date DATE NOT NULL,

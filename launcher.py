@@ -13,7 +13,7 @@ from pathlib import Path
 
 # Try to import Flask
 try:
-    from flask import Flask, send_from_directory, render_template
+    from flask import Flask, send_from_directory, render_template, request, jsonify
     from flask_cors import CORS
 except ImportError:
     print("Error: Flask is not installed. Please install it:")
@@ -49,42 +49,56 @@ next_user_id = 3
 # ==================== FRONTEND ROUTES ====================
 
 @app.route('/')
+@app.route('/index.html')
 def index():
     """Serve the main HTML file"""
-    return send_from_directory(str(FRONTEND_DIR), 'index.html')
-
-@app.route('/<path:filename>')
-def serve_static(filename):
-    """Serve static files (CSS, JS, etc.)"""
-    return send_from_directory(str(FRONTEND_DIR), filename)
+    try:
+        return send_from_directory(str(FRONTEND_DIR), 'index.html')
+    except Exception as e:
+        return f"Error loading index.html: {str(e)}", 500
 
 @app.route('/css/<path:filename>')
 def serve_css(filename):
     """Serve CSS files"""
-    return send_from_directory(str(FRONTEND_DIR / 'css'), filename)
+    try:
+        return send_from_directory(str(FRONTEND_DIR / 'css'), filename)
+    except Exception as e:
+        return f"CSS file not found: {filename}", 404
 
 @app.route('/js/<path:filename>')
 def serve_js(filename):
     """Serve JavaScript files"""
-    return send_from_directory(str(FRONTEND_DIR / 'js'), filename)
+    try:
+        return send_from_directory(str(FRONTEND_DIR / 'js'), filename)
+    except Exception as e:
+        return f"JS file not found: {filename}", 404
 
 @app.route('/images/<path:filename>')
 def serve_images(filename):
     """Serve image files"""
-    return send_from_directory(str(FRONTEND_DIR / 'images'), filename)
+    try:
+        return send_from_directory(str(FRONTEND_DIR / 'images'), filename)
+    except Exception as e:
+        return f"Image not found: {filename}", 404
+
+@app.route('/<path:filename>')
+def serve_static(filename):
+    """Serve other static files"""
+    try:
+        return send_from_directory(str(FRONTEND_DIR), filename)
+    except Exception as e:
+        return f"File not found: {filename}", 404
 
 # ==================== TOOLS API ====================
 
 @app.route('/api/tools', methods=['GET'])
 def get_tools():
     """Get all tools"""
-    from flask import jsonify
     return jsonify(tools_db), 200
 
 @app.route('/api/tools/<int:tool_id>', methods=['GET'])
 def get_tool(tool_id):
     """Get a specific tool"""
-    from flask import jsonify
     tool = next((t for t in tools_db if t['id'] == tool_id), None)
     if not tool:
         return jsonify({'message': 'Tool not found'}), 404
@@ -93,7 +107,6 @@ def get_tool(tool_id):
 @app.route('/api/tools', methods=['POST'])
 def create_tool():
     """Create a new tool"""
-    from flask import jsonify
     global next_tool_id
     
     data = request.get_json()
@@ -113,7 +126,6 @@ def create_tool():
 @app.route('/api/tools/<int:tool_id>', methods=['PUT'])
 def update_tool(tool_id):
     """Update a tool"""
-    from flask import jsonify
     tool = next((t for t in tools_db if t['id'] == tool_id), None)
     if not tool:
         return jsonify({'message': 'Tool not found'}), 404
@@ -125,7 +137,6 @@ def update_tool(tool_id):
 @app.route('/api/tools/<int:tool_id>', methods=['DELETE'])
 def delete_tool(tool_id):
     """Delete a tool"""
-    from flask import jsonify
     global tools_db
     tools_db = [t for t in tools_db if t['id'] != tool_id]
     return jsonify({'message': 'Tool deleted'}), 200
@@ -135,13 +146,11 @@ def delete_tool(tool_id):
 @app.route('/api/borrowers', methods=['GET'])
 def get_borrowers():
     """Get all borrowers"""
-    from flask import jsonify
     return jsonify(borrowers_db), 200
 
 @app.route('/api/borrowers', methods=['POST'])
 def create_borrower():
     """Create a new borrower record"""
-    from flask import jsonify
     global next_borrower_id
     
     data = request.get_json()
@@ -149,6 +158,8 @@ def create_borrower():
         'id': next_borrower_id,
         'toolId': data.get('toolId'),
         'borrowerName': data.get('borrowerName'),
+        'course': data.get('course'),
+        'year': data.get('year'),
         'borrowDate': data.get('borrowDate'),
         'returnDate': data.get('returnDate'),
         'borrowReason': data.get('borrowReason'),
@@ -164,13 +175,11 @@ def create_borrower():
 @app.route('/api/users', methods=['GET'])
 def get_users():
     """Get all users"""
-    from flask import jsonify
     return jsonify(users_db), 200
 
 @app.route('/api/users', methods=['POST'])
 def create_user():
     """Create a new user"""
-    from flask import jsonify
     global next_user_id
     
     data = request.get_json()
@@ -190,7 +199,6 @@ def create_user():
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
-    from flask import jsonify
     return jsonify({'status': 'healthy'}), 200
 
 # ==================== ERROR HANDLERS ====================
@@ -198,14 +206,12 @@ def health_check():
 @app.errorhandler(404)
 def not_found(error):
     """Handle 404 errors"""
-    from flask import jsonify
     # Try to serve index.html for SPA routing
     return send_from_directory(str(FRONTEND_DIR), 'index.html')
 
 @app.errorhandler(500)
 def server_error(error):
     """Handle 500 errors"""
-    from flask import jsonify
     return jsonify({'error': 'Internal server error'}), 500
 
 # ==================== LAUNCHER ====================

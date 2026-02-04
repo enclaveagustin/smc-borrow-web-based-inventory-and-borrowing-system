@@ -40,14 +40,20 @@ Complete guide for installing HulamKo and understanding system requirements.
 - **Font Awesome 6.4.0** - Icons
 - **Poppins Font** - Typography (Google Fonts)
 - **QRCode.js** - QR Code generation
+- **JsBarcode 3.11.5** - Barcode generation (CODE128 format)
+- **Quagga2 1.7.13** - Barcode scanning camera support
 - **HTML5** - Page structure
 - **CSS3** - Styling
 - **JavaScript (ES6+)** - Interactivity
 
-### Backend (Optional)
-- **Flask** - Web framework
-- **SQLAlchemy** - Database ORM
-- **Python-dotenv** - Environment variables
+### Backend (Optional - for multi-device access)
+- **Flask** - Web framework (2.3.3)
+- **Flask-CORS** - Cross-origin request handling (4.0.0)
+- **SQLAlchemy** - Database ORM (optional)
+- **Flask-MySQL** - MySQL database connector (1.5.2)
+- **MySQL Connector** - MySQL client library (8.0.33)
+- **PyJWT** - JWT token authentication (2.8.0)
+- **Python-dotenv** - Environment variables (1.0.0)
 
 ### Development Tools
 - **localStorage API** - Browser data storage

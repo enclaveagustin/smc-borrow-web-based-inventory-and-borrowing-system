@@ -149,6 +149,44 @@
     color: var(--secondary);
 }
 
+/* Password Input Wrapper - Icon Inside */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper .form-control {
+    padding-right: 2.5rem;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+    color: var(--secondary);
+}
+
+.password-toggle-btn:focus {
+    outline: none;
+}
+
+.password-toggle-btn i {
+    pointer-events: none;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -1349,4 +1387,34 @@ html, body {
 
 .form-body {
     padding: 1rem 0;
+}
+
+/* BARCODE DISPLAY STYLES */
+.barcode-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f9fafb;
+    border: 2px dashed #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    min-height: 150px;
+}
+
+.barcode-display {
+    text-align: center;
+    color: var(--primary);
+}
+
+.barcode-display i {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.barcode-display p {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dark);
 }

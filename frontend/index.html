@@ -34,12 +34,17 @@
                 
                 <div class="form-group">
                     <label class="form-label"><i class="fas fa-envelope"></i> Email</label>
-                    <input type="email" id="loginEmail" class="form-control" placeholder="admin@hulamko.com" value="admin@hulamko.com" required>
+                    <input type="email" id="loginEmail" class="form-control" placeholder="admin@hulamko.com" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label"><i class="fas fa-lock"></i> Password</label>
-                    <input type="password" id="loginPassword" class="form-control" placeholder="password123" value="password123" required>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="loginPassword" class="form-control" placeholder="password123" required>
+                        <button class="password-toggle-btn" type="button" onclick="togglePasswordVisibility()" title="Show/Hide Password">
+                            <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="login-actions">
@@ -223,7 +228,7 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <select class="form-select" id="toolCategory" onchange="filterTools()">
+                            <select class="form-select" id="toolCategoryFilter" onchange="filterTools()">
                                 <option value="">All Categories</option>
                                 <option value="Hand Tools">Hand Tools</option>
                                 <option value="Power Tools">Power Tools</option>
@@ -319,6 +324,37 @@
                                     <div class="mb-3">
                                         <label class="form-label">Borrower Name *</label>
                                         <input type="text" class="form-control" id="inlineBorrowerName" required>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Course *</label>
+                                            <select class="form-select" id="inlineBorrowerCourse" required>
+                                                <option value="">Select Course</option>
+                                                <option value="BS Business Administration">BS Business Administration</option>
+                                                <option value="BS Accountancy">BS Accountancy</option>
+                                                <option value="BS Computer Science">BS Computer Science</option>
+                                                <option value="BS Tourism Management">BS Tourism Management</option>
+                                                <option value="BS Hospitality Management">BS Hospitality Management</option>
+                                                <option value="BS Civil Engineering">BS Civil Engineering</option>
+                                                <option value="BS Secondary Education">BS Secondary Education</option>
+                                                <option value="BS Elementary Education">BS Elementary Education</option>
+                                                <option value="BS Criminology">BS Criminology</option>
+                                                <option value="BA Psychology">BA Psychology</option>
+                                                <option value="Senior High">Senior High</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Year *</label>
+                                            <select class="form-select" id="inlineBorrowerYear" required>
+                                                <option value="">Select Year</option>
+                                                <option value="1st Year">1st Year</option>
+                                                <option value="2nd Year">2nd Year</option>
+                                                <option value="3rd Year">3rd Year</option>
+                                                <option value="4th Year">4th Year</option>
+                                                <option value="Grade 11">Grade 11</option>
+                                                <option value="Grade 12">Grade 12</option>
+                                            </select>
+                                        </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
@@ -486,10 +522,9 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Category</label>
+                            <label class="form-label">Category *</label>
                             <div class="input-group">
-                                <select class="form-select" id="toolCategory">
-                                    <option value="">Select Category</option>
+                                <select class="form-select" id="toolCategory" required>
                                     <option value="Hand Tools">Hand Tools</option>
                                     <option value="Power Tools">Power Tools</option>
                                     <option value="Safety Equipment">Safety Equipment</option>
@@ -551,6 +586,37 @@
                         <div class="mb-3">
                             <label class="form-label">Borrower Name *</label>
                             <input type="text" class="form-control" id="borrowerName" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Course *</label>
+                                <select class="form-select" id="borrowerCourse" required>
+                                    <option value="">Select Course</option>
+                                    <option value="BS Business Administration">BS Business Administration</option>
+                                    <option value="BS Accountancy">BS Accountancy</option>
+                                    <option value="BS Computer Science">BS Computer Science</option>
+                                    <option value="BS Tourism Management">BS Tourism Management</option>
+                                    <option value="BS Hospitality Management">BS Hospitality Management</option>
+                                    <option value="BS Civil Engineering">BS Civil Engineering</option>
+                                    <option value="BS Secondary Education">BS Secondary Education</option>
+                                    <option value="BS Elementary Education">BS Elementary Education</option>
+                                    <option value="BS Criminology">BS Criminology</option>
+                                    <option value="BA Psychology">BA Psychology</option>
+                                    <option value="Senior High">Senior High</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Year *</label>
+                                <select class="form-select" id="borrowerYear" required>
+                                    <option value="">Select Year</option>
+                                    <option value="1st Year">1st Year</option>
+                                    <option value="2nd Year">2nd Year</option>
+                                    <option value="3rd Year">3rd Year</option>
+                                    <option value="4th Year">4th Year</option>
+                                    <option value="Grade 11">Grade 11</option>
+                                    <option value="Grade 12">Grade 12</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -694,6 +760,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.7.13/dist/quagga.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="js/app.js"></script>
     </div> <!-- Close mainApp div -->
 </body>

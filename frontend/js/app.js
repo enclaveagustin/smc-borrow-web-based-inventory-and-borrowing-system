@@ -40,6 +40,21 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ==================== AUTHENTICATION ====================
+function togglePasswordVisibility() {
+    const passwordField = document.getElementById('loginPassword');
+    const toggleIcon = document.getElementById('passwordToggleIcon');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+    } else {
+        passwordField.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    }
+}
+
 function showLoginPage() {
     document.getElementById('loginPage').style.display = 'flex';
     document.getElementById('mainApp').style.display = 'none';
@@ -55,51 +70,56 @@ function showMainApp() {
 }
 
 function handleLogin() {
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value.trim();
-    
-    if (!email || !password) {
-        showAlert('Please enter both email and password', 'warning');
-        return;
+    try {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+        
+        if (!email || !password) {
+            showAlert('Please enter both email and password', 'warning');
+            return;
+        }
+        
+        if (!email.includes('@')) {
+            showAlert('Please enter a valid email address', 'warning');
+            return;
+        }
+        
+        // Validate against default credentials
+        const validEmail = 'admin@hulamko.com';
+        const validPassword = 'password123';
+        
+        if (email !== validEmail || password !== validPassword) {
+            showAlert('Invalid email or password. Use admin@hulamko.com / password123', 'danger');
+            return;
+        }
+        
+        // Authentication successful
+        appState.isLoggedIn = true;
+        appState.currentUser = email;
+        localStorage.setItem('currentUser', email);
+        
+        // Clear login form
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+        
+        showAlert('Welcome back, ' + email.split('@')[0] + '!', 'success');
+        
+        loadApplicationState();
+        setupEventListeners();
+        updateDashboard();
+        renderTools();
+        renderBorrowers();
+        renderUsers();
+        setupAutosave();
+        
+        // Delay showing main app for animation
+        setTimeout(() => {
+            showMainApp();
+        }, 600);
+    } catch (error) {
+        console.error('Login error:', error);
+        showAlert('Login failed: ' + error.message, 'danger');
     }
-    
-    if (!email.includes('@')) {
-        showAlert('Please enter a valid email address', 'warning');
-        return;
-    }
-    
-    // Validate against default credentials
-    const validEmail = 'admin@hulamko.com';
-    const validPassword = 'password123';
-    
-    if (email !== validEmail || password !== validPassword) {
-        showAlert('Invalid email or password. Use admin@hulamko.com / password123', 'danger');
-        return;
-    }
-    
-    // Authentication successful
-    appState.isLoggedIn = true;
-    appState.currentUser = email;
-    localStorage.setItem('currentUser', email);
-    
-    // Clear login form
-    document.getElementById('loginEmail').value = '';
-    document.getElementById('loginPassword').value = '';
-    
-    showAlert('Welcome back, ' + email.split('@')[0] + '!', 'success');
-    
-    loadApplicationState();
-    setupEventListeners();
-    updateDashboard();
-    renderTools();
-    renderBorrowers();
-    renderUsers();
-    setupAutosave();
-    
-    // Delay showing main app for animation
-    setTimeout(() => {
-        showMainApp();
-    }, 600);
 }
 
 function showForgotPassword(e) {
@@ -217,6 +237,13 @@ function saveTool() {
         return false;
     }
     
+    // Validate category is selected
+    const category = document.getElementById('toolCategory').value.trim();
+    if (!category) {
+        showAlert('Please select a category', 'warning');
+        return false;
+    }
+    
     // Show loading state
     const loadingId = showLoadingState('Adding tool...');
     appState.isProcessing = true;
@@ -236,7 +263,7 @@ function saveTool() {
                     brand: document.getElementById('toolBrand').value.trim(),
                     description: document.getElementById('toolDescription').value.trim(),
                     quantity: parseInt(document.getElementById('toolQuantity').value),
-                    category: document.getElementById('toolCategory').value,
+                    category: category,
                     image: e.target.result, // Base64 image data
                     createdDate: new Date().toISOString()
                 };
@@ -277,7 +304,7 @@ function saveTool() {
                 brand: document.getElementById('toolBrand').value.trim(),
                 description: document.getElementById('toolDescription').value.trim(),
                 quantity: parseInt(document.getElementById('toolQuantity').value),
-                category: document.getElementById('toolCategory').value,
+                category: category,
                 createdDate: new Date().toISOString()
             };
             
@@ -382,14 +409,25 @@ function deleteTool(toolId) {
 
 function filterTools() {
     const searchTerm = (document.getElementById('toolSearch')?.value || '').toLowerCase();
-    const categoryTerm = document.getElementById('toolCategory')?.value || '';
+    const categoryTerm = (document.getElementById('toolCategoryFilter')?.value || '').trim();
     
     const filtered = appState.allTools.filter(tool => {
-        const matchesSearch = tool.name.toLowerCase().includes(searchTerm) || 
-                            tool.brand.toLowerCase().includes(searchTerm) ||
-                            (tool.description && tool.description.toLowerCase().includes(searchTerm));
-        const matchesCategory = !categoryTerm || tool.category === categoryTerm;
-        return matchesSearch && matchesCategory;
+        const toolBrand = (tool.brand || '').toLowerCase();
+        const toolDesc = (tool.description || '').toLowerCase();
+        const toolCategory = (tool.category || '').trim();
+        
+        // If category is selected, show all items in that category (ignore search)
+        if (categoryTerm) {
+            return toolCategory === categoryTerm;
+        }
+        
+        // If no category selected, filter by search term
+        const matchesSearch = !searchTerm || 
+                            tool.name.toLowerCase().includes(searchTerm) || 
+                            toolBrand.includes(searchTerm) ||
+                            toolDesc.includes(searchTerm);
+        
+        return matchesSearch;
     });
 
     renderFilteredTools(filtered);
@@ -434,8 +472,8 @@ function renderFilteredTools(tools) {
                         <button class="btn btn-primary btn-small" onclick="editToolForm(${tool.id})" data-bs-toggle="modal" data-bs-target="#editToolModal">
                             <i class="fas fa-edit"></i> Edit
                         </button>
-                        <button class="btn btn-info btn-small" onclick="exportQRCode(${tool.id}, '${tool.name}')">
-                            <i class="fas fa-download"></i> Export QR
+                        <button class="btn btn-info btn-small" onclick="exportQRCode(${tool.id}, '${tool.name.replace(/'/g, "\\'")}')">
+                            <i class="fas fa-barcode"></i> Export Barcode
                         </button>
                         <button class="btn btn-danger btn-small" onclick="confirmDeleteTool(${tool.id})">
                             <i class="fas fa-trash"></i> Delete
@@ -450,8 +488,11 @@ function renderFilteredTools(tools) {
                                     ${tool.image ? `<img src="${tool.image}" alt="${tool.name}" class="tool-image" onclick="viewToolImage('${tool.name.replace(/'/g, "\\'")}', '${tool.image.replace(/'/g, "\\'")}')" title="Click to view full size">` : '<div class="no-image"><i class="fas fa-image"></i><p>No Image</p></div>'}
                                 </div>
                             </div>
-                            <div class="media-item qr-container">
-                                <div id="qr-tool-${tool.id}" class="qr-code-wrapper"></div>
+                            <div class="media-item barcode-container">
+                                <div class="barcode-display">
+                                    <i class="fas fa-barcode"></i>
+                                    <p>ID: ${tool.id}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -462,18 +503,10 @@ function renderFilteredTools(tools) {
 
     tools.forEach(tool => {
         try {
-            const elem = document.getElementById(`qr-tool-${tool.id}`);
-            if (elem && elem.childNodes.length === 0) {
-                new QRCode(elem, {
-                    text: JSON.stringify({id: tool.id, name: tool.name}),
-                    width: 120,
-                    height: 120,
-                    colorDark: '#667eea',
-                    colorLight: '#f7fafc'
-                });
-            }
+            // Barcode display is now shown in the template
+            console.log('Tool processed:', tool.id);
         } catch (e) {
-            console.log('QR code generation skipped for tool', tool.id);
+            console.log('Tool processing error:', e);
         }
     });
 }
@@ -508,6 +541,8 @@ function saveBorrower() {
             id: Math.max(...appState.allBorrowers.map(b => b.id || 0), 0) + 1,
             tool_id: toolId,
             borrower_name: document.getElementById('borrowerName').value.trim(),
+            course: document.getElementById('borrowerCourse').value.trim(),
+            year: document.getElementById('borrowerYear').value.trim(),
             borrow_date: document.getElementById('borrowDate').value,
             return_date: document.getElementById('returnDate').value,
             reason: document.getElementById('borrowReason').value.trim(),
@@ -617,6 +652,14 @@ function renderFilteredBorrowers(borrowers) {
                 <div class="row">
                     <div class="col-md-8">
                         <h4>${borrower.borrower_name}</h4>
+                        <div class="detail-row">
+                            <span class="detail-label">Course:</span>
+                            <span class="detail-value">${borrower.course || 'N/A'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Year:</span>
+                            <span class="detail-value">${borrower.year || 'N/A'}</span>
+                        </div>
                         <div class="detail-row">
                             <span class="detail-label">Tool:</span>
                             <span class="detail-value">${tool?.name || 'Unknown'}</span>
@@ -823,7 +866,7 @@ function switchTab(tab) {
 function setupEventListeners() {
     // Search handlers
     const toolSearch = document.getElementById('toolSearch');
-    const toolCat = document.getElementById('toolCategory');
+    const toolCat = document.getElementById('toolCategoryFilter');
     const borrowerSearch = document.getElementById('borrowerSearch');
     const filterStatus = document.getElementById('filterStatus');
     const userSearch = document.getElementById('userSearch');
@@ -1138,34 +1181,48 @@ function closeInlineForm() {
 function saveInlineBorrower() {
     const toolId = document.getElementById('inlineBorrowerTool').value;
     const borrowerName = document.getElementById('inlineBorrowerName').value;
+    const course = document.getElementById('inlineBorrowerCourse').value;
+    const year = document.getElementById('inlineBorrowerYear').value;
     const borrowDate = document.getElementById('inlineBorrowDate').value;
     const returnDate = document.getElementById('inlineReturnDate').value;
     const borrowReason = document.getElementById('inlineBorrowReason').value;
     
-    if (!toolId || !borrowerName || !borrowDate || !returnDate) {
+    if (!toolId || !borrowerName || !course || !year || !borrowDate || !returnDate) {
         showAlert('Please fill in all required fields', 'warning');
         return;
     }
     
     const newBorrower = {
-        id: Date.now().toString(),
-        toolId: parseInt(toolId),
-        borrowerName,
-        borrowDate,
-        returnDate,
-        borrowReason,
-        status: 'active',
-        dateRecorded: new Date().toISOString().split('T')[0]
+        id: Math.max(...appState.allBorrowers.map(b => b.id || 0), 0) + 1,
+        tool_id: parseInt(toolId),
+        borrower_name: borrowerName,
+        course: course,
+        year: year,
+        borrow_date: borrowDate,
+        return_date: returnDate,
+        reason: borrowReason,
+        returned: false,
+        returned_date: null
     };
     
-    appState.borrowers.push(newBorrower);
-    saveAppState();
+    // Update tool quantity
+    const tool = appState.allTools.find(t => t.id === parseInt(toolId));
+    if (tool) {
+        tool.quantity -= 1;
+    }
+    
+    appState.allBorrowers.push(newBorrower);
+    saveApplicationState();
     
     // Clear form and close
     closeInlineForm();
     
     // Refresh borrowers list
     renderBorrowers();
+    renderTools();
+    updateDashboard();
+    updateToolSelect();
+    updateInlineToolSelect();
     
     showAlert(`✓ Borrowing recorded for ${borrowerName}!`, 'success');
 }
@@ -1187,59 +1244,141 @@ function updateInlineToolSelect() {
 }
 
 
-// Legacy QR code export function (kept for backward compatibility)
-
-
+// Barcode export function - Generate and download CODE128 barcode
 function exportQRCode(toolId, toolName) {
-    const tool = appState.allTools.find(t => t.id === toolId);
-    if (!tool) return;
-    
-    // Create a temporary container
-    const tempDiv = document.createElement('div');
-    const qrContainer = document.createElement('div');
-    qrContainer.style.padding = '20px';
-    qrContainer.style.backgroundColor = 'white';
-    qrContainer.style.borderRadius = '8px';
-    tempDiv.appendChild(qrContainer);
-    
-    // Generate QR code
-    const qrData = JSON.stringify({ id: tool.id, name: tool.name });
-    new QRCode(qrContainer, {
-        text: qrData,
-        width: 300,
-        height: 300,
-        colorDark: '#667eea',
-        colorLight: '#ffffff'
-    });
-    
-    // Get the QR code image
-    setTimeout(() => {
-        const qrImage = qrContainer.querySelector('img') || qrContainer.querySelector('canvas');
+    try {
+        const tool = appState.allTools.find(t => t.id === toolId);
+        if (!tool) {
+            showAlert('Tool not found', 'error');
+            console.error('Tool not found with ID:', toolId);
+            return;
+        }
         
-        if (qrImage) {
-            let imageData;
+        console.log('Exporting barcode for tool:', tool.name, 'ID:', tool.id);
+        
+        // Create canvas for barcode generation
+        const barcodeCanvas = document.createElement('canvas');
+        barcodeCanvas.style.position = 'fixed';
+        barcodeCanvas.style.left = '-9999px';
+        barcodeCanvas.style.top = '-9999px';
+        document.body.appendChild(barcodeCanvas);
+        
+        try {
+            // Generate barcode directly on canvas using JsBarcode
+            JsBarcode(barcodeCanvas, String(tool.id), {
+                format: 'CODE128',
+                width: 2,
+                height: 80,
+                displayValue: true,
+                fontSize: 14,
+                margin: 10
+            });
             
-            if (qrImage.tagName === 'CANVAS') {
-                imageData = qrImage.toDataURL('image/png');
-            } else {
-                // Convert image to canvas
-                const canvas = document.createElement('canvas');
-                canvas.width = qrImage.width;
-                canvas.height = qrImage.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(qrImage, 0, 0);
-                imageData = canvas.toDataURL('image/png');
+            console.log('Barcode generated on canvas');
+            
+            // Now draw everything on final canvas
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = 600;
+            finalCanvas.height = 400;
+            const ctx = finalCanvas.getContext('2d');
+            
+            // White background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, 600, 400);
+            
+            // Title
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Tool Barcode', 300, 35);
+            
+            // Draw the barcode canvas onto final canvas
+            try {
+                ctx.drawImage(barcodeCanvas, 50, 70, 500, 140);
+                console.log('Barcode image drawn');
+            } catch (drawErr) {
+                console.error('Error drawing barcode:', drawErr);
+                // Continue anyway, will show text only
             }
             
-            // Create download link
-            const link = document.createElement('a');
-            link.href = imageData;
-            link.download = `${tool.name.replace(/\s+/g, '_')}_QR_${new Date().toISOString().split('T')[0]}.png`;
-            link.click();
+            // Tool info
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#000000';
+            ctx.fillText('Tool: ' + tool.name, 300, 230);
             
-            showAlert(`QR code for "${tool.name}" exported successfully!`, 'success');
+            ctx.font = '12px Arial';
+            ctx.fillText('ID: ' + tool.id, 300, 250);
+            ctx.fillText('Category: ' + (tool.category || 'Other'), 300, 270);
+            ctx.fillText('Quantity: ' + tool.quantity, 300, 290);
+            
+            // Create PNG and download
+            try {
+                const pngUrl = finalCanvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = pngUrl;
+                link.download = tool.name.replace(/\s+/g, '_') + '_Barcode_ID' + tool.id + '.png';
+                
+                console.log('Downloading file:', link.download);
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showAlert('✓ Barcode downloaded: ' + link.download, 'success');
+                console.log('Download triggered successfully');
+            } catch (dlErr) {
+                console.error('Download error:', dlErr);
+                showAlert('Error triggering download: ' + dlErr.message, 'error');
+            }
+            
+            document.body.removeChild(barcodeCanvas);
+            
+        } catch (barcodeErr) {
+            console.error('Barcode generation error:', barcodeErr.message);
+            document.body.removeChild(barcodeCanvas);
+            
+            // Fallback: create a simple text-only version
+            console.log('Using fallback text-only version');
+            const fallbackCanvas = document.createElement('canvas');
+            fallbackCanvas.width = 600;
+            fallbackCanvas.height = 400;
+            const fallbackCtx = fallbackCanvas.getContext('2d');
+            
+            fallbackCtx.fillStyle = '#ffffff';
+            fallbackCtx.fillRect(0, 0, 600, 400);
+            
+            fallbackCtx.fillStyle = '#000000';
+            fallbackCtx.font = 'bold 20px Arial';
+            fallbackCtx.textAlign = 'center';
+            fallbackCtx.fillText('Tool Barcode (Text Only)', 300, 50);
+            
+            fallbackCtx.font = 'bold 16px Arial';
+            fallbackCtx.fillText(tool.id, 300, 120);
+            
+            fallbackCtx.font = 'bold 14px Arial';
+            fallbackCtx.fillText(tool.name, 300, 180);
+            
+            fallbackCtx.font = '12px Arial';
+            fallbackCtx.fillText('Category: ' + (tool.category || 'Other'), 300, 220);
+            fallbackCtx.fillText('Quantity: ' + tool.quantity, 300, 250);
+            
+            const pngUrl = fallbackCanvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = pngUrl;
+            link.download = tool.name.replace(/\s+/g, '_') + '_Barcode_ID' + tool.id + '.png';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showAlert('⚠ Downloaded text-only version: ' + link.download, 'warning');
         }
-    }, 500);
+        
+    } catch (error) {
+        console.error('Export error:', error);
+        showAlert('Failed to export barcode: ' + error.message, 'error');
+    }
 }
 
 function clearAllData() {

@@ -77,7 +77,18 @@ Simply double-click `HulamKo.exe` anytime you want to use the application.
 The `.exe` file includes:
 - **Flask Web Server** - Backend API and static file serving
 - **Frontend Application** - HTML, CSS, and JavaScript interface
-- **All Dependencies** - Bundled Python packages
+- **All Frontend Libraries** - Bootstrap, Font Awesome, JsBarcode, Quagga2
+- **All Dependencies** - Bundled Python packages (Flask, Flask-CORS, etc.)
+
+## Features in Built Executable
+
+✅ **Barcode Export** - Generate and download barcode images (CODE128)  
+✅ **Barcode Scanning** - Built-in scanner support  
+✅ **Password Toggle** - Show/hide password on login  
+✅ **Course/Year Tracking** - Student information fields  
+✅ **Category Filtering** - Filter tools by category  
+✅ **Responsive Design** - Works on desktop, tablet, mobile  
+✅ **Local Storage** - Data persists in browser  
 
 ## Troubleshooting
 
@@ -85,7 +96,16 @@ The `.exe` file includes:
 - Make sure Python is installed and added to PATH
 - Try restarting Command Prompt after installing Python
 
-### Build fails with "command not found"
+### Application runs on localhost (local network only)
+- The built executable runs on `http://localhost:5000`
+- Access from the same machine only by default
+- To access from other machines, edit launcher.py: change `Host=0.0.0.0` in config
+
+### Backend not accessible
+- If you see "Cannot reach localhost:5000"
+- Check that the executable is still running (check taskbar)
+- The Flask server starts automatically inside the .exe
+- Try manually opening browser to: `http://localhost:5000`
 - Install PyInstaller: `pip install pyinstaller`
 - Make sure you're in the HulamKo project directory
 

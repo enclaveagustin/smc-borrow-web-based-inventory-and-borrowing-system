@@ -32,12 +32,40 @@ setup.bat production   # Production mode
 2. **Login**
    - Email: `admin@hulamko.com`
    - Password: `password123`
+   - **Password Visibility:** Click the eye icon (👁️) next to password field to show/hide text
    - Click "Sign In"
 
 3. **Explore Dashboard**
    - See statistics at top (Total Tools, Active Borrowings, Overdue Items, Total Users)
    - View Recent Activity below
    - Click menu items in sidebar to navigate
+
+---
+
+## ✨ New Features (Latest Version)
+
+### Barcode Export & Printing
+- **Export barcodes as images** (CODE128 format)
+- Download high-quality PNG files
+- Print and stick on tools for fast scanning
+- Includes tool name, ID, and details
+
+### Password Visibility Toggle
+- **Eye icon** (👁️) inside password field on login
+- Toggle to show/hide password text
+- Positioned inside the input for easy access
+
+### Student Information Fields
+- **Course:** Add student's academic program (BS CS, BS Engineering, etc.)
+- **Year/Grade:** Track academic level (1st-4th Year, Grade 11-12)
+- Searchable and filterable by course/year
+- Perfect for school and educational institutions
+
+### Advanced Category Filtering
+- **Filter tools by category** in the Tools tab
+- Shows only tools in selected category
+- Options: Hand Tools, Power Tools, Electronics, Safety Equipment, Other
+- Speeds up tool location
 
 ---
 
@@ -64,6 +92,18 @@ setup.bat production   # Production mode
    - ✅ Green notification confirms
    - Tool appears in the list immediately
 
+### Filter Tools by Category
+
+1. **Go to Tools Tab**
+2. **Select category from dropdown** at top of list
+   - **Hand Tools** - Hammers, screwdrivers, wrenches
+   - **Power Tools** - Drills, saws, grinders
+   - **Electronics** - Multimeters, test equipment
+   - **Safety Equipment** - Goggles, gloves, harnesses
+   - **Other** - Miscellaneous items
+3. **List updates instantly** showing only selected category
+4. **All tools** appears by default in dropdown
+
 ### Edit an Existing Tool
 
 1. Find the tool in the list
@@ -84,13 +124,26 @@ setup.bat production   # Production mode
 2. Type in search box at top
 3. Results filter automatically
 
-### Generate QR Code
+### Generate Barcode (Export as Image)
 
 1. Find tool in list
-2. Click **QR code icon**
+2. Click **barcode icon** (right side of tool row)
+3. **PNG barcode image downloads**
+4. Contains:
+   - CODE128 barcode (tool ID)
+   - Tool name and details
+   - Ready to print and stick on tool
+5. High quality 600x400px image
+
+### Legacy QR Code (Alternative)
+
+1. Find tool in list
+2. Click **QR code icon** (if available)
 3. QR code appears in popup
 4. Print or save the image
-5. Stick on physical tool for quick scanning
+5. Stick on physical tool for camera scanning
+
+**Note:** Barcode (CODE128) is faster than QR codes for manual scanning with barcode scanners.
 
 ---
 
@@ -119,8 +172,13 @@ The fastest way to record a borrowing is using the barcode scanner!
      - Borrow date (today) ✓
      - Return date (7 days from today) ✓
 
-5. **Enter Borrower Name**
-   - Type borrower's name
+5. **Enter Borrower Details**
+   - **Borrower Name** ⭐ Required: Borrower's full name
+   - **Course** (Optional): Academic program they're enrolled in
+     - Options: BS Computer Science, BS Engineering, Senior High, etc.
+   - **Year/Grade** (Optional): Academic year
+     - Options: 1st Year, 2nd Year, 3rd Year, 4th Year, Grade 11, Grade 12
+   - Tool, date, and reason auto-filled from scan
    - Can edit dates if needed (change from 7-day default)
 
 6. **Click "Record Borrowing"**
@@ -140,6 +198,8 @@ If you don't have a barcode scanner:
 
 3. **Fill in Borrowing Details**
    - **Borrower Name** ⭐ Required: "John Smith"
+   - **Course** (Optional): Select academic program
+   - **Year/Grade** (Optional): Select academic year/grade
    - **Tool** ⭐ Required: Select from dropdown
    - **Borrow Date** ⭐ Required: Today's date (auto-filled)
    - **Return Date** ⭐ Required: When to return
