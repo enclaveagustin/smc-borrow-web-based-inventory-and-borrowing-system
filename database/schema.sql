@@ -26,14 +26,23 @@ CREATE TABLE IF NOT EXISTS tools (
     name VARCHAR(150) NOT NULL,
     brand VARCHAR(100),
     description TEXT,
-    category VARCHAR(100),
+    category ENUM('Computer Equipments', 'Equipments', 'Furniture and Fixture', 'Sacred Images and Chapel') NOT NULL DEFAULT 'Equipments',
+    location VARCHAR(200),
     quantity INT NOT NULL DEFAULT 1,
     available_qty INT NOT NULL DEFAULT 1,
+    `condition` ENUM('Good Condition', 'Needs Repair', 'Lost', 'Damaged') DEFAULT 'Good Condition',
+    year_acquired DATE,
+    asset_code VARCHAR(50) UNIQUE,
+    previous_qty INT DEFAULT 0,
+    action_since_prev ENUM('Newly Acquired', 'Removed', 'Transferred', 'Disposed') NULL,
     qr_code VARCHAR(255),
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_name (name),
-    INDEX idx_category (category)
+    INDEX idx_category (category),
+    INDEX idx_location (location),
+    INDEX idx_condition (`condition`),
+    INDEX idx_asset_code (asset_code)
 );
 
 -- Borrowers Table (Borrowing Records)
@@ -77,13 +86,14 @@ INSERT IGNORE INTO users (username, password, email, full_name, role)
 VALUES ('admin', '$2b$12$...(hashed admin123)', 'admin@hulam-ko.local', 'Administrator', 'admin');
 
 -- Create some sample tools
-INSERT IGNORE INTO tools (name, brand, description, category, quantity, available_qty)
+INSERT IGNORE INTO tools (name, brand, description, category, location, quantity, available_qty, `condition`, year_acquired, asset_code, previous_qty, action_since_prev)
 VALUES 
-    ('Hammer', 'Stanley', 'Claw hammer 16oz', 'Hand Tools', 5, 5),
-    ('Screwdriver Set', 'DeWalt', 'Set of 6 screwdrivers', 'Hand Tools', 8, 8),
-    ('Wrench Set', 'Craftsman', 'Set of 10 wrenches', 'Hand Tools', 3, 3),
-    ('Drill Machine', 'Makita', 'Cordless drill driver', 'Power Tools', 2, 2),
-    ('Measuring Tape', 'Lufkin', '25ft measuring tape', 'Measurement', 10, 10);
+    ('KEYBOARD', 'A4TECH', 'KEYBOARD A4TECH USB A-SHAPE', 'Computer Equipments', 'CALL LAB RM. 116', 41, 41, 'Good Condition', '2023-06-15', 'HK-CE-001', 41, NULL),
+    ('MOUSE', 'A4TECH', 'MOUSE A4TECH USB A-SHAPE', 'Computer Equipments', 'CALL LAB RM. 116', 41, 41, 'Good Condition', '2023-06-15', 'HK-CE-002', 41, NULL),
+    ('MONITOR', 'ACER', '21.5" LED VGA+HDMI 75hz MONITOR ACER', 'Computer Equipments', 'CALL LAB RM. 116', 32, 32, 'Good Condition', '2023-08-20', 'HK-CE-003', 32, NULL),
+    ('SYSTEM UNIT', 'CIVO', 'CIVO CASE H002 MICRO ATX', 'Computer Equipments', 'CALL LAB RM. 116', 41, 41, 'Good Condition', '2023-09-01', 'HK-CE-007', 41, NULL),
+    ('CHAIR', 'N/A', 'MONOBLOC WHITE', 'Furniture and Fixture', 'CALL LAB RM. 116', 36, 36, 'Needs Repair', '2019-05-15', 'HK-FF-011', 36, 'Transferred'),
+    ('CRUCIFIX', 'N/A', 'CRUCIFIX', 'Sacred Images and Chapel', 'CALL LAB RM. 116', 1, 1, 'Good Condition', '2019-01-20', 'HK-SC-015', 1, NULL);
 
 -- Create indexes for better query performance
 CREATE INDEX idx_tools_created ON tools(created_date);

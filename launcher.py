@@ -30,9 +30,12 @@ FRONTEND_DIR = BASE_DIR / 'frontend'
 
 # In-memory data storage (same as app-simple.py)
 tools_db = [
-    {'id': 1, 'name': 'Hammer', 'brand': 'Stanley', 'quantity': 5, 'category': 'Hand Tools', 'description': 'Claw hammer'},
-    {'id': 2, 'name': 'Screwdriver Set', 'brand': 'DeWalt', 'quantity': 8, 'category': 'Hand Tools', 'description': 'Multi-bit screwdriver'},
-    {'id': 3, 'name': 'Wrench Set', 'brand': 'Craftsman', 'quantity': 3, 'category': 'Hand Tools', 'description': 'Socket wrench set'}
+    {'id': 1, 'name': 'KEYBOARD', 'brand': 'A4TECH', 'quantity': 41, 'category': 'Computer Equipments', 'description': 'KEYBOARD A4TECH USB A-SHAPE', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2023-06-15', 'condition': 'Good Condition', 'assetCode': 'HK-CE-001', 'previousQty': 41, 'actionSincePrev': ''},
+    {'id': 2, 'name': 'MOUSE', 'brand': 'A4TECH', 'quantity': 41, 'category': 'Computer Equipments', 'description': 'MOUSE A4TECH USB A-SHAPE', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2023-06-15', 'condition': 'Good Condition', 'assetCode': 'HK-CE-002', 'previousQty': 41, 'actionSincePrev': ''},
+    {'id': 3, 'name': 'MONITOR', 'brand': 'ACER', 'quantity': 32, 'category': 'Computer Equipments', 'description': '21.5" LED VGA+HDMI 75hz MONITOR ACER', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2023-08-20', 'condition': 'Good Condition', 'assetCode': 'HK-CE-003', 'previousQty': 32, 'actionSincePrev': ''},
+    {'id': 4, 'name': 'AVR', 'brand': 'GENERIC', 'quantity': 41, 'category': 'Computer Equipments', 'description': 'GENERIC 500WATTS SECURE AVR', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2023-02-14', 'condition': 'Good Condition', 'assetCode': 'HK-CE-006', 'previousQty': 41, 'actionSincePrev': ''},
+    {'id': 5, 'name': 'CHAIR', 'brand': 'N/A', 'quantity': 36, 'category': 'Furniture and Fixture', 'description': 'MONOBLOC WHITE', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2019-05-15', 'condition': 'Needs Repair', 'assetCode': 'HK-FF-011', 'previousQty': 36, 'actionSincePrev': 'Transferred'},
+    {'id': 6, 'name': 'CRUCIFIX', 'brand': 'N/A', 'quantity': 1, 'category': 'Sacred Images and Chapel', 'description': 'CRUCIFIX', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2019-01-20', 'condition': 'Good Condition', 'assetCode': 'HK-SC-015', 'previousQty': 1, 'actionSincePrev': ''}
 ]
 
 borrowers_db = []
@@ -42,7 +45,7 @@ users_db = [
 ]
 activity_log = []
 
-next_tool_id = 4
+next_tool_id = 7
 next_borrower_id = 1
 next_user_id = 3
 
@@ -117,7 +120,13 @@ def create_tool():
         'quantity': data.get('quantity', 0),
         'category': data.get('category'),
         'description': data.get('description'),
-        'image': data.get('image')
+        'image': data.get('image'),
+        'location': data.get('location'),
+        'yearAcquired': data.get('yearAcquired'),
+        'condition': data.get('condition', 'Good Condition'),
+        'assetCode': data.get('assetCode'),
+        'previousQty': data.get('previousQty', 0),
+        'actionSincePrev': data.get('actionSincePrev', '')
     }
     tools_db.append(new_tool)
     next_tool_id += 1
@@ -193,6 +202,33 @@ def create_user():
     users_db.append(new_user)
     next_user_id += 1
     return jsonify(new_user), 201
+
+@app.route('/api/users/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    """Update a user"""
+    user = next((u for u in users_db if u['id'] == user_id), None)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+    data = request.get_json()
+    user.update(data)
+    return jsonify(user), 200
+
+@app.route('/api/users/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    """Delete a user"""
+    global users_db
+    users_db = [u for u in users_db if u['id'] != user_id]
+    return jsonify({'message': 'User deleted'}), 200
+
+@app.route('/api/borrowers/<int:borrower_id>', methods=['PUT'])
+def update_borrower(borrower_id):
+    """Update a borrower record (e.g. adjust return date)"""
+    borrower = next((b for b in borrowers_db if b['id'] == borrower_id), None)
+    if not borrower:
+        return jsonify({'message': 'Borrower not found'}), 404
+    data = request.get_json()
+    borrower.update(data)
+    return jsonify(borrower), 200
 
 # ==================== HEALTH CHECK ====================
 
