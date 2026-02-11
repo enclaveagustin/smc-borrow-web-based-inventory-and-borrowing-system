@@ -281,7 +281,6 @@
                         </div>
                     </div>
                     <div class="tools-header" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addBorrowerModal"><i class="fas fa-plus"></i> Add Borrower</button>
                         <button class="btn btn-success mb-3" onclick="openBarcodeScanner()"><i class="fas fa-barcode"></i> Scan to Save</button>
                     </div>
                     <div class="row mb-4">
@@ -316,7 +315,7 @@
                 <div class="page-header">
                     <div class="page-header-content">
                         <h2><i class="fas fa-cog"></i> Settings</h2>
-                        <p>Configure application settings, reporting, and export</p>
+                        <p>Configure profile, generate inventory reports, and export</p>
                     </div>
                 </div>
                 <div class="settings-container">
@@ -327,10 +326,10 @@
                         <button class="btn btn-primary mb-3" onclick="updateProfile()"><i class="fas fa-save"></i> Save Changes</button>
                     </div>
 
-                    <!-- INVENTORY REPORTING (SMCTI Form Format) -->
+                    <!-- INVENTORY REPORT & EXPORT (SMCTI Form Format) -->
                     <div class="settings-section">
-                        <h3><i class="fas fa-chart-bar"></i> Inventory Reporting</h3>
-                        <p style="color:#666; margin-bottom:1rem;">Generate inventory reports matching the official SMCTI Inventory Form format.</p>
+                        <h3><i class="fas fa-chart-bar"></i> Inventory Report & Export</h3>
+                        <p style="color:#666; margin-bottom:1rem;">Generate and export inventory reports matching the official SMCTI Inventory Form format. This report includes <strong>all tools</strong> in the system.</p>
                         
                         <!-- Form Header Fields -->
                         <div class="row mb-3">
@@ -395,7 +394,23 @@
                                 <button class="btn btn-primary w-100" onclick="generateInventoryReport()"><i class="fas fa-file-alt"></i> Generate</button>
                             </div>
                         </div>
+
+                        <!-- Signatories -->
+                        <h5 style="margin-top:1.5rem; margin-bottom:0.75rem;"><i class="fas fa-signature"></i> Signatories</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-3"><label class="form-label">Prepared By (Name)</label><input type="text" class="form-control" id="sigPreparedBy" placeholder="Full Name"></div>
+                            <div class="col-md-3"><label class="form-label">Prepared By (Title)</label><input type="text" class="form-control" id="sigPreparedByTitle" placeholder="e.g. Property Custodian"></div>
+                            <div class="col-md-3"><label class="form-label">Verified By (Name)</label><input type="text" class="form-control" id="sigVerifiedBy" placeholder="Full Name"></div>
+                            <div class="col-md-3"><label class="form-label">Verified By (Title)</label><input type="text" class="form-control" id="sigVerifiedByTitle" placeholder="e.g. Department Head"></div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-3"><label class="form-label">Noted By (Name)</label><input type="text" class="form-control" id="sigNotedBy" placeholder="Full Name"></div>
+                            <div class="col-md-3"><label class="form-label">Noted By (Title)</label><input type="text" class="form-control" id="sigNotedByTitle" placeholder="e.g. VP for Administration"></div>
+                        </div>
+
+                        <!-- Report Result -->
                         <div id="inventoryReportResult" style="display:none;">
+                            <hr>
                             <div class="table-responsive">
                                 <table class="table table-bordered table-sm" id="reportTable" style="font-size:0.82rem;">
                                     <thead>
@@ -421,24 +436,11 @@
                                     <tbody id="reportTableBody"></tbody>
                                 </table>
                             </div>
+                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                                <button class="btn btn-info mb-3" onclick="exportReportToWord()"><i class="fas fa-file-word"></i> Export to Word (.doc)</button>
+                                <button class="btn btn-success mb-3" onclick="exportReportToExcel()"><i class="fas fa-file-excel"></i> Export to Excel (.xlsx)</button>
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- EXPORT TO WORD (SMCTI Form Format) -->
-                    <div class="settings-section">
-                        <h3><i class="fas fa-file-word"></i> Export Report to Word</h3>
-                        <p style="color:#666; margin-bottom:1rem;">Export as official SMCTI Inventory Form (.docx) with signatories.</p>
-                        <div class="row mb-3">
-                            <div class="col-md-3"><label class="form-label">Prepared By (Name)</label><input type="text" class="form-control" id="sigPreparedBy" placeholder="Full Name"></div>
-                            <div class="col-md-3"><label class="form-label">Prepared By (Title)</label><input type="text" class="form-control" id="sigPreparedByTitle" placeholder="e.g. Property Custodian"></div>
-                            <div class="col-md-3"><label class="form-label">Verified By (Name)</label><input type="text" class="form-control" id="sigVerifiedBy" placeholder="Full Name"></div>
-                            <div class="col-md-3"><label class="form-label">Verified By (Title)</label><input type="text" class="form-control" id="sigVerifiedByTitle" placeholder="e.g. Department Head"></div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-3"><label class="form-label">Noted By (Name)</label><input type="text" class="form-control" id="sigNotedBy" placeholder="Full Name"></div>
-                            <div class="col-md-3"><label class="form-label">Noted By (Title)</label><input type="text" class="form-control" id="sigNotedByTitle" placeholder="e.g. VP for Administration"></div>
-                        </div>
-                        <button class="btn btn-info mb-3" onclick="exportReportToWord()"><i class="fas fa-download"></i> Export to Word (.docx)</button>
                     </div>
 
                     <div class="settings-section">

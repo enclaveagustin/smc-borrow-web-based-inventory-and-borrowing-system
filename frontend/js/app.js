@@ -849,7 +849,7 @@ function generateInventoryReport() {
     }
 
     document.getElementById('inventoryReportResult').style.display = 'block';
-    showAlert(`Report generated: ${filteredTools.length} items found`, 'success');
+    showAlert(`Inventory report generated: ${filteredTools.length} total items listed`, 'success');
 }
 
 // ==================== EXPORT TO WORD (SMCTI INVENTORY FORM FORMAT) ====================
@@ -1058,14 +1058,132 @@ function exportReportToWord() {
     </body>
     </html>`;
 
-    const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `SMCTI_Inventory_Form_SY${sy.replace(/\s+/g, '')}_${department.replace(/[\/\s]+/g, '_')}.docx`;
-    link.click();
-    URL.revokeObjectURL(url);
-    showAlert('SMCTI Inventory Form exported successfully!', 'success');
+    try {
+        const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `SMCTI_Inventory_Form_SY${sy.replace(/\s+/g, '')}_${department.replace(/[\/\s]+/g, '_')}.doc`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        // Delay cleanup so the browser has time to start the download
+        setTimeout(function() {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }, 1000);
+        showAlert('SMCTI Inventory Form exported to Word successfully!', 'success');
+    } catch (err) {
+        console.error('Word export error:', err);
+        showAlert('Export failed: ' + err.message, 'danger');
+    }
+}
+
+// ==================== EXPORT TO EXCEL (SMCTI INVENTORY FORM FORMAT) ====================
+function exportReportToExcel() {
+    if (typeof XLSX === 'undefined') {
+        showAlert('Excel library not loaded. Please check your internet connection and refresh the page.', 'danger');
+        return;
+    }
+    const reportBody = document.getElementById('reportTableBody');
+    if (!reportBody || reportBody.children.length === 0) {
+        showAlert('Please generate an inventory report first', 'warning');
+        return;
+    }
+
+    try {
+    const sy = document.getElementById('reportSY')?.value || '2024-2025';
+    const department = document.getElementById('reportDepartment')?.value || 'ICT_COLLEGE';
+    const officeLocation = document.getElementById('reportOfficeLocation')?.value || 'ALL LOCATIONS';
+    const division = document.getElementById('reportDivision')?.value || 'Administration';
+    const deptLevel = document.getElementById('reportDeptLevel')?.value || 'Higher Education';
+    const reportDate = document.getElementById('reportDate')?.value || new Date().toISOString().split('T')[0];
+
+    // Build worksheet data
+    const wsData = [];
+
+    // Header rows
+    wsData.push(['ST. MARY\'S COLLEGE OF TAGUM, INC']);
+    wsData.push(['OFFICE OF THE PROPERTY CUSTODIAN']);
+    wsData.push(['National Highway, Tagum City, 8100 Davao del Norte, Philippines']);
+    wsData.push([]);
+    wsData.push(['INVENTORY FORM']);
+    wsData.push(['SY ' + sy]);
+    wsData.push([]);
+    wsData.push(['Division: ' + division, '', 'Department Level: ' + deptLevel]);
+    wsData.push(['Department: ' + department, '', 'Date: ' + reportDate]);
+    wsData.push(['Office/Unit Location: ' + (officeLocation || 'ALL LOCATIONS')]);
+    wsData.push([]);
+
+    // Table headers
+    wsData.push(['PREV. QTY.', 'ITEMS', 'CURRENT QTY.', 'BRAND NAME / SPECIFICATION',
+        'Good Condition', 'Needs Repair', 'Lost', 'Damaged',
+        'Newly Acquired', 'Removed', 'Transferred', 'Disposed']);
+
+    // Table data from report
+    const rows = reportBody.querySelectorAll('tr');
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 12) {
+            wsData.push([
+                cells[0].textContent.trim(),
+                cells[1].textContent.trim(),
+                cells[2].textContent.trim(),
+                cells[3].textContent.trim(),
+                cells[4].textContent.trim(),
+                cells[5].textContent.trim(),
+                cells[6].textContent.trim(),
+                cells[7].textContent.trim(),
+                cells[8].textContent.trim(),
+                cells[9].textContent.trim(),
+                cells[10].textContent.trim(),
+                cells[11].textContent.trim()
+            ]);
+        }
+    });
+
+    // Signatories
+    const preparedBy = document.getElementById('sigPreparedBy')?.value || '';
+    const preparedByTitle = document.getElementById('sigPreparedByTitle')?.value || '';
+    const verifiedBy = document.getElementById('sigVerifiedBy')?.value || '';
+    const verifiedByTitle = document.getElementById('sigVerifiedByTitle')?.value || '';
+    const notedBy = document.getElementById('sigNotedBy')?.value || '';
+    const notedByTitle = document.getElementById('sigNotedByTitle')?.value || '';
+
+    wsData.push([]);
+    wsData.push([]);
+    wsData.push(['Prepared By:', '', '', 'Verified By:', '', '', '', 'Noted By:']);
+    wsData.push([]);
+    wsData.push([preparedBy, '', '', verifiedBy, '', '', '', notedBy]);
+    wsData.push([preparedByTitle, '', '', verifiedByTitle, '', '', '', notedByTitle]);
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Set column widths
+    ws['!cols'] = [
+        { wch: 10 }, { wch: 25 }, { wch: 12 }, { wch: 35 },
+        { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 10 },
+        { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 10 }
+    ];
+
+    // Merge header cells
+    ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } },
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 11 } },
+        { s: { r: 4, c: 0 }, e: { r: 4, c: 11 } },
+        { s: { r: 5, c: 0 }, e: { r: 5, c: 11 } },
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
+    XLSX.writeFile(wb, `SMCTI_Inventory_Form_SY${sy.replace(/\s+/g, '')}_${department.replace(/[\/\s]+/g, '_')}.xlsx`);
+    showAlert('SMCTI Inventory Form exported to Excel successfully!', 'success');
+    } catch (err) {
+        console.error('Excel export error:', err);
+        showAlert('Excel export failed: ' + err.message, 'danger');
+    }
 }
 
 // ==================== TOOL SELECTS ====================
