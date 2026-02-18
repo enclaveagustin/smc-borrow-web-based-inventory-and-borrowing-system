@@ -9,6 +9,8 @@ const appState = {
     allBorrowers: [],
     allUsers: [],
     activityLog: [],
+    damageReports: [],
+    toolMovements: [],
     lastUpdate: null,
     isProcessing: false,
     isLoggedIn: false,
@@ -181,6 +183,8 @@ function loadApplicationState() {
     appState.allBorrowers = JSON.parse(localStorage.getItem('borrowers')) || [];
     appState.allUsers = JSON.parse(localStorage.getItem('users')) || [];
     appState.activityLog = JSON.parse(localStorage.getItem('activity')) || [];
+    appState.damageReports = JSON.parse(localStorage.getItem('damageReports')) || [];
+    appState.toolMovements = JSON.parse(localStorage.getItem('toolMovements')) || [];
     appState.lastUpdate = localStorage.getItem('lastUpdate');
 }
 
@@ -189,6 +193,8 @@ function saveApplicationState() {
     localStorage.setItem('borrowers', JSON.stringify(appState.allBorrowers));
     localStorage.setItem('users', JSON.stringify(appState.allUsers));
     localStorage.setItem('activity', JSON.stringify(appState.activityLog));
+    localStorage.setItem('damageReports', JSON.stringify(appState.damageReports));
+    localStorage.setItem('toolMovements', JSON.stringify(appState.toolMovements));
     localStorage.setItem('lastUpdate', new Date().toISOString());
 }
 
@@ -216,6 +222,10 @@ function updateDashboard() {
 
     renderDefectiveTools();
     renderActivity();
+    initMonthlyRecordMonth();
+    renderMonthlyRecord();
+    renderTopBorrowersByCourseChart();
+    checkOverdueAndNotify();
 }
 
 function renderDefectiveTools() {
@@ -287,6 +297,17 @@ function saveTool() {
             if (!toolData.name) { hideLoadingState(loadingId); showAlert('Tool name is required', 'warning'); appState.isProcessing = false; return; }
             setTimeout(() => {
                 appState.allTools.push(toolData);
+                // Record tool movement (Added) with date/time
+                appState.toolMovements.push({
+                    id: getNextId(appState.toolMovements),
+                    tool_id: toolData.id,
+                    tool_name: toolData.name,
+                    movement_type: 'Added',
+                    quantity_changed: toolData.quantity,
+                    reason: 'New tool added to inventory',
+                    remarks: '',
+                    movement_date: new Date().toISOString()
+                });
                 addActivity(`Tool "${toolData.name}" added (${toolData.assetCode})`);
                 saveApplicationState();
                 hideLoadingState(loadingId);
@@ -358,7 +379,7 @@ function updateTool() {
     return false;
 }
 
-function deleteTool(toolId) {
+function deleteTool(toolId, reason, remarks) {
     const tool = appState.allTools.find(t => t.id === toolId);
     if (!tool) return;
     const activeBorrowings = appState.allBorrowers.filter(b => b.tool_id === toolId && !b.returned);
@@ -366,14 +387,41 @@ function deleteTool(toolId) {
         showAlert(`Cannot delete "${tool.name}" — it has ${activeBorrowings.length} active borrowing(s). Return items first.`, 'danger');
         return;
     }
-    const loadingId = showLoadingState('Deleting tool...');
+    const loadingId = showLoadingState('Removing tool...');
     setTimeout(() => {
         try {
+            // Record tool movement (Removed/Pulled Out) with date/time and reason
+            appState.toolMovements.push({
+                id: getNextId(appState.toolMovements),
+                tool_id: tool.id,
+                tool_name: tool.name,
+                movement_type: 'Pulled Out',
+                quantity_changed: tool.quantity,
+                reason: reason || 'Removed',
+                remarks: remarks || '',
+                movement_date: new Date().toISOString()
+            });
+            // Auto-file a damage report if reason is Damaged, For Repair, or Lost
+            if (reason === 'Damaged' || reason === 'For Repair' || reason === 'Lost') {
+                appState.damageReports.push({
+                    id: getNextId(appState.damageReports),
+                    tool_id: tool.id,
+                    tool_name: tool.name,
+                    reported_by: appState.currentUser ? appState.currentUser.split('@')[0] : 'Admin',
+                    damage_type: reason,
+                    severity: reason === 'Lost' ? 'Severe' : 'Moderate',
+                    description: remarks || `Tool removed from inventory - ${reason}`,
+                    date_reported: new Date().toISOString(),
+                    status: 'Pending',
+                    resolution_notes: '',
+                    resolved_date: null
+                });
+            }
             appState.allTools = appState.allTools.filter(t => t.id !== toolId);
-            addActivity(`Tool "${tool.name}" deleted`);
+            addActivity(`Tool "${tool.name}" removed (Reason: ${reason}${remarks ? ', ' + remarks : ''})`);
             saveApplicationState();
             hideLoadingState(loadingId);
-            showAlert(`"${tool.name}" deleted successfully!`, 'success');
+            showAlert(`"${tool.name}" removed successfully! (Reason: ${reason})`, 'success');
             renderTools();
             updateDashboard();
         } catch (error) {
@@ -533,9 +581,16 @@ function saveBorrower() {
         if (!tool) { hideLoadingState(loadingId); showAlert('Please select a valid tool', 'warning'); return false; }
         if (tool.quantity <= 0) { hideLoadingState(loadingId); showAlert(`"${tool.name}" is not available`, 'warning'); return false; }
 
+        const studentId = document.getElementById('borrowerStudentId').value.trim();
+        const email = document.getElementById('borrowerEmail').value.trim();
+        if (!studentId) { hideLoadingState(loadingId); showAlert('Student ID / Barcode is required', 'warning'); return false; }
+        if (!email) { hideLoadingState(loadingId); showAlert('Email address is required', 'warning'); return false; }
+
         const borrowerData = {
             id: getNextId(appState.allBorrowers),
             tool_id: toolId,
+            student_id: studentId,
+            email: email,
             borrower_name: document.getElementById('borrowerName').value.trim(),
             course: document.getElementById('borrowerCourse').value.trim(),
             year: document.getElementById('borrowerYear').value.trim(),
@@ -543,7 +598,9 @@ function saveBorrower() {
             return_date: document.getElementById('returnDate').value,
             reason: document.getElementById('borrowReason').value.trim(),
             returned: false,
-            returned_date: null
+            returned_date: null,
+            return_remarks: '',
+            overdue_notified: false
         };
 
         if (!borrowerData.borrower_name) { hideLoadingState(loadingId); showAlert('Borrower name is required', 'warning'); return false; }
@@ -564,14 +621,32 @@ function saveBorrower() {
     return false;
 }
 
-function returnBorrower(borrowerId) {
+function returnBorrower(borrowerId, returnRemarks, returnCondition) {
     const borrower = appState.allBorrowers.find(b => b.id === borrowerId);
     if (!borrower || borrower.returned) return;
     const tool = appState.allTools.find(t => t.id === borrower.tool_id);
     borrower.returned = true;
     borrower.returned_date = new Date().toISOString();
+    borrower.return_remarks = returnRemarks || '';
     if (tool) tool.quantity += 1;
-    addActivity(`${borrower.borrower_name} returned "${tool?.name || 'item'}"`);
+    // If returned damaged, auto-file a damage report
+    if (returnCondition && returnCondition !== 'Good Condition' && tool) {
+        appState.damageReports.push({
+            id: getNextId(appState.damageReports),
+            tool_id: tool.id,
+            tool_name: tool.name,
+            reported_by: borrower.borrower_name,
+            damage_type: returnCondition === 'Damaged' ? 'Damaged' : 'For Repair',
+            severity: returnCondition === 'Damaged' ? 'Moderate' : 'Minor',
+            description: `Returned ${returnCondition.toLowerCase()} by ${borrower.borrower_name}. Remarks: ${returnRemarks}`,
+            date_reported: new Date().toISOString(),
+            status: 'Pending',
+            resolution_notes: '',
+            resolved_date: null
+        });
+        addActivity(`DAMAGE REPORTED: "${tool.name}" returned ${returnCondition.toLowerCase()} by ${borrower.borrower_name}`);
+    }
+    addActivity(`${borrower.borrower_name} returned "${tool?.name || 'item'}"${returnRemarks ? ' - ' + returnRemarks : ''}`);
     saveApplicationState();
     showAlert('Item returned successfully!', 'success');
     renderBorrowers(); renderTools(); updateDashboard(); updateToolSelect(); updateInlineToolSelect();
@@ -652,17 +727,21 @@ function renderFilteredBorrowers(borrowers) {
                 <div class="row">
                     <div class="col-md-8">
                         <h4>${escapeHtml(borrower.borrower_name)}</h4>
+                        <div class="detail-row"><span class="detail-label">Student ID:</span><span class="detail-value"><code>${escapeHtml(borrower.student_id) || 'N/A'}</code></span></div>
+                        <div class="detail-row"><span class="detail-label">Email:</span><span class="detail-value">${escapeHtml(borrower.email) || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Course:</span><span class="detail-value">${escapeHtml(borrower.course) || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Year:</span><span class="detail-value">${escapeHtml(borrower.year) || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Tool:</span><span class="detail-value">${escapeHtml(tool?.name) || 'Unknown'}</span></div>
                         <div class="detail-row"><span class="detail-label">Borrow Date:</span><span class="detail-value">${new Date(borrower.borrow_date).toLocaleDateString()}</span></div>
                         <div class="detail-row"><span class="detail-label">Return Date:</span><span class="detail-value">${returnDate.toLocaleDateString()}</span></div>
                         ${isOverdue ? `<div class="detail-row"><span class="detail-label" style="color:red;">Days Overdue:</span><span class="detail-value" style="color:red; font-weight:bold;">${overdueDays} day(s)</span></div>` : ''}
-                        ${borrower.reason ? `<div class="detail-row"><span class="detail-label">Reason:</span><span class="detail-value">${borrower.reason}</span></div>` : ''}
+                        ${borrower.reason ? `<div class="detail-row"><span class="detail-label">Reason:</span><span class="detail-value">${escapeHtml(borrower.reason)}</span></div>` : ''}
+                        ${borrower.return_remarks ? `<div class="detail-row"><span class="detail-label">Return Remarks:</span><span class="detail-value"><em>${escapeHtml(borrower.return_remarks)}</em></span></div>` : ''}
                         ${!borrower.returned ? `
                         <div class="action-buttons">
                             <button class="btn btn-success btn-small" onclick="confirmReturn(${borrower.id})"><i class="fas fa-check"></i> Mark Returned</button>
                             ${isOverdue ? `<button class="btn btn-warning btn-small" onclick="openAdjustOverdue(${borrower.id})"><i class="fas fa-calendar-alt"></i> Adjust Date</button>` : ''}
+                            ${isOverdue && borrower.email ? `<button class="btn btn-danger btn-small" onclick="sendOverdueEmail(${borrower.id})"><i class="fas fa-envelope"></i> Send Overdue Notice</button>` : ''}
                         </div>
                         ` : ''}
                     </div>
@@ -1219,7 +1298,25 @@ function updateInlineToolSelect() {
 function confirmDeleteTool(toolId) {
     const tool = appState.allTools.find(t => t.id === toolId);
     if (!tool) return;
-    if (confirm(`Delete "${tool.name}"?\n\nThis action cannot be undone.`)) deleteTool(toolId);
+    const activeBorrowings = appState.allBorrowers.filter(b => b.tool_id === toolId && !b.returned);
+    if (activeBorrowings.length > 0) {
+        showAlert(`Cannot delete "${tool.name}" — it has ${activeBorrowings.length} active borrowing(s). Return items first.`, 'danger');
+        return;
+    }
+    document.getElementById('deleteToolId').value = tool.id;
+    document.getElementById('deleteToolName').value = tool.name;
+    document.getElementById('deleteToolReason').value = '';
+    document.getElementById('deleteToolRemarks').value = '';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteToolReasonModal')).show();
+}
+
+function executeDeleteTool() {
+    const toolId = parseInt(document.getElementById('deleteToolId').value);
+    const reason = document.getElementById('deleteToolReason').value;
+    const remarks = document.getElementById('deleteToolRemarks').value.trim();
+    if (!reason) { showAlert('Please select a reason for removal', 'warning'); return; }
+    bootstrap.Modal.getInstance(document.getElementById('deleteToolReasonModal')).hide();
+    deleteTool(toolId, reason, remarks);
 }
 
 function confirmDeleteUser(userId) {
@@ -1230,8 +1327,32 @@ function confirmDeleteUser(userId) {
 
 function confirmReturn(borrowerId) {
     const borrower = appState.allBorrowers.find(b => b.id === borrowerId);
+    if (!borrower) return;
     const tool = appState.allTools.find(t => t.id === borrower.tool_id);
-    if (confirm(`Mark "${tool?.name || 'item'}" as returned by ${borrower.borrower_name}?`)) returnBorrower(borrowerId);
+    document.getElementById('returnBorrowerId').value = borrower.id;
+    document.getElementById('returnBorrowerName').value = borrower.borrower_name;
+    document.getElementById('returnToolName').value = tool?.name || 'Unknown';
+    document.getElementById('returnStudentIdScan').value = '';
+    document.getElementById('returnCondition').value = 'Good Condition';
+    document.getElementById('returnRemarks').value = '';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('returnRemarksModal')).show();
+}
+
+function executeReturnBorrower() {
+    const borrowerId = parseInt(document.getElementById('returnBorrowerId').value);
+    const borrower = appState.allBorrowers.find(b => b.id === borrowerId);
+    if (!borrower) return;
+    const scannedId = document.getElementById('returnStudentIdScan').value.trim();
+    const returnCondition = document.getElementById('returnCondition').value;
+    const returnRemarks = document.getElementById('returnRemarks').value.trim();
+    if (!scannedId) { showAlert('Please scan or enter the Student ID / Barcode', 'warning'); return; }
+    if (borrower.student_id && scannedId !== borrower.student_id) {
+        showAlert(`Student ID mismatch! Expected "${borrower.student_id}" but got "${scannedId}". The same ID used for borrowing must be scanned.`, 'danger');
+        return;
+    }
+    if (!returnRemarks) { showAlert('Please enter return remarks/comments', 'warning'); return; }
+    bootstrap.Modal.getInstance(document.getElementById('returnRemarksModal')).hide();
+    returnBorrower(borrowerId, returnRemarks, returnCondition);
 }
 
 // ==================== TAB SWITCHING ====================
@@ -1246,6 +1367,8 @@ function switchTab(tab) {
     else if (tab === 'borrowers') { renderBorrowers(); updateInlineToolSelect(); }
     else if (tab === 'users') { renderUsers(); }
     else if (tab === 'settings') { initReportYearFilter(); }
+    else if (tab === 'damageReporting') { renderDamageReports(); updateDamageToolSelect(); }
+    else if (tab === 'dashboard') { updateDashboard(); }
 }
 
 // ==================== EVENT LISTENERS ====================
@@ -1455,6 +1578,8 @@ function closeInlineForm() {
 
 function saveInlineBorrower() {
     const toolId = document.getElementById('inlineBorrowerTool').value;
+    const studentId = document.getElementById('inlineStudentId').value.trim();
+    const email = document.getElementById('inlineBorrowerEmail').value.trim();
     const borrowerName = document.getElementById('inlineBorrowerName').value;
     const course = document.getElementById('inlineBorrowerCourse').value;
     const year = document.getElementById('inlineBorrowerYear').value;
@@ -1462,15 +1587,16 @@ function saveInlineBorrower() {
     const returnDate = document.getElementById('inlineReturnDate').value;
     const borrowReason = document.getElementById('inlineBorrowReason').value;
 
-    if (!toolId || !borrowerName || !course || !year || !borrowDate || !returnDate) {
-        showAlert('Please fill in all required fields', 'warning'); return;
+    if (!toolId || !studentId || !email || !borrowerName || !course || !year || !borrowDate || !returnDate) {
+        showAlert('Please fill in all required fields (including Student ID and Email)', 'warning'); return;
     }
 
     const newBorrower = {
         id: getNextId(appState.allBorrowers),
-        tool_id: parseInt(toolId), borrower_name: borrowerName, course, year,
+        tool_id: parseInt(toolId), student_id: studentId, email: email,
+        borrower_name: borrowerName, course, year,
         borrow_date: borrowDate, return_date: returnDate, reason: borrowReason,
-        returned: false, returned_date: null
+        returned: false, returned_date: null, return_remarks: '', overdue_notified: false
     };
 
     const tool = appState.allTools.find(t => t.id === parseInt(toolId));
@@ -1561,4 +1687,449 @@ function downloadToolImage() {
     link.download = `${toolName.replace(/\s+/g, '_')}_${Date.now()}.png`;
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
     showAlert('Image downloaded successfully!', 'success');
+}
+
+// ==================== DAMAGE REPORTING SECTION ====================
+function updateDamageToolSelect() {
+    const select = document.getElementById('damageTool');
+    if (!select) return;
+    select.innerHTML = '<option value="">Select a tool</option>';
+    appState.allTools.forEach(tool => {
+        const option = document.createElement('option');
+        option.value = tool.id;
+        option.textContent = `${tool.name} (${tool.brand || 'N/A'}) - ${tool.assetCode || 'N/A'}`;
+        select.appendChild(option);
+    });
+}
+
+function saveDamageReport() {
+    const toolId = parseInt(document.getElementById('damageTool').value);
+    const reportedBy = document.getElementById('damageReportedBy').value.trim();
+    const damageType = document.getElementById('damageType').value;
+    const severity = document.getElementById('damageSeverity').value;
+    const description = document.getElementById('damageDescription').value.trim();
+
+    if (!toolId || !reportedBy || !damageType || !description) {
+        showAlert('Please fill in all required fields', 'warning'); return;
+    }
+
+    const tool = appState.allTools.find(t => t.id === toolId);
+    if (!tool) { showAlert('Tool not found', 'danger'); return; }
+
+    const report = {
+        id: getNextId(appState.damageReports),
+        tool_id: toolId,
+        tool_name: tool.name,
+        reported_by: reportedBy,
+        damage_type: damageType,
+        severity: severity,
+        description: description,
+        date_reported: new Date().toISOString(),
+        status: 'Pending',
+        resolution_notes: '',
+        resolved_date: null
+    };
+
+    appState.damageReports.push(report);
+
+    // Update tool condition based on damage type
+    if (damageType === 'Damaged') tool.condition = 'Damaged';
+    else if (damageType === 'For Repair') tool.condition = 'Needs Repair';
+    else if (damageType === 'Lost') tool.condition = 'Lost';
+
+    // Record as tool movement
+    appState.toolMovements.push({
+        id: getNextId(appState.toolMovements),
+        tool_id: tool.id,
+        tool_name: tool.name,
+        movement_type: 'Pulled Out',
+        quantity_changed: 0,
+        reason: `Damage Report: ${damageType}`,
+        remarks: description,
+        movement_date: new Date().toISOString()
+    });
+
+    addActivity(`Damage Report filed: "${tool.name}" - ${damageType} (${severity}) by ${reportedBy}`);
+    saveApplicationState();
+    document.getElementById('damageReportForm').reset();
+    bootstrap.Modal.getInstance(document.getElementById('addDamageReportModal')).hide();
+    showAlert('Damage report submitted successfully!', 'success');
+    renderDamageReports();
+    updateDashboard();
+}
+
+function filterDamageReports() {
+    const searchTerm = (document.getElementById('damageSearch')?.value || '').toLowerCase();
+    const typeTerm = document.getElementById('damageTypeFilter')?.value || '';
+    const statusTerm = document.getElementById('damageStatusFilter')?.value || '';
+
+    const filtered = appState.damageReports.filter(r => {
+        const matchesSearch = !searchTerm ||
+            r.tool_name.toLowerCase().includes(searchTerm) ||
+            r.reported_by.toLowerCase().includes(searchTerm) ||
+            r.description.toLowerCase().includes(searchTerm);
+        const matchesType = !typeTerm || r.damage_type === typeTerm;
+        const matchesStatus = !statusTerm || r.status === statusTerm;
+        return matchesSearch && matchesType && matchesStatus;
+    });
+    renderFilteredDamageReports(filtered);
+}
+
+function renderDamageReports() { renderFilteredDamageReports(appState.damageReports); }
+
+function renderFilteredDamageReports(reports) {
+    const list = document.getElementById('damageReportsList');
+    if (!list) return;
+    if (reports.length === 0) {
+        list.innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i><h4>No Damage Reports</h4><p>No damage reports have been filed yet</p></div>';
+        return;
+    }
+
+    list.innerHTML = `
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-danger">
+                    <tr>
+                        <th>#</th>
+                        <th>Date Reported</th>
+                        <th>Tool</th>
+                        <th>Reported By</th>
+                        <th>Type</th>
+                        <th>Severity</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${reports.map((r, idx) => {
+                        const statusBadge = r.status === 'Pending' ? 'bg-warning' :
+                            r.status === 'Under Review' ? 'bg-info' :
+                            r.status === 'Repaired' || r.status === 'Replaced' ? 'bg-success' : 'bg-secondary';
+                        const severityBadge = r.severity === 'Minor' ? 'bg-info' :
+                            r.severity === 'Moderate' ? 'bg-warning' : 'bg-danger';
+                        return `<tr>
+                            <td>${idx + 1}</td>
+                            <td>${new Date(r.date_reported).toLocaleString()}</td>
+                            <td><strong>${escapeHtml(r.tool_name)}</strong></td>
+                            <td>${escapeHtml(r.reported_by)}</td>
+                            <td><span class="badge bg-danger">${escapeHtml(r.damage_type)}</span></td>
+                            <td><span class="badge ${severityBadge}">${escapeHtml(r.severity)}</span></td>
+                            <td>${escapeHtml(r.description)}</td>
+                            <td><span class="badge ${statusBadge}">${escapeHtml(r.status)}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-warning" onclick="openUpdateDamageStatus(${r.id})" title="Update Status"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteDamageReport(${r.id})" title="Delete"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-muted mt-2"><strong>Total Reports: ${reports.length}</strong></div>
+    `;
+}
+
+function openUpdateDamageStatus(reportId) {
+    const report = appState.damageReports.find(r => r.id === reportId);
+    if (!report) return;
+    document.getElementById('updateDamageId').value = report.id;
+    document.getElementById('updateDamageStatus').value = report.status;
+    document.getElementById('updateDamageNotes').value = report.resolution_notes || '';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('updateDamageStatusModal')).show();
+}
+
+function updateDamageReportStatus() {
+    const reportId = parseInt(document.getElementById('updateDamageId').value);
+    const report = appState.damageReports.find(r => r.id === reportId);
+    if (!report) return;
+    report.status = document.getElementById('updateDamageStatus').value;
+    report.resolution_notes = document.getElementById('updateDamageNotes').value.trim();
+    if (report.status === 'Repaired' || report.status === 'Replaced' || report.status === 'Written Off') {
+        report.resolved_date = new Date().toISOString();
+        // Optionally restore tool condition if repaired/replaced
+        if (report.status === 'Repaired' || report.status === 'Replaced') {
+            const tool = appState.allTools.find(t => t.id === report.tool_id);
+            if (tool) tool.condition = 'Good Condition';
+        }
+    }
+    addActivity(`Damage Report #${report.id} for "${report.tool_name}" updated to "${report.status}"`);
+    saveApplicationState();
+    bootstrap.Modal.getInstance(document.getElementById('updateDamageStatusModal')).hide();
+    showAlert('Damage report status updated!', 'success');
+    renderDamageReports();
+    updateDashboard();
+}
+
+function deleteDamageReport(reportId) {
+    if (!confirm('Delete this damage report?')) return;
+    appState.damageReports = appState.damageReports.filter(r => r.id !== reportId);
+    saveApplicationState();
+    showAlert('Damage report deleted', 'success');
+    renderDamageReports();
+}
+
+// ==================== MONTHLY RECORD REPORT (Dashboard) ====================
+function initMonthlyRecordMonth() {
+    const el = document.getElementById('monthlyRecordMonth');
+    if (!el || el.value) return;
+    const now = new Date();
+    el.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function renderMonthlyRecord() {
+    const monthInput = document.getElementById('monthlyRecordMonth');
+    if (!monthInput || !monthInput.value) return;
+    const [year, month] = monthInput.value.split('-').map(Number);
+    const startOfMonth = new Date(year, month - 1, 1);
+    const endOfMonth = new Date(year, month, 0, 23, 59, 59);
+
+    // A. Added Tools this month
+    const addedMovements = appState.toolMovements.filter(m => {
+        const d = new Date(m.movement_date);
+        return m.movement_type === 'Added' && d >= startOfMonth && d <= endOfMonth;
+    });
+
+    // B. Damaged Tools this month
+    const damagedReports = appState.damageReports.filter(r => {
+        const d = new Date(r.date_reported);
+        return d >= startOfMonth && d <= endOfMonth;
+    });
+
+    // C. Pulled-out Tools this month
+    const pulledOutMovements = appState.toolMovements.filter(m => {
+        const d = new Date(m.movement_date);
+        return (m.movement_type === 'Pulled Out' || m.movement_type === 'Removed') && d >= startOfMonth && d <= endOfMonth;
+    });
+
+    document.getElementById('monthlyAdded').textContent = addedMovements.length;
+    document.getElementById('monthlyDamaged').textContent = damagedReports.length;
+    document.getElementById('monthlyPulledOut').textContent = pulledOutMovements.length;
+
+    // Details table
+    const detailsDiv = document.getElementById('monthlyRecordDetails');
+    if (!detailsDiv) return;
+
+    let html = '';
+    if (addedMovements.length > 0) {
+        html += `<h5 style="color: var(--success); margin-top: 1rem;"><i class="fas fa-plus-circle"></i> Added Tools</h5>
+        <div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-success"><tr><th>Tool</th><th>Qty</th><th>Date & Time</th><th>Reason</th></tr></thead><tbody>
+        ${addedMovements.map(m => `<tr><td>${escapeHtml(m.tool_name)}</td><td>${m.quantity_changed}</td><td>${new Date(m.movement_date).toLocaleString()}</td><td>${escapeHtml(m.reason || '')}</td></tr>`).join('')}
+        </tbody></table></div>`;
+    }
+    if (damagedReports.length > 0) {
+        html += `<h5 style="color: var(--danger); margin-top: 1rem;"><i class="fas fa-tools"></i> Damaged Tools</h5>
+        <div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-danger"><tr><th>Tool</th><th>Type</th><th>Severity</th><th>Date & Time</th><th>Reported By</th></tr></thead><tbody>
+        ${damagedReports.map(r => `<tr><td>${escapeHtml(r.tool_name)}</td><td>${escapeHtml(r.damage_type)}</td><td>${escapeHtml(r.severity)}</td><td>${new Date(r.date_reported).toLocaleString()}</td><td>${escapeHtml(r.reported_by)}</td></tr>`).join('')}
+        </tbody></table></div>`;
+    }
+    if (pulledOutMovements.length > 0) {
+        html += `<h5 style="color: var(--warning); margin-top: 1rem;"><i class="fas fa-minus-circle"></i> Pulled-out Tools</h5>
+        <div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-warning"><tr><th>Tool</th><th>Qty</th><th>Date & Time</th><th>Reason</th><th>Remarks</th></tr></thead><tbody>
+        ${pulledOutMovements.map(m => `<tr><td>${escapeHtml(m.tool_name)}</td><td>${m.quantity_changed}</td><td>${new Date(m.movement_date).toLocaleString()}</td><td>${escapeHtml(m.reason || '')}</td><td>${escapeHtml(m.remarks || '')}</td></tr>`).join('')}
+        </tbody></table></div>`;
+    }
+    if (!html) html = '<p class="text-muted">No records for this month.</p>';
+    detailsDiv.innerHTML = html;
+}
+
+// ==================== TOP BORROWERS BY COURSE (Bar Chart) ====================
+let topBorrowersChart = null;
+
+function renderTopBorrowersByCourseChart() {
+    const canvas = document.getElementById('topBorrowersCourseChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    // Count borrowings by course
+    const courseCounts = {};
+    appState.allBorrowers.forEach(b => {
+        const course = b.course || 'Unknown';
+        courseCounts[course] = (courseCounts[course] || 0) + 1;
+    });
+
+    const sortedCourses = Object.entries(courseCounts).sort((a, b) => b[1] - a[1]);
+    const labels = sortedCourses.map(c => c[0]);
+    const data = sortedCourses.map(c => c[1]);
+
+    const colors = [
+        '#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+        '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1', '#14b8a6'
+    ];
+
+    if (topBorrowersChart) {
+        topBorrowersChart.destroy();
+    }
+
+    topBorrowersChart = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Number of Items Borrowed',
+                data: data,
+                backgroundColor: labels.map((_, i) => colors[i % colors.length]),
+                borderColor: labels.map((_, i) => colors[i % colors.length]),
+                borderWidth: 1,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'Items Borrowed per Course',
+                    font: { size: 16, weight: 'bold' }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 },
+                    title: { display: true, text: 'Number of Borrowings' }
+                },
+                x: {
+                    title: { display: true, text: 'Course' },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 30,
+                        font: { size: 10 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// ==================== OVERDUE EMAIL NOTIFICATION ====================
+function checkOverdueAndNotify() {
+    const overdueBorrowers = appState.allBorrowers.filter(b =>
+        !b.returned && new Date(b.return_date) < new Date() && !b.overdue_notified && b.email
+    );
+    if (overdueBorrowers.length > 0) {
+        const overdueCount = overdueBorrowers.length;
+        // Show notification badge
+        const overdueEl = document.getElementById('overdueItems');
+        if (overdueEl) overdueEl.style.color = '#ef4444';
+    }
+}
+
+function sendOverdueEmail(borrowerId) {
+    const borrower = appState.allBorrowers.find(b => b.id === borrowerId);
+    if (!borrower || !borrower.email) {
+        showAlert('No email address found for this borrower', 'warning');
+        return;
+    }
+    const tool = appState.allTools.find(t => t.id === borrower.tool_id);
+    const overdueDays = calculateOverdueDays(borrower.return_date);
+    const subject = encodeURIComponent(`OVERDUE Notice - ${tool?.name || 'Borrowed Item'}`);
+    const body = encodeURIComponent(
+        `Dear ${borrower.borrower_name},\n\n` +
+        `This is to notify you that the item you borrowed is now OVERDUE.\n\n` +
+        `Details:\n` +
+        `- Item: ${tool?.name || 'Unknown'}\n` +
+        `- Student ID: ${borrower.student_id || 'N/A'}\n` +
+        `- Borrow Date: ${new Date(borrower.borrow_date).toLocaleDateString()}\n` +
+        `- Expected Return Date: ${new Date(borrower.return_date).toLocaleDateString()}\n` +
+        `- Days Overdue: ${overdueDays} day(s)\n\n` +
+        `Please return the item immediately to avoid further penalties.\n\n` +
+        `Thank you,\nHulamKo Inventory System\nSt. Mary's College of Tagum, Inc.`
+    );
+
+    // Open mailto link
+    window.open(`mailto:${borrower.email}?subject=${subject}&body=${body}`, '_blank');
+
+    // Mark as notified
+    borrower.overdue_notified = true;
+    addActivity(`Overdue email notification sent to ${borrower.borrower_name} (${borrower.email})`);
+    saveApplicationState();
+    showAlert(`Overdue notification prepared for ${borrower.email}. Your email client should open.`, 'success');
+    renderBorrowers();
+}
+
+// ==================== STUDENT ID SCANNER ====================
+function openStudentIdScanner() {
+    document.getElementById('student-id-scanner-section').style.display = 'block';
+    const input = document.getElementById('studentIdScanInput');
+    if (input) {
+        input.value = '';
+        input.focus();
+        if (!input._scanListener) {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    processStudentIdScan();
+                }
+            });
+            input._scanListener = true;
+        }
+    }
+}
+
+function closeStudentIdScanner() {
+    document.getElementById('student-id-scanner-section').style.display = 'none';
+    document.getElementById('student-id-scan-result').style.display = 'none';
+}
+
+function processStudentIdScan() {
+    const input = document.getElementById('studentIdScanInput');
+    const studentId = input.value.trim();
+    if (!studentId) { showAlert('Please scan or enter a Student ID', 'warning'); return; }
+
+    // Check if this student has an active borrowing (for return)
+    const activeBorrowing = appState.allBorrowers.find(b =>
+        b.student_id === studentId && !b.returned
+    );
+
+    if (activeBorrowing) {
+        // Found active borrowing - prompt return
+        const tool = appState.allTools.find(t => t.id === activeBorrowing.tool_id);
+        document.getElementById('student-id-scan-result').style.display = 'block';
+        document.getElementById('scannedStudentIdDisplay').textContent = studentId;
+        showAlert(`Student ${activeBorrowing.borrower_name} has active borrowing: "${tool?.name || 'item'}". Opening return form...`, 'info');
+        closeStudentIdScanner();
+        // Open the return modal
+        confirmReturn(activeBorrowing.id);
+        // Pre-fill the student ID scan
+        setTimeout(() => {
+            const returnScanEl = document.getElementById('returnStudentIdScan');
+            if (returnScanEl) returnScanEl.value = studentId;
+        }, 300);
+    } else {
+        // No active borrowing - open borrow form with student ID pre-filled
+        document.getElementById('student-id-scan-result').style.display = 'block';
+        document.getElementById('scannedStudentIdDisplay').textContent = studentId;
+        closeStudentIdScanner();
+        document.getElementById('inline-borrower-form').style.display = 'block';
+        document.getElementById('inlineStudentId').value = studentId;
+        document.getElementById('inlineBorrowDate').valueAsDate = new Date();
+        const returnDate = new Date(); returnDate.setDate(returnDate.getDate() + 7);
+        document.getElementById('inlineReturnDate').valueAsDate = returnDate;
+        showAlert(`Student ID "${studentId}" scanned. Fill in borrower details.`, 'success');
+        setTimeout(() => { document.getElementById('inlineBorrowerName')?.focus(); }, 100);
+    }
+    input.value = '';
+}
+
+// ==================== SCAN RETURN BY STUDENT ID ====================
+function processReturnScan() {
+    const studentId = document.getElementById('returnScanStudentId').value.trim();
+    if (!studentId) { showAlert('Please scan or enter a Student ID', 'warning'); return; }
+
+    const activeBorrowing = appState.allBorrowers.find(b =>
+        b.student_id === studentId && !b.returned
+    );
+
+    if (activeBorrowing) {
+        bootstrap.Modal.getInstance(document.getElementById('scanReturnModal')).hide();
+        confirmReturn(activeBorrowing.id);
+        setTimeout(() => {
+            const returnScanEl = document.getElementById('returnStudentIdScan');
+            if (returnScanEl) returnScanEl.value = studentId;
+        }, 300);
+    } else {
+        document.getElementById('returnScanResult').style.display = 'block';
+        document.getElementById('returnScanResult').innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> No active borrowing found for this Student ID.</div>';
+    }
 }

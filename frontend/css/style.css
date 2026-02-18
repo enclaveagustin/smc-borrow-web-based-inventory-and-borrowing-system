@@ -1493,3 +1493,128 @@ html, body {
     font-weight: 600;
     color: var(--dark);
 }
+
+/* ==================== DAMAGE REPORTING STYLES ==================== */
+#damageReporting .card {
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+
+#damageReporting .table-danger th {
+    background-color: #dc3545 !important;
+    color: #fff;
+}
+
+.damage-severity-minor { color: #0dcaf0; font-weight: 600; }
+.damage-severity-moderate { color: #ffc107; font-weight: 600; }
+.damage-severity-severe { color: #dc3545; font-weight: 700; }
+
+/* ==================== MONTHLY RECORD STYLES ==================== */
+.monthly-record-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.monthly-stat-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1.25rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: transform 0.2s;
+}
+
+.monthly-stat-card:hover { transform: translateY(-3px); }
+
+.monthly-stat-card .stat-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.monthly-stat-card .stat-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    font-family: 'Playfair Display', serif;
+}
+
+.monthly-stat-card .stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.monthly-stat-card.added .stat-icon,
+.monthly-stat-card.added .stat-number { color: #10b981; }
+
+.monthly-stat-card.damaged .stat-icon,
+.monthly-stat-card.damaged .stat-number { color: #ef4444; }
+
+.monthly-stat-card.pulled-out .stat-icon,
+.monthly-stat-card.pulled-out .stat-number { color: #f59e0b; }
+
+/* ==================== TOP BORROWERS CHART ==================== */
+.chart-container {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    margin-bottom: 1.5rem;
+}
+
+.chart-container canvas {
+    max-height: 350px;
+}
+
+/* ==================== STUDENT ID SCANNER ==================== */
+#student-id-scanner-section {
+    background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 2px dashed #2563eb;
+}
+
+#student-id-scanner-section h5 {
+    color: #1e40af;
+    font-weight: 700;
+}
+
+#student-id-scan-result {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* ==================== OVERDUE NOTIFICATION BUTTON ==================== */
+.btn-overdue-email {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    transition: background 0.2s;
+}
+
+.btn-overdue-email:hover {
+    background: #dc2626;
+    color: #fff;
+}
+
+/* ==================== MODAL TWEAKS FOR NEW MODALS ==================== */
+#deleteToolReasonModal .modal-header,
+#returnRemarksModal .modal-header { border-bottom: 2px solid #dee2e6; }
+
+#deleteToolReasonModal .modal-footer,
+#returnRemarksModal .modal-footer { border-top: 2px solid #dee2e6; }
+
+/* ==================== RESPONSIVE TWEAKS ==================== */
+@media (max-width: 768px) {
+    .monthly-stat-card .stat-number { font-size: 1.8rem; }
+    .chart-container canvas { max-height: 250px; }
+}

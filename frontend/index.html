@@ -88,6 +88,7 @@
                 <li class="nav-item"><a class="nav-link active" onclick="switchTab('dashboard')" data-tab="dashboard"><i class="fas fa-chart-line"></i><span>Dashboard</span></a></li>
                 <li class="nav-item"><a class="nav-link" onclick="switchTab('tools')" data-tab="tools"><i class="fas fa-hammer"></i><span>Tools</span></a></li>
                 <li class="nav-item"><a class="nav-link" onclick="switchTab('borrowers')" data-tab="borrowers"><i class="fas fa-handshake"></i><span>Borrowers</span></a></li>
+                <li class="nav-item"><a class="nav-link" onclick="switchTab('damageReporting')" data-tab="damageReporting"><i class="fas fa-exclamation-triangle"></i><span>Damage Reports</span></a></li>
                 <li class="nav-item"><a class="nav-link" onclick="switchTab('users')" data-tab="users"><i class="fas fa-users"></i><span>Users</span></a></li>
                 <li class="nav-item"><a class="nav-link" onclick="switchTab('settings')" data-tab="settings"><i class="fas fa-cog"></i><span>Settings</span></a></li>
             </ul>
@@ -155,6 +156,49 @@
                             <div class="empty-state"><i class="fas fa-check-circle"></i><h4>No Defective Tools</h4><p>All tools are in good condition</p></div>
                         </div>
                     </div>
+                    <!-- MONTHLY RECORD REPORT -->
+                    <div class="monthly-record-section" style="padding: 2rem; border-top: 1px solid #e9ecef;">
+                        <h3><i class="fas fa-calendar-alt"></i> Monthly Record Report</h3>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Select Month</label>
+                                <input type="month" class="form-control" id="monthlyRecordMonth" onchange="renderMonthlyRecord()">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="stat-card" style="border-left: 4px solid var(--success);">
+                                    <div class="stat-icon" style="color: var(--success);"><i class="fas fa-plus-circle"></i></div>
+                                    <div class="stat-number" id="monthlyAdded">0</div>
+                                    <div class="stat-label">Added Tools</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card" style="border-left: 4px solid var(--danger);">
+                                    <div class="stat-icon" style="color: var(--danger);"><i class="fas fa-tools"></i></div>
+                                    <div class="stat-number" id="monthlyDamaged">0</div>
+                                    <div class="stat-label">Damaged Tools</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card" style="border-left: 4px solid var(--warning);">
+                                    <div class="stat-icon" style="color: var(--warning);"><i class="fas fa-minus-circle"></i></div>
+                                    <div class="stat-number" id="monthlyPulledOut">0</div>
+                                    <div class="stat-label">Pulled-out Tools</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="monthlyRecordDetails" class="mt-3"></div>
+                    </div>
+
+                    <!-- TOP BORROWERS BY COURSE -->
+                    <div class="top-borrowers-section" style="padding: 2rem; border-top: 1px solid #e9ecef;">
+                        <h3><i class="fas fa-chart-bar"></i> Top Borrowers by Course</h3>
+                        <div style="max-width: 700px; margin: 1rem auto;">
+                            <canvas id="topBorrowersCourseChart" width="700" height="350"></canvas>
+                        </div>
+                    </div>
+
                     <div class="activity-section">
                         <h3><i class="fas fa-history"></i> Recent Activity</h3>
                         <div id="recentActivity" class="activity-timeline">
@@ -248,6 +292,25 @@
                             </div>
                         </div>
                     </div>
+                    <!-- STUDENT ID SCANNER SECTION -->
+                    <div id="student-id-scanner-section" style="display: none; margin-bottom: 2rem;">
+                        <div class="scanner-card">
+                            <div class="scanner-header">
+                                <h4><i class="fas fa-id-card"></i> Scan Student ID / Barcode</h4>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="closeStudentIdScanner()"><i class="fas fa-times"></i> Close Scanner</button>
+                            </div>
+                            <div class="scanner-body">
+                                <div class="barcode-input-group">
+                                    <input type="text" id="studentIdScanInput" class="form-control form-control-lg" placeholder="Scan Student ID barcode or type the Student ID here..." autofocus autocomplete="off">
+                                    <small class="form-text text-muted"><i class="fas fa-info-circle"></i> Scan or enter the Student ID to release or return an item</small>
+                                </div>
+                                <div id="student-id-scan-result" style="display: none; margin-top: 1rem;">
+                                    <div class="alert alert-info"><i class="fas fa-user"></i> <strong>Student ID: </strong><span id="scannedStudentIdDisplay"></span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="inline-borrower-form" style="display: none; margin-bottom: 2rem;">
                         <div class="borrower-form-card">
                             <div class="form-header">
@@ -257,6 +320,10 @@
                             <div class="form-body">
                                 <form id="inlineBorrowerForm">
                                     <div class="mb-3"><label class="form-label">Tool *</label><select class="form-select" id="inlineBorrowerTool" required><option value="">Select a tool</option></select></div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3"><label class="form-label">Student ID / Barcode *</label><input type="text" class="form-control" id="inlineStudentId" required placeholder="Scan or enter Student ID"></div>
+                                        <div class="col-md-6 mb-3"><label class="form-label">Email Address *</label><input type="email" class="form-control" id="inlineBorrowerEmail" required placeholder="student@email.com"></div>
+                                    </div>
                                     <div class="mb-3"><label class="form-label">Borrower Name *</label><input type="text" class="form-control" id="inlineBorrowerName" required></div>
                                     <div class="row">
                                         <div class="col-md-6 mb-3"><label class="form-label">Course *</label>
@@ -281,7 +348,8 @@
                         </div>
                     </div>
                     <div class="tools-header" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                        <button class="btn btn-success mb-3" onclick="openBarcodeScanner()"><i class="fas fa-barcode"></i> Scan to Save</button>
+                        <button class="btn btn-info mb-3" onclick="openStudentIdScanner()"><i class="fas fa-id-card"></i> Scan Student ID</button>
+                        <button class="btn btn-success mb-3" onclick="openBarcodeScanner()"><i class="fas fa-barcode"></i> Scan Tool Barcode</button>
                     </div>
                     <div class="row mb-4">
                         <div class="col-md-6"><div class="search-box"><i class="fas fa-search"></i><input type="text" class="form-control" id="borrowerSearch" placeholder="Search borrowings..." onkeyup="filterBorrowers()"></div></div>
@@ -292,6 +360,47 @@
                         </div>
                     </div>
                     <div id="borrowersList"></div>
+                </div>
+            </div>
+
+            <!-- DAMAGE REPORTING TAB -->
+            <div id="damageReporting" class="tab-content" style="display: none;">
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h2><i class="fas fa-exclamation-triangle"></i> Damage Reports</h2>
+                        <p>Track and manage damaged, lost, and items needing repair</p>
+                    </div>
+                </div>
+                <div class="damage-reporting-container">
+                    <div class="tools-header" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        <button class="btn btn-danger mb-3" data-bs-toggle="modal" data-bs-target="#addDamageReportModal"><i class="fas fa-plus"></i> File Damage Report</button>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="search-box"><i class="fas fa-search"></i>
+                                <input type="text" class="form-control" id="damageSearch" placeholder="Search damage reports..." onkeyup="filterDamageReports()">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="damageTypeFilter" onchange="filterDamageReports()">
+                                <option value="">All Types</option>
+                                <option value="Damaged">Damaged</option>
+                                <option value="For Repair">For Repair</option>
+                                <option value="Lost">Lost</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="damageStatusFilter" onchange="filterDamageReports()">
+                                <option value="">All Status</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Under Review">Under Review</option>
+                                <option value="Repaired">Repaired</option>
+                                <option value="Replaced">Replaced</option>
+                                <option value="Written Off">Written Off</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="damageReportsList"></div>
                 </div>
             </div>
 
@@ -554,6 +663,10 @@
                 <div class="modal-body">
                     <form id="borrowerForm">
                         <div class="mb-3"><label class="form-label">Tool *</label><select class="form-select" id="borrowerTool" required><option value="">Select a tool</option></select></div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3"><label class="form-label">Student ID / Barcode *</label><input type="text" class="form-control" id="borrowerStudentId" required placeholder="Scan or enter Student ID"></div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Email Address *</label><input type="email" class="form-control" id="borrowerEmail" required placeholder="student@email.com"></div>
+                        </div>
                         <div class="mb-3"><label class="form-label">Borrower Name *</label><input type="text" class="form-control" id="borrowerName" required></div>
                         <div class="row">
                             <div class="col-md-6 mb-3"><label class="form-label">Course *</label>
@@ -726,11 +839,134 @@
         </div>
     </div>
 
+    <!-- ADD DAMAGE REPORT MODAL -->
+    <div class="modal fade" id="addDamageReportModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626);"><h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> File Damage Report</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="damageReportForm">
+                        <div class="mb-3"><label class="form-label">Tool *</label><select class="form-select" id="damageTool" required><option value="">Select a tool</option></select></div>
+                        <div class="mb-3"><label class="form-label">Reported By *</label><input type="text" class="form-control" id="damageReportedBy" required></div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3"><label class="form-label">Damage Type *</label>
+                                <select class="form-select" id="damageType" required>
+                                    <option value="">Select Type</option><option value="Damaged">Damaged</option><option value="For Repair">For Repair</option><option value="Lost">Lost</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Severity *</label>
+                                <select class="form-select" id="damageSeverity" required>
+                                    <option value="Minor">Minor</option><option value="Moderate">Moderate</option><option value="Severe">Severe</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3"><label class="form-label">Description of Damage *</label><textarea class="form-control" id="damageDescription" rows="3" required placeholder="Describe the damage in detail..."></textarea></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="saveDamageReport()"><i class="fas fa-save"></i> Submit Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPDATE DAMAGE REPORT STATUS MODAL -->
+    <div class="modal fade" id="updateDamageStatusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><h5 class="modal-title"><i class="fas fa-edit"></i> Update Report Status</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="updateDamageForm">
+                        <input type="hidden" id="updateDamageId">
+                        <div class="mb-3"><label class="form-label">New Status *</label>
+                            <select class="form-select" id="updateDamageStatus" required>
+                                <option value="Pending">Pending</option><option value="Under Review">Under Review</option><option value="Repaired">Repaired</option><option value="Replaced">Replaced</option><option value="Written Off">Written Off</option>
+                            </select>
+                        </div>
+                        <div class="mb-3"><label class="form-label">Resolution Notes</label><textarea class="form-control" id="updateDamageNotes" rows="3" placeholder="Notes about the resolution..."></textarea></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateDamageReportStatus()"><i class="fas fa-save"></i> Update Status</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DELETE TOOL REASON MODAL -->
+    <div class="modal fade" id="deleteToolReasonModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626);"><h5 class="modal-title"><i class="fas fa-trash"></i> Remove Tool - Reason Required</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="deleteToolId">
+                    <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> You are about to remove a tool from the inventory. Please provide a reason.</div>
+                    <div class="mb-3"><label class="form-label">Tool Name</label><input type="text" class="form-control" id="deleteToolName" readonly></div>
+                    <div class="mb-3"><label class="form-label">Reason for Removal *</label>
+                        <select class="form-select" id="deleteToolReason" required>
+                            <option value="">Select a reason</option><option value="Damaged">Damaged</option><option value="For Repair">For Repair</option><option value="Lost">Lost</option>
+                        </select>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Additional Remarks</label><textarea class="form-control" id="deleteToolRemarks" rows="3" placeholder="Provide additional details..."></textarea></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="executeDeleteTool()"><i class="fas fa-trash"></i> Confirm Removal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RETURN REMARKS MODAL -->
+    <div class="modal fade" id="returnRemarksModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #10b981, #059669);"><h5 class="modal-title"><i class="fas fa-undo"></i> Return Item - Scan & Remarks</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="returnBorrowerId">
+                    <div class="mb-3"><label class="form-label">Borrower</label><input type="text" class="form-control" id="returnBorrowerName" readonly></div>
+                    <div class="mb-3"><label class="form-label">Tool</label><input type="text" class="form-control" id="returnToolName" readonly></div>
+                    <div class="mb-3"><label class="form-label">Scan Student ID / Barcode to Confirm Return *</label><input type="text" class="form-control" id="returnStudentIdScan" required placeholder="Scan the same Student ID / Barcode used during borrowing"></div>
+                    <div class="mb-3"><label class="form-label">Condition Upon Return *</label>
+                        <select class="form-select" id="returnCondition" required>
+                            <option value="Good Condition">Good Condition</option><option value="Damaged">Damaged</option><option value="Needs Repair">Needs Repair</option>
+                        </select>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Return Remarks / Comments *</label><textarea class="form-control" id="returnRemarks" rows="3" required placeholder="E.g., Item returned in good condition / Item has scratches on surface..."></textarea></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="executeReturnBorrower()"><i class="fas fa-check"></i> Confirm Return</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STUDENT ID SCANNER FOR RETURN -->
+    <div class="modal fade" id="scanReturnModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-id-card"></i> Scan Student ID to Return</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Scan or Enter Student ID / Barcode</label><input type="text" class="form-control form-control-lg" id="returnScanStudentId" placeholder="Scan Student ID barcode..." autofocus autocomplete="off"></div>
+                    <div id="returnScanResult" style="display:none;" class="mt-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="processReturnScan()"><i class="fas fa-search"></i> Find Borrowing</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.7.13/dist/quagga.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
