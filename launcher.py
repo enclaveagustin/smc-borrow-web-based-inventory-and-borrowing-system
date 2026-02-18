@@ -9,7 +9,17 @@ import sys
 import time
 import webbrowser
 import threading
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from pathlib import Path
+
+# Load environment variables from .env
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not installed, will use os.environ directly
 
 # Try to import Flask
 try:
@@ -236,6 +246,118 @@ def update_borrower(borrower_id):
 def health_check():
     """Health check endpoint"""
     return jsonify({'status': 'healthy'}), 200
+
+# ==================== EMAIL API ====================
+
+@app.route('/api/send-overdue-email', methods=['POST'])
+def send_overdue_email():
+    """Send overdue notification email via Gmail SMTP"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'message': 'No data provided'}), 400
+
+        to_email = data.get('to_email')
+        borrower_name = data.get('borrower_name', 'Student')
+        tool_name = data.get('tool_name', 'Borrowed Item')
+        student_id = data.get('student_id', 'N/A')
+        borrow_date = data.get('borrow_date', 'N/A')
+        return_date = data.get('return_date', 'N/A')
+        days_overdue = data.get('days_overdue', 0)
+
+        if not to_email:
+            return jsonify({'success': False, 'message': 'Recipient email is required'}), 400
+
+        # Get SMTP credentials from environment
+        sender_email = os.environ.get('EMAIL_SENDER', '')
+        app_password = os.environ.get('EMAIL_APP_PASSWORD', '')
+        smtp_host = os.environ.get('EMAIL_SMTP_HOST', 'smtp.gmail.com')
+        smtp_port = int(os.environ.get('EMAIL_SMTP_PORT', 587))
+
+        if not sender_email or not app_password:
+            return jsonify({'success': False, 'message': 'Email credentials not configured in .env file'}), 500
+
+        # Build the email
+        msg = MIMEMultipart('alternative')
+        msg['From'] = f'HulamKo Inventory System <{sender_email}>'
+        msg['To'] = to_email
+        msg['Subject'] = f'OVERDUE Notice - {tool_name} | HulamKo Inventory System'
+
+        # Plain text version
+        text_body = f"""Dear {borrower_name},
+
+This is to notify you that the item you borrowed is now OVERDUE.
+
+Details:
+  - Item: {tool_name}
+  - Student ID: {student_id}
+  - Borrow Date: {borrow_date}
+  - Expected Return Date: {return_date}
+  - Days Overdue: {days_overdue} day(s)
+
+Please return the item immediately to avoid further penalties.
+
+Thank you,
+HulamKo Inventory System
+St. Mary's College of Tagum, Inc.
+"""
+
+        # HTML version
+        html_body = f"""
+        <html>
+        <body style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                <div style="background: linear-gradient(135deg, #dc3545, #c82333); padding: 30px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">⚠️ OVERDUE NOTICE</h1>
+                    <p style="color: #f8d7da; margin: 8px 0 0 0; font-size: 14px;">HulamKo Inventory System</p>
+                </div>
+                <div style="padding: 30px;">
+                    <p style="font-size: 16px; color: #333;">Dear <strong>{borrower_name}</strong>,</p>
+                    <p style="font-size: 14px; color: #555; line-height: 1.6;">This is to notify you that the item you borrowed is now <strong style="color: #dc3545;">OVERDUE</strong>. Please return it immediately to avoid further penalties.</p>
+                    <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                        <h3 style="margin: 0 0 12px 0; color: #856404; font-size: 16px;">📋 Borrowing Details</h3>
+                        <table style="width: 100%; font-size: 14px; color: #333;">
+                            <tr><td style="padding: 6px 0; font-weight: 600;">Item:</td><td style="padding: 6px 0;">{tool_name}</td></tr>
+                            <tr><td style="padding: 6px 0; font-weight: 600;">Student ID:</td><td style="padding: 6px 0;">{student_id}</td></tr>
+                            <tr><td style="padding: 6px 0; font-weight: 600;">Borrow Date:</td><td style="padding: 6px 0;">{borrow_date}</td></tr>
+                            <tr><td style="padding: 6px 0; font-weight: 600;">Expected Return:</td><td style="padding: 6px 0;">{return_date}</td></tr>
+                            <tr><td style="padding: 6px 0; font-weight: 600; color: #dc3545;">Days Overdue:</td><td style="padding: 6px 0; color: #dc3545; font-weight: bold; font-size: 18px;">{days_overdue} day(s)</td></tr>
+                        </table>
+                    </div>
+                    <p style="font-size: 14px; color: #555; line-height: 1.6;">Please return the item to the <strong>Office of the Property Custodian</strong> at your earliest convenience.</p>
+                </div>
+                <div style="background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #dee2e6;">
+                    <p style="font-size: 12px; color: #6c757d; margin: 0;">St. Mary's College of Tagum, Inc.</p>
+                    <p style="font-size: 11px; color: #adb5bd; margin: 4px 0 0 0;">This is an automated message from HulamKo Inventory System</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        msg.attach(MIMEText(text_body, 'plain'))
+        msg.attach(MIMEText(html_body, 'html'))
+
+        # Send the email via SMTP
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(sender_email, app_password)
+            server.sendmail(sender_email, to_email, msg.as_string())
+
+        print(f'  ✉ Overdue email sent to {to_email} for "{tool_name}"')
+        return jsonify({'success': True, 'message': f'Overdue notification sent to {to_email}'}), 200
+
+    except smtplib.SMTPAuthenticationError:
+        print(f'  ✗ SMTP Auth Error - Check EMAIL_APP_PASSWORD in .env')
+        return jsonify({'success': False, 'message': 'Email authentication failed. Check App Password in .env'}), 500
+    except smtplib.SMTPException as e:
+        print(f'  ✗ SMTP Error: {str(e)}')
+        return jsonify({'success': False, 'message': f'SMTP error: {str(e)}'}), 500
+    except Exception as e:
+        print(f'  ✗ Email Error: {str(e)}')
+        return jsonify({'success': False, 'message': f'Failed to send email: {str(e)}'}), 500
 
 # ==================== ERROR HANDLERS ====================
 

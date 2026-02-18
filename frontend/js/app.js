@@ -2023,29 +2023,40 @@ function sendOverdueEmail(borrowerId) {
     }
     const tool = appState.allTools.find(t => t.id === borrower.tool_id);
     const overdueDays = calculateOverdueDays(borrower.return_date);
-    const subject = encodeURIComponent(`OVERDUE Notice - ${tool?.name || 'Borrowed Item'}`);
-    const body = encodeURIComponent(
-        `Dear ${borrower.borrower_name},\n\n` +
-        `This is to notify you that the item you borrowed is now OVERDUE.\n\n` +
-        `Details:\n` +
-        `- Item: ${tool?.name || 'Unknown'}\n` +
-        `- Student ID: ${borrower.student_id || 'N/A'}\n` +
-        `- Borrow Date: ${new Date(borrower.borrow_date).toLocaleDateString()}\n` +
-        `- Expected Return Date: ${new Date(borrower.return_date).toLocaleDateString()}\n` +
-        `- Days Overdue: ${overdueDays} day(s)\n\n` +
-        `Please return the item immediately to avoid further penalties.\n\n` +
-        `Thank you,\nHulamKo Inventory System\nSt. Mary's College of Tagum, Inc.`
-    );
 
-    // Open mailto link
-    window.open(`mailto:${borrower.email}?subject=${subject}&body=${body}`, '_blank');
+    const loadingId = showLoadingState('Sending overdue notification...');
 
-    // Mark as notified
-    borrower.overdue_notified = true;
-    addActivity(`Overdue email notification sent to ${borrower.borrower_name} (${borrower.email})`);
-    saveApplicationState();
-    showAlert(`Overdue notification prepared for ${borrower.email}. Your email client should open.`, 'success');
-    renderBorrowers();
+    fetch('/api/send-overdue-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            to_email: borrower.email,
+            borrower_name: borrower.borrower_name,
+            tool_name: tool?.name || 'Unknown Item',
+            student_id: borrower.student_id || 'N/A',
+            borrow_date: new Date(borrower.borrow_date).toLocaleDateString(),
+            return_date: new Date(borrower.return_date).toLocaleDateString(),
+            days_overdue: overdueDays
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        hideLoadingState(loadingId);
+        if (data.success) {
+            borrower.overdue_notified = true;
+            addActivity(`Overdue email sent to ${borrower.borrower_name} (${borrower.email})`);
+            saveApplicationState();
+            showAlert(`Overdue notification sent to ${borrower.email}!`, 'success');
+            renderBorrowers();
+        } else {
+            showAlert(`Failed to send email: ${data.message}`, 'danger');
+        }
+    })
+    .catch(err => {
+        hideLoadingState(loadingId);
+        showAlert('Failed to send email. Check server console for details.', 'danger');
+        console.error('Email send error:', err);
+    });
 }
 
 // ==================== STUDENT ID SCANNER ====================
