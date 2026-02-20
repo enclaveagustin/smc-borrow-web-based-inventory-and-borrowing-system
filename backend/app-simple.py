@@ -1,5 +1,5 @@
 """
-HulamKo Backend - Simplified Flask API (No Database Required)
+SMC-Borrow Backend - Simplified Flask API (No Database Required)
 Handles API operations with in-memory data storage
 """
 
@@ -21,8 +21,8 @@ tools_db = [
 borrowers_db = []
 
 users_db = [
-    {'id': 1, 'name': 'Admin', 'email': 'admin@hulam.ko', 'username': 'admin', 'role': 'Admin'},
-    {'id': 2, 'name': 'Teacher One', 'email': 'teacher1@hulam.ko', 'username': 'teacher1', 'role': 'Teacher'}
+    {'id': 1, 'name': 'Admin', 'email': 'admin@smcborrow.com', 'username': 'admin', 'role': 'Admin'},
+    {'id': 2, 'name': 'Teacher One', 'email': 'teacher1@smcborrow.com', 'username': 'teacher1', 'role': 'Teacher'}
 ]
 
 activity_log = []
@@ -293,7 +293,7 @@ def health():
     """Health check endpoint"""
     return jsonify({
         'status': 'ok',
-        'message': 'HulamKo Backend API is running',
+        'message': 'SMC-Borrow Backend API is running',
         'timestamp': datetime.now().isoformat()
     }), 200
 
@@ -309,7 +309,7 @@ def internal_error(error):
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("🚀 HulamKo Backend API Starting...")
+    print("🚀 SMC-Borrow Backend API Starting...")
     print("=" * 60)
     print("✅ API Base URL: http://localhost:5000/api")
     print("✅ Health Check: http://localhost:5000/api/health")

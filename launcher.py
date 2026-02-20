@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-HulamKo - Production Launcher
+SMC-Borrow - Production Launcher
 Serves the frontend and backend together as a standalone application
 """
 
@@ -40,18 +40,18 @@ FRONTEND_DIR = BASE_DIR / 'frontend'
 
 # In-memory data storage (same as app-simple.py)
 tools_db = [
-    {'id': 1, 'name': 'KEYBOARD', 'brand': 'A4TECH', 'quantity': 41, 'category': 'Computer Equipments', 'description': 'KEYBOARD A4TECH USB A-SHAPE', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2023-06-15', 'condition': 'Good Condition', 'assetCode': 'HK-CE-001', 'previousQty': 41, 'actionSincePrev': ''},
-    {'id': 2, 'name': 'MOUSE', 'brand': 'A4TECH', 'quantity': 41, 'category': 'Computer Equipments', 'description': 'MOUSE A4TECH USB A-SHAPE', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2023-06-15', 'condition': 'Good Condition', 'assetCode': 'HK-CE-002', 'previousQty': 41, 'actionSincePrev': ''},
-    {'id': 3, 'name': 'MONITOR', 'brand': 'ACER', 'quantity': 32, 'category': 'Computer Equipments', 'description': '21.5" LED VGA+HDMI 75hz MONITOR ACER', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2023-08-20', 'condition': 'Good Condition', 'assetCode': 'HK-CE-003', 'previousQty': 32, 'actionSincePrev': ''},
-    {'id': 4, 'name': 'AVR', 'brand': 'GENERIC', 'quantity': 41, 'category': 'Computer Equipments', 'description': 'GENERIC 500WATTS SECURE AVR', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2023-02-14', 'condition': 'Good Condition', 'assetCode': 'HK-CE-006', 'previousQty': 41, 'actionSincePrev': ''},
-    {'id': 5, 'name': 'CHAIR', 'brand': 'N/A', 'quantity': 36, 'category': 'Furniture and Fixture', 'description': 'MONOBLOC WHITE', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2019-05-15', 'condition': 'Needs Repair', 'assetCode': 'HK-FF-011', 'previousQty': 36, 'actionSincePrev': 'Transferred'},
-    {'id': 6, 'name': 'CRUCIFIX', 'brand': 'N/A', 'quantity': 1, 'category': 'Sacred Images and Chapel', 'description': 'CRUCIFIX', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2019-01-20', 'condition': 'Good Condition', 'assetCode': 'HK-SC-015', 'previousQty': 1, 'actionSincePrev': ''}
+    {'id': 1, 'name': 'KEYBOARD', 'brand': 'A4TECH', 'quantity': 41, 'category': 'Computer Equipments', 'description': 'KEYBOARD A4TECH USB A-SHAPE', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2023-06-15', 'condition': 'Good Condition', 'assetCode': 'SMC-CE-001', 'previousQty': 41, 'actionSincePrev': ''},
+    {'id': 2, 'name': 'MOUSE', 'brand': 'A4TECH', 'quantity': 41, 'category': 'Computer Equipments', 'description': 'MOUSE A4TECH USB A-SHAPE', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2023-06-15', 'condition': 'Good Condition', 'assetCode': 'SMC-CE-002', 'previousQty': 41, 'actionSincePrev': ''},
+    {'id': 3, 'name': 'MONITOR', 'brand': 'ACER', 'quantity': 32, 'category': 'Computer Equipments', 'description': '21.5" LED VGA+HDMI 75hz MONITOR ACER', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2023-08-20', 'condition': 'Good Condition', 'assetCode': 'SMC-CE-003', 'previousQty': 32, 'actionSincePrev': ''},
+    {'id': 4, 'name': 'AVR', 'brand': 'GENERIC', 'quantity': 41, 'category': 'Computer Equipments', 'description': 'GENERIC 500WATTS SECURE AVR', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2023-02-14', 'condition': 'Good Condition', 'assetCode': 'SMC-CE-006', 'previousQty': 41, 'actionSincePrev': ''},
+    {'id': 5, 'name': 'CHAIR', 'brand': 'N/A', 'quantity': 36, 'category': 'Furniture and Fixture', 'description': 'MONOBLOC WHITE', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2019-05-15', 'condition': 'Needs Repair', 'assetCode': 'SMC-FF-011', 'previousQty': 36, 'actionSincePrev': 'Transferred'},
+    {'id': 6, 'name': 'CRUCIFIX', 'brand': 'N/A', 'quantity': 1, 'category': 'Sacred Images and Chapel', 'description': 'CRUCIFIX', 'location': 'CALL LAB RM. 116', 'yearAcquired': '2019-01-20', 'condition': 'Good Condition', 'assetCode': 'SMC-SC-015', 'previousQty': 1, 'actionSincePrev': ''}
 ]
 
 borrowers_db = []
 users_db = [
-    {'id': 1, 'name': 'Admin', 'email': 'admin@hulamko.com', 'username': 'admin', 'role': 'Admin'},
-    {'id': 2, 'name': 'Teacher One', 'email': 'teacher1@hulamko.com', 'username': 'teacher1', 'role': 'Teacher'}
+    {'id': 1, 'name': 'Admin', 'email': 'admin@smcborrow.com', 'username': 'admin', 'role': 'Admin'},
+    {'id': 2, 'name': 'Teacher One', 'email': 'teacher1@smcborrow.com', 'username': 'teacher1', 'role': 'Teacher'}
 ]
 activity_log = []
 
@@ -279,9 +279,9 @@ def send_overdue_email():
 
         # Build the email
         msg = MIMEMultipart('alternative')
-        msg['From'] = f'HulamKo Inventory System <{sender_email}>'
+        msg['From'] = f'SMC-Borrow Inventory System <{sender_email}>'
         msg['To'] = to_email
-        msg['Subject'] = f'OVERDUE Notice - {tool_name} | HulamKo Inventory System'
+        msg['Subject'] = f'OVERDUE Notice - {tool_name} | SMC-Borrow Inventory System'
 
         # Plain text version
         text_body = f"""Dear {borrower_name},
@@ -298,7 +298,7 @@ Details:
 Please return the item immediately to avoid further penalties.
 
 Thank you,
-HulamKo Inventory System
+SMC-Borrow Inventory System
 St. Mary's College of Tagum, Inc.
 """
 
@@ -309,7 +309,7 @@ St. Mary's College of Tagum, Inc.
             <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
                 <div style="background: linear-gradient(135deg, #dc3545, #c82333); padding: 30px; text-align: center;">
                     <h1 style="color: #ffffff; margin: 0; font-size: 24px;">⚠️ OVERDUE NOTICE</h1>
-                    <p style="color: #f8d7da; margin: 8px 0 0 0; font-size: 14px;">HulamKo Inventory System</p>
+                    <p style="color: #f8d7da; margin: 8px 0 0 0; font-size: 14px;">SMC-Borrow Inventory System</p>
                 </div>
                 <div style="padding: 30px;">
                     <p style="font-size: 16px; color: #333;">Dear <strong>{borrower_name}</strong>,</p>
@@ -328,7 +328,7 @@ St. Mary's College of Tagum, Inc.
                 </div>
                 <div style="background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #dee2e6;">
                     <p style="font-size: 12px; color: #6c757d; margin: 0;">St. Mary's College of Tagum, Inc.</p>
-                    <p style="font-size: 11px; color: #adb5bd; margin: 4px 0 0 0;">This is an automated message from HulamKo Inventory System</p>
+                    <p style="font-size: 11px; color: #adb5bd; margin: 4px 0 0 0;">This is an automated message from SMC-Borrow Inventory System</p>
                 </div>
             </div>
         </body>
@@ -377,7 +377,7 @@ def server_error(error):
 def start_server(port=5000):
     """Start the Flask development server"""
     print(f"\n{'='*60}")
-    print("  HulamKo - Starting Application Server")
+    print("  SMC-Borrow - Starting Application Server")
     print(f"{'='*60}\n")
     
     print(f"  ✓ Frontend: {FRONTEND_DIR}")

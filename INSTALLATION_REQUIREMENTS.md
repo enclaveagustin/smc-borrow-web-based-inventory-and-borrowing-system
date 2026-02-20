@@ -1,6 +1,6 @@
-# 📋 HulamKo — Installation Requirements & Setup Guide
+# 📋 SMC-Borrow — Installation Requirements & Setup Guide
 
-> **SMCTI Equipment & Tools Inventory and Lending Management System**
+> **SMCTI Equipment & Tools Web-Based Inventory and Borrowing System**
 
 ---
 
@@ -92,14 +92,14 @@ These are installed automatically by `setup.bat` or manually via `pip install`:
    - Download from [python.org](https://www.python.org/downloads/)
    - **Check** ✅ "Add Python to PATH" during installation
 
-2. **Download or Clone HulamKo**
+2. **Download or Clone SMC-Borrow**
    ```
-   git clone https://github.com/enclaveagustin/HulamKo.git
+   git clone https://github.com/enclaveagustin/SMC-Borrow.git
    ```
    Or download and extract the ZIP file.
 
 3. **Run the Setup Script**
-   - Double-click `setup.bat` in the HulamKo folder
+   - Double-click `setup.bat` in the SMC-Borrow folder
    - It will:
      - Create a Python virtual environment (`.venv`)
      - Install all required Python packages
@@ -110,7 +110,7 @@ These are installed automatically by `setup.bat` or manually via `pip install`:
 
 #### Option B — Manual Setup
 
-1. **Open Command Prompt** in the HulamKo folder
+1. **Open Command Prompt** in the SMC-Borrow folder
 
 2. **Create Virtual Environment:**
    ```cmd
@@ -138,8 +138,8 @@ These are installed automatically by `setup.bat` or manually via `pip install`:
 brew install python3
 
 # 2. Clone the repository
-git clone https://github.com/enclaveagustin/HulamKo.git
-cd HulamKo
+git clone https://github.com/enclaveagustin/SMC-Borrow.git
+cd SMC-Borrow
 
 # 3. Create virtual environment
 python3 -m venv .venv
@@ -162,8 +162,8 @@ sudo apt update
 sudo apt install python3 python3-pip python3-venv
 
 # 2. Clone the repository
-git clone https://github.com/enclaveagustin/HulamKo.git
-cd HulamKo
+git clone https://github.com/enclaveagustin/SMC-Borrow.git
+cd SMC-Borrow
 
 # 3. Create virtual environment
 python3 -m venv .venv
@@ -225,7 +225,7 @@ The server starts on **port 5000**. Open your browser to:
 ## 📁 Project Structure
 
 ```
-HulamKo/
+SMC-Borrow/
 ├── launcher.py                  # Main application entry point (Flask server)
 ├── setup.bat                    # Automated Windows setup script
 ├── setup.py                     # Python package setup
@@ -413,7 +413,7 @@ pip install -r backend/requirements.txt
 Use this checklist to verify your installation:
 
 - [ ] Python 3.7+ installed (`python --version`)
-- [ ] HulamKo folder downloaded/cloned
+- [ ] SMC-Borrow folder downloaded/cloned
 - [ ] Virtual environment created (`.venv` folder exists)
 - [ ] Dependencies installed (`pip install -r backend/requirements.txt`)
 - [ ] `python launcher.py` runs without errors
@@ -459,6 +459,6 @@ netstat -ano | findstr :5000
 
 ---
 
-**HulamKo v2.0 — SMCTI Inventory & Lending Management System**
+**SMC-Borrow v2.0 — SMCTI Web-Based Inventory and Borrowing System**
 
 For usage instructions and feature documentation, see **README.md**.

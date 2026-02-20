@@ -1,9 +1,9 @@
--- HulamKo Database Schema
+-- SMC-Borrow Database Schema
 -- MySQL Database Setup
 
 -- Create Database
-CREATE DATABASE IF NOT EXISTS hulam_ko;
-USE hulam_ko;
+CREATE DATABASE IF NOT EXISTS smc_borrow;
+USE smc_borrow;
 
 -- Users Table
 CREATE TABLE IF NOT EXISTS users (
@@ -127,17 +127,17 @@ CREATE TABLE IF NOT EXISTS activity_log (
 
 -- Create default admin user (username: admin, password: admin123)
 INSERT IGNORE INTO users (username, password, email, full_name, role)
-VALUES ('admin', '$2b$12$...(hashed admin123)', 'admin@hulam-ko.local', 'Administrator', 'admin');
+VALUES ('admin', '$2b$12$...(hashed admin123)', 'admin@smc-borrow.local', 'Administrator', 'admin');
 
 -- Create some sample tools
 INSERT IGNORE INTO tools (name, brand, description, category, location, quantity, available_qty, `condition`, year_acquired, asset_code, previous_qty, action_since_prev)
 VALUES 
-    ('KEYBOARD', 'A4TECH', 'KEYBOARD A4TECH USB A-SHAPE', 'Computer Equipments', 'CALL LAB RM. 116', 41, 41, 'Good Condition', '2023-06-15', 'HK-CE-001', 41, NULL),
-    ('MOUSE', 'A4TECH', 'MOUSE A4TECH USB A-SHAPE', 'Computer Equipments', 'CALL LAB RM. 116', 41, 41, 'Good Condition', '2023-06-15', 'HK-CE-002', 41, NULL),
-    ('MONITOR', 'ACER', '21.5" LED VGA+HDMI 75hz MONITOR ACER', 'Computer Equipments', 'CALL LAB RM. 116', 32, 32, 'Good Condition', '2023-08-20', 'HK-CE-003', 32, NULL),
-    ('SYSTEM UNIT', 'CIVO', 'CIVO CASE H002 MICRO ATX', 'Computer Equipments', 'CALL LAB RM. 116', 41, 41, 'Good Condition', '2023-09-01', 'HK-CE-007', 41, NULL),
-    ('CHAIR', 'N/A', 'MONOBLOC WHITE', 'Furniture and Fixture', 'CALL LAB RM. 116', 36, 36, 'Needs Repair', '2019-05-15', 'HK-FF-011', 36, 'Transferred'),
-    ('CRUCIFIX', 'N/A', 'CRUCIFIX', 'Sacred Images and Chapel', 'CALL LAB RM. 116', 1, 1, 'Good Condition', '2019-01-20', 'HK-SC-015', 1, NULL);
+    ('KEYBOARD', 'A4TECH', 'KEYBOARD A4TECH USB A-SHAPE', 'Computer Equipments', 'CALL LAB RM. 116', 41, 41, 'Good Condition', '2023-06-15', 'SMC-CE-001', 41, NULL),
+    ('MOUSE', 'A4TECH', 'MOUSE A4TECH USB A-SHAPE', 'Computer Equipments', 'CALL LAB RM. 116', 41, 41, 'Good Condition', '2023-06-15', 'SMC-CE-002', 41, NULL),
+    ('MONITOR', 'ACER', '21.5" LED VGA+HDMI 75hz MONITOR ACER', 'Computer Equipments', 'CALL LAB RM. 116', 32, 32, 'Good Condition', '2023-08-20', 'SMC-CE-003', 32, NULL),
+    ('SYSTEM UNIT', 'CIVO', 'CIVO CASE H002 MICRO ATX', 'Computer Equipments', 'CALL LAB RM. 116', 41, 41, 'Good Condition', '2023-09-01', 'SMC-CE-007', 41, NULL),
+    ('CHAIR', 'N/A', 'MONOBLOC WHITE', 'Furniture and Fixture', 'CALL LAB RM. 116', 36, 36, 'Needs Repair', '2019-05-15', 'SMC-FF-011', 36, 'Transferred'),
+    ('CRUCIFIX', 'N/A', 'CRUCIFIX', 'Sacred Images and Chapel', 'CALL LAB RM. 116', 1, 1, 'Good Condition', '2019-01-20', 'SMC-SC-015', 1, NULL);
 
 -- Create indexes for better query performance
 CREATE INDEX idx_tools_created ON tools(created_date);

@@ -1,4 +1,4 @@
-// HulamKo Enhanced Application v3.0 - Main JavaScript
+// SMC-Borrow Enhanced Application v3.0 - Main JavaScript
 // Features: DateTime display, Defective tools, Categories/Locations, Year Acquired,
 // Asset Code, Excel Import, Overdue adjustment, User CRUD, Inventory Reporting, Word Export
 
@@ -48,7 +48,7 @@ function generateAssetCode() {
 }
 
 function generateAssetCodeValue() {
-    const prefix = 'HK';
+    const prefix = 'SMC';
     const timestamp = Date.now().toString(36).toUpperCase();
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     return `${prefix}-${timestamp}-${random}`;
@@ -56,7 +56,7 @@ function generateAssetCodeValue() {
 
 // ==================== INITIALIZE ====================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('HulamKo Application v3.0 Initializing...');
+    console.log('SMC-Borrow Application v3.0 Initializing...');
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser && savedUser.trim() !== '') {
         appState.isLoggedIn = true;
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setupAutosave();
         startDateTimeClock();
         initReportYearFilter();
-        console.log('HulamKo Ready!');
+        console.log('SMC-Borrow Ready!');
     } else {
         showLoginPage();
         // Enter-key login support (before setupEventListeners which runs post-login)
@@ -119,10 +119,10 @@ function handleLogin() {
         const password = document.getElementById('loginPassword').value.trim();
         if (!email || !password) { showAlert('Please enter both email and password', 'warning'); return; }
         if (!email.includes('@')) { showAlert('Please enter a valid email address', 'warning'); return; }
-        const validEmail = 'admin@hulamko.com';
+        const validEmail = 'admin@smcborrow.com';
         const validPassword = 'password123';
         if (email !== validEmail || password !== validPassword) {
-            showAlert('Invalid email or password. Use admin@hulamko.com / password123', 'danger');
+            showAlert('Invalid email or password. Use admin@smcborrow.com / password123', 'danger');
             return;
         }
         appState.isLoggedIn = true;
@@ -1492,7 +1492,7 @@ function exportData() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `hulam-ko-data-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `smc-borrow-data-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
     showAlert('Data exported successfully', 'success');

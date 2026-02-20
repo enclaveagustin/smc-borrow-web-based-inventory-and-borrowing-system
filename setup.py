@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-HulamKo - Automated Setup & Launch Script
+SMC-Borrow - Automated Setup & Launch Script
 Sets up the environment and starts both frontend and backend servers
 """
 

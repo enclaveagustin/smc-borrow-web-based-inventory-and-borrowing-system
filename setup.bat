@@ -1,6 +1,6 @@
 @echo off
 REM ============================================
-REM HulamKo - Automated Setup & Launch Script
+REM SMC-Borrow - Automated Setup & Launch Script
 REM ============================================
 REM This script sets up the environment and starts both the frontend and backend servers
 REM Usage: setup.bat [production]
@@ -24,7 +24,7 @@ if not "%1"=="" (
 
 echo.
 echo ===================================
-echo    HulamKo Setup ^& Launch
+echo    SMC-Borrow Setup ^& Launch
 echo    Mode: %MODE%
 echo ===================================
 echo.
@@ -106,14 +106,14 @@ echo Servers are starting. Please wait...
 echo.
 
 REM Start frontend HTTP server in a new window
-start "HulamKo Frontend Server (%MODE%)" cmd /k cd /d "%SCRIPT_DIR%frontend" ^& python -m http.server 8080
+start "SMC-Borrow Frontend Server (%MODE%)" cmd /k cd /d "%SCRIPT_DIR%frontend" ^& python -m http.server 8080
 
 REM Wait a moment for frontend to start
 timeout /t 2 /nobreak
 
 REM Start backend server in a new window if requirements were met
 if exist "backend\app-simple.py" (
-    start "HulamKo Backend Server (%mode%)" cmd /k cd /d "%SCRIPT_DIR%backend" ^& python app-simple.py
+    start "SMC-Borrow Backend Server (%mode%)" cmd /k cd /d "%SCRIPT_DIR%backend" ^& python app-simple.py
 )
 
 REM Give servers time to start
@@ -123,7 +123,7 @@ REM Open the application in default browser
 echo.
 echo Launching application in your browser...
 echo Default Credentials:
-echo   Email: admin@hulamko.com
+echo   Email: admin@smcborrow.com
 echo   Password: password123
 echo.
 timeout /t 1 /nobreak

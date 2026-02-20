@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-HulamKo Production Build Script
+SMC-Borrow Production Build Script
 Builds a standalone .exe file using PyInstaller
 """
 
@@ -56,7 +56,7 @@ def build_exe():
             "--onefile",  # Single executable file
             "--windowed",  # No console window
             "--name",
-            "HulamKo",
+            "SMC-Borrow",
             "--add-data",
             f"{script_dir / 'frontend'}{os.pathsep}frontend",  # Include frontend files
             "--add-data",
@@ -100,10 +100,10 @@ def package_distribution():
     release_dir.mkdir(parents=True, exist_ok=True)
     
     # Copy the executable
-    exe_file = dist_dir / "HulamKo.exe"
+    exe_file = dist_dir / "SMC-Borrow.exe"
     if exe_file.exists():
-        shutil.copy(exe_file, release_dir / "HulamKo.exe")
-        print(f"✓ Executable copied to: {release_dir / 'HulamKo.exe'}")
+        shutil.copy(exe_file, release_dir / "SMC-Borrow.exe")
+        print(f"✓ Executable copied to: {release_dir / 'SMC-Borrow.exe'}")
     else:
         print("✗ Executable not found in dist directory")
         return False
@@ -130,7 +130,7 @@ def cleanup_build_files():
         print("✓ Removed build directory")
     
     # Remove .spec file (we can keep it if we want)
-    spec_file = script_dir / "HulamKo.spec"
+    spec_file = script_dir / "SMC-Borrow.spec"
     if spec_file.exists():
         spec_file.unlink()
         print("✓ Removed spec file")
@@ -138,7 +138,7 @@ def cleanup_build_files():
 def main():
     """Main build process"""
     print("\n" + "=" * 60)
-    print("  HulamKo Production Build")
+    print("  SMC-Borrow Production Build")
     print("=" * 60)
     
     # Step 1: Check PyInstaller
@@ -163,11 +163,11 @@ def main():
     print("\n" + "=" * 60)
     print("  BUILD COMPLETE!")
     print("=" * 60)
-    print("\nYour executable is ready at: release/HulamKo.exe")
+    print("\nYour executable is ready at: release/SMC-Borrow.exe")
     print("\nTo run the application:")
     print("  1. Navigate to the 'release' folder")
-    print("  2. Double-click 'HulamKo.exe'")
-    print("  3. Your browser will open with the HulamKo application")
+    print("  2. Double-click 'SMC-Borrow.exe'")
+    print("  3. Your browser will open with the SMC-Borrow application")
     
     return True
 

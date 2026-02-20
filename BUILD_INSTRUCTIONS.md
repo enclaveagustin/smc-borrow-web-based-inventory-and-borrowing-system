@@ -1,6 +1,6 @@
-# HulamKo Production Build Guide
+# SMC-Borrow Production Build Guide
 
-This guide explains how to build HulamKo as a standalone Windows executable (.exe) file for production deployment.
+This guide explains how to build SMC-Borrow as a standalone Windows executable (.exe) file for production deployment.
 
 ## Prerequisites
 
@@ -20,9 +20,9 @@ If you haven't already:
 ### Step 2: Prepare the Build Environment
 
 1. Open Command Prompt or PowerShell
-2. Navigate to the HulamKo project folder:
+2. Navigate to the SMC-Borrow project folder:
    ```
-   cd C:\path\to\HulamKo
+   cd C:\path\to\SMC-Borrow
    ```
 
 3. Install required dependencies:
@@ -51,13 +51,13 @@ The script will:
 If the script doesn't work, you can build manually:
 
 ```
-pyinstaller --onefile --windowed --name HulamKo --add-data "frontend;frontend" --add-data "database;database" --hidden-import=flask --hidden-import=flask_cors --collect-all=flask launcher.py
+pyinstaller --onefile --windowed --name SMC-Borrow --add-data "frontend;frontend" --add-data "database;database" --hidden-import=flask --hidden-import=flask_cors --collect-all=flask launcher.py
 ```
 
-After building, copy the `dist/HulamKo.exe` file to a folder with the other files:
+After building, copy the `dist/SMC-Borrow.exe` file to a folder with the other files:
 
 ```
-copy dist\HulamKo.exe release\HulamKo.exe
+copy dist\SMC-Borrow.exe release\SMC-Borrow.exe
 copy README.md release\README.md
 copy INSTALLATION.md release\INSTALLATION.md
 ```
@@ -66,11 +66,11 @@ copy INSTALLATION.md release\INSTALLATION.md
 
 ### First Run
 1. Navigate to the `release` folder
-2. Double-click `HulamKo.exe`
-3. Your default browser will automatically open with the HulamKo application
+2. Double-click `SMC-Borrow.exe`
+3. Your default browser will automatically open with the SMC-Borrow application
 
 ### Subsequent Runs
-Simply double-click `HulamKo.exe` anytime you want to use the application.
+Simply double-click `SMC-Borrow.exe` anytime you want to use the application.
 
 ## What's Included in the Executable
 
@@ -107,7 +107,7 @@ The `.exe` file includes:
 - The Flask server starts automatically inside the .exe
 - Try manually opening browser to: `http://localhost:5000`
 - Install PyInstaller: `pip install pyinstaller`
-- Make sure you're in the HulamKo project directory
+- Make sure you're in the SMC-Borrow project directory
 
 ### Executable won't start
 - Check that all frontend files are present in the build
@@ -120,15 +120,15 @@ The `.exe` file includes:
 
 ## Distribution
 
-To distribute the HulamKo application:
+To distribute the SMC-Borrow application:
 
 1. Navigate to the `release` folder
-2. Copy all files (HulamKo.exe, README.md, INSTALLATION.md)
+2. Copy all files (SMC-Borrow.exe, README.md, INSTALLATION.md)
 3. Distribute to end users
 
 Users only need to:
 1. Extract the files
-2. Double-click `HulamKo.exe`
+2. Double-click `SMC-Borrow.exe`
 3. Use the application
 
 ## File Sizes
@@ -143,7 +143,7 @@ Users only need to:
 To create a smaller executable, exclude unnecessary files:
 
 ```
-pyinstaller --onefile --windowed --name HulamKo --optimize=2 launcher.py
+pyinstaller --onefile --windowed --name SMC-Borrow --optimize=2 launcher.py
 ```
 
 ### Add Application Icon
@@ -151,7 +151,7 @@ pyinstaller --onefile --windowed --name HulamKo --optimize=2 launcher.py
 Create a custom `.ico` file and use:
 
 ```
-pyinstaller --onefile --windowed --name HulamKo --icon=myicon.ico launcher.py
+pyinstaller --onefile --windowed --name SMC-Borrow --icon=myicon.ico launcher.py
 ```
 
 ### Create an Installer
@@ -172,7 +172,7 @@ If you encounter issues:
 
 ## Version Information
 
-- HulamKo Version: 2.0
+- SMC-Borrow Version: 2.0
 - Build System: PyInstaller 5.x
 - Target: Windows 7+
 - Recommended: Windows 10 or later

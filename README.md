@@ -1,4 +1,4 @@
-# HulamKo - Inventory & Lending Management System
+# SMC-Borrow: Web-Based Inventory and Borrowing System
 
 A modern, professional web-based inventory and tool lending management system built for **ST. MARY'S COLLEGE OF TAGUM, INC. (SMCTI)**. Designed to manage equipment tracking, generate official SMCTI inventory reports, and export Word documents matching the school's official Inventory Form format.
 
@@ -8,7 +8,7 @@ A modern, professional web-based inventory and tool lending management system bu
 
 **Default Login Credentials:**
 ```
-Email: admin@hulamko.com
+Email: admin@smcborrow.com
 Password: password123
 ```
 
@@ -83,7 +83,7 @@ The application runs at **http://localhost:5000** and opens your browser automat
 ## 📁 Project Structure
 
 ```
-HulamKo/
+SMC-Borrow/
 ├── launcher.py              # Flask backend (port 5000)
 ├── setup.bat                # Windows quick start
 ├── setup.py                 # Python setup script
@@ -132,8 +132,8 @@ HulamKo/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/enclaveagustin/HulamKo.git
-cd HulamKo
+git clone https://github.com/enclaveagustin/SMC-Borrow.git
+cd SMC-Borrow
 
 # 2. Create virtual environment
 python -m venv .venv
@@ -252,7 +252,7 @@ A **sample file** is included: `sample_import.xlsx` (20 items matching SMCTI CAL
 ## 🆘 Troubleshooting
 
 ### Can't Login?
-- Use exactly: `admin@hulamko.com` / `password123`
+- Use exactly: `admin@smcborrow.com` / `password123`
 - No extra spaces in email or password
 - Press **Enter** after typing password to submit
 
