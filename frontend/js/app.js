@@ -1329,30 +1329,157 @@ function confirmReturn(borrowerId) {
     const borrower = appState.allBorrowers.find(b => b.id === borrowerId);
     if (!borrower) return;
     const tool = appState.allTools.find(t => t.id === borrower.tool_id);
+    
+    // Reset modal to step 1
+    document.getElementById('returnStep1').style.display = 'block';
+    document.getElementById('returnStep2').style.display = 'none';
+    document.getElementById('returnProceedBtn').style.display = 'inline-block';
+    document.getElementById('returnBackBtn').style.display = 'none';
+    
+    // Set values
     document.getElementById('returnBorrowerId').value = borrower.id;
+    document.getElementById('returnStudentIdExpected').value = borrower.student_id || '';
     document.getElementById('returnBorrowerName').value = borrower.borrower_name;
     document.getElementById('returnToolName').value = tool?.name || 'Unknown';
     document.getElementById('returnStudentIdScan').value = '';
     document.getElementById('returnCondition').value = 'Good Condition';
     document.getElementById('returnRemarks').value = '';
+    document.getElementById('returnScanFeedback').innerHTML = '';
+    
     bootstrap.Modal.getOrCreateInstance(document.getElementById('returnRemarksModal')).show();
+}
+
+function proceedToReturnScan() {
+    const returnCondition = document.getElementById('returnCondition').value;
+    const returnRemarks = document.getElementById('returnRemarks').value.trim();
+    const expectedStudentId = document.getElementById('returnStudentIdExpected').value;
+    
+    // Validate step 1 fields
+    if (!returnRemarks) { 
+        showAlert('Please enter return remarks/comments before proceeding', 'warning'); 
+        return; 
+    }
+    
+    // Hide step 1, show step 2
+    document.getElementById('returnStep1').style.display = 'none';
+    document.getElementById('returnStep2').style.display = 'block';
+    document.getElementById('returnProceedBtn').style.display = 'none';
+    document.getElementById('returnBackBtn').style.display = 'inline-block';
+    
+    // Generate and display the student barcode
+    const barcodeCanvas = document.getElementById('returnStudentBarcode');
+    const studentIdDisplay = document.getElementById('returnStudentIdDisplay');
+    
+    if (expectedStudentId) {
+        try {
+            JsBarcode(barcodeCanvas, expectedStudentId, {
+                format: 'CODE128',
+                width: 2,
+                height: 80,
+                displayValue: true,
+                fontSize: 16,
+                margin: 10,
+                background: '#ffffff',
+                lineColor: '#000000'
+            });
+            studentIdDisplay.textContent = `Student ID: ${expectedStudentId}`;
+        } catch (err) {
+            console.error('Barcode generation error:', err);
+            studentIdDisplay.textContent = `Student ID: ${expectedStudentId} (Barcode generation failed)`;
+        }
+    } else {
+        barcodeCanvas.style.display = 'none';
+        studentIdDisplay.textContent = 'No Student ID on record - any ID will be accepted';
+    }
+    
+    // Setup auto-confirm listener on scan input
+    const scanInput = document.getElementById('returnStudentIdScan');
+    scanInput.value = '';
+    scanInput.focus();
+    
+    // Remove existing listener if any
+    if (scanInput._returnScanListener) {
+        scanInput.removeEventListener('keypress', scanInput._returnScanListener);
+    }
+    
+    // Add new listener for auto-confirm on Enter
+    scanInput._returnScanListener = function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            executeReturnBorrower();
+        }
+    };
+    scanInput.addEventListener('keypress', scanInput._returnScanListener);
+    
+    // Also add input event for real-time feedback
+    if (scanInput._inputListener) {
+        scanInput.removeEventListener('input', scanInput._inputListener);
+    }
+    scanInput._inputListener = function() {
+        const scannedId = scanInput.value.trim();
+        const feedback = document.getElementById('returnScanFeedback');
+        if (scannedId && expectedStudentId) {
+            if (scannedId === expectedStudentId) {
+                feedback.innerHTML = '<div class="alert alert-success py-2"><i class="fas fa-check-circle"></i> ID matches! Press Enter or the scan will auto-confirm.</div>';
+                // Auto-confirm after a brief delay
+                setTimeout(() => {
+                    if (scanInput.value.trim() === expectedStudentId) {
+                        executeReturnBorrower();
+                    }
+                }, 500);
+            } else if (scannedId.length >= expectedStudentId.length) {
+                feedback.innerHTML = '<div class="alert alert-danger py-2"><i class="fas fa-times-circle"></i> ID does not match!</div>';
+            } else {
+                feedback.innerHTML = '';
+            }
+        } else {
+            feedback.innerHTML = '';
+        }
+    };
+    scanInput.addEventListener('input', scanInput._inputListener);
+}
+
+function backToReturnStep1() {
+    document.getElementById('returnStep1').style.display = 'block';
+    document.getElementById('returnStep2').style.display = 'none';
+    document.getElementById('returnProceedBtn').style.display = 'inline-block';
+    document.getElementById('returnBackBtn').style.display = 'none';
+    document.getElementById('returnScanFeedback').innerHTML = '';
 }
 
 function executeReturnBorrower() {
     const borrowerId = parseInt(document.getElementById('returnBorrowerId').value);
     const borrower = appState.allBorrowers.find(b => b.id === borrowerId);
     if (!borrower) return;
+    
     const scannedId = document.getElementById('returnStudentIdScan').value.trim();
     const returnCondition = document.getElementById('returnCondition').value;
     const returnRemarks = document.getElementById('returnRemarks').value.trim();
-    if (!scannedId) { showAlert('Please scan or enter the Student ID / Barcode', 'warning'); return; }
-    if (borrower.student_id && scannedId !== borrower.student_id) {
-        showAlert(`Student ID mismatch! Expected "${borrower.student_id}" but got "${scannedId}". The same ID used for borrowing must be scanned.`, 'danger');
+    const expectedStudentId = document.getElementById('returnStudentIdExpected').value;
+    
+    if (!scannedId) { 
+        showAlert('Please scan the Student ID / Barcode to confirm return', 'warning'); 
+        document.getElementById('returnStudentIdScan').focus();
+        return; 
+    }
+    
+    if (expectedStudentId && scannedId !== expectedStudentId) {
+        showAlert(`Student ID mismatch! Expected "${expectedStudentId}" but got "${scannedId}". The same ID used for borrowing must be scanned.`, 'danger');
+        document.getElementById('returnScanFeedback').innerHTML = '<div class="alert alert-danger py-2"><i class="fas fa-times-circle"></i> ID mismatch! Please scan the correct Student ID.</div>';
+        document.getElementById('returnStudentIdScan').value = '';
+        document.getElementById('returnStudentIdScan').focus();
         return;
     }
-    if (!returnRemarks) { showAlert('Please enter return remarks/comments', 'warning'); return; }
+    
+    if (!returnRemarks) { 
+        showAlert('Please enter return remarks/comments', 'warning'); 
+        backToReturnStep1();
+        return; 
+    }
+    
     bootstrap.Modal.getInstance(document.getElementById('returnRemarksModal')).hide();
     returnBorrower(borrowerId, returnRemarks, returnCondition);
+    showAlert('Item returned successfully!', 'success');
 }
 
 // ==================== TAB SWITCHING ====================
@@ -2102,11 +2229,6 @@ function processStudentIdScan() {
         closeStudentIdScanner();
         // Open the return modal
         confirmReturn(activeBorrowing.id);
-        // Pre-fill the student ID scan
-        setTimeout(() => {
-            const returnScanEl = document.getElementById('returnStudentIdScan');
-            if (returnScanEl) returnScanEl.value = studentId;
-        }, 300);
     } else {
         // No active borrowing - open borrow form with student ID pre-filled
         document.getElementById('student-id-scan-result').style.display = 'block';
@@ -2135,10 +2257,6 @@ function processReturnScan() {
     if (activeBorrowing) {
         bootstrap.Modal.getInstance(document.getElementById('scanReturnModal')).hide();
         confirmReturn(activeBorrowing.id);
-        setTimeout(() => {
-            const returnScanEl = document.getElementById('returnStudentIdScan');
-            if (returnScanEl) returnScanEl.value = studentId;
-        }, 300);
     } else {
         document.getElementById('returnScanResult').style.display = 'block';
         document.getElementById('returnScanResult').innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> No active borrowing found for this Student ID.</div>';
