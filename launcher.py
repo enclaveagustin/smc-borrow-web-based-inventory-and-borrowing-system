@@ -14,12 +14,42 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from pathlib import Path
 
-# Load environment variables from .env
+# Determine base directories (works for both dev and frozen exe)
+if getattr(sys, 'frozen', False):
+    # Running as PyInstaller frozen exe
+    # EXE_DIR = where the .exe lives (for .env file)
+    # BUNDLE_DIR = where PyInstaller extracted bundled data (frontend/, database/)
+    EXE_DIR = Path(sys.executable).parent.absolute()
+    BUNDLE_DIR = Path(getattr(sys, '_MEIPASS', EXE_DIR)).absolute()
+else:
+    # Running in development
+    EXE_DIR = Path(__file__).parent.absolute()
+    BUNDLE_DIR = EXE_DIR
+
+# Load environment variables from .env (look next to the exe/script)
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    # Explicitly load .env from the exe/script directory
+    env_path = EXE_DIR / '.env'
+    if env_path.exists():
+        load_dotenv(dotenv_path=str(env_path))
+        print(f'  \u2713 Loaded .env from {env_path}')
+    else:
+        load_dotenv()  # fallback: search current dir and parents
+        print(f'  \u26a0 No .env file found at {env_path} - using defaults')
 except ImportError:
-    pass  # dotenv not installed, will use os.environ directly
+    # dotenv not installed, try manual .env parsing
+    env_path = EXE_DIR / '.env'
+    if env_path.exists():
+        print(f'  \u2713 Manually loading .env from {env_path}')
+        with open(env_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, _, value = line.partition('=')
+                    os.environ.setdefault(key.strip(), value.strip())
+    else:
+        print(f'  \u26a0 No .env file found and dotenv not installed')
 
 # Try to import Flask
 try:
@@ -30,13 +60,13 @@ except ImportError:
     print("  pip install flask flask-cors")
     sys.exit(1)
 
-# Setup Flask app
-app = Flask(__name__, static_folder='frontend', static_url_path='')
+# Setup Flask app - serve frontend from bundled data directory
+app = Flask(__name__, static_folder=str(BUNDLE_DIR / 'frontend'), static_url_path='')
 CORS(app)
 
 # Get the base directory
-BASE_DIR = Path(__file__).parent.absolute() if hasattr(sys, 'frozen') else Path(__file__).parent.absolute()
-FRONTEND_DIR = BASE_DIR / 'frontend'
+BASE_DIR = EXE_DIR
+FRONTEND_DIR = BUNDLE_DIR / 'frontend'
 
 # In-memory data storage (same as app-simple.py)
 tools_db = [
@@ -456,11 +486,19 @@ def start_server(port=5000):
 if __name__ == '__main__':
     # Check if running as frozen executable (built with PyInstaller)
     if getattr(sys, 'frozen', False):
-        BASE_DIR = Path(sys.executable).parent.absolute()
-        FRONTEND_DIR = BASE_DIR / 'frontend'
+        FRONTEND_DIR = BUNDLE_DIR / 'frontend'
         if not FRONTEND_DIR.exists():
             print(f"Error: Frontend directory not found at {FRONTEND_DIR}")
+            print(f"Bundle dir: {BUNDLE_DIR}")
             print("Make sure all files are properly packaged in the executable.")
+            input("Press Enter to exit...")
             sys.exit(1)
+        # Show email config status on startup
+        sender = os.environ.get('EMAIL_SENDER', '')
+        if sender:
+            print(f'  \u2713 Email sender configured: {sender}')
+        else:
+            print(f'  \u26a0 Email not configured - place a .env file next to SMC-Borrow.exe')
+            print(f'    Copy .env.example to .env and fill in your email credentials')
     
     start_server(port=5000)

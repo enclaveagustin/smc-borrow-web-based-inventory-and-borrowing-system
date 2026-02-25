@@ -68,6 +68,11 @@ def build_exe():
             "--hidden-import=click",
             "--hidden-import=itsdangerous",
             "--hidden-import=markupsafe",
+            "--hidden-import=dotenv",
+            "--hidden-import=smtplib",
+            "--hidden-import=email",
+            "--hidden-import=email.mime.text",
+            "--hidden-import=email.mime.multipart",
             "--collect-all=flask",
             str(launcher_path)
         ]
@@ -107,8 +112,18 @@ def package_distribution():
     else:
         print("✗ Executable not found in dist directory")
         return False
+        # Copy .env.example as a template for users
+    env_example = script_dir / '.env.example'
+    if env_example.exists():
+        shutil.copy(env_example, release_dir / '.env.example')
+        print("\u2713 Copied .env.example (rename to .env and configure)")
     
-    # Copy README and installation guide
+    # Also copy .env if it exists (for pre-configured builds)
+    env_file = script_dir / '.env'
+    if env_file.exists():
+        shutil.copy(env_file, release_dir / '.env')
+        print("\u2713 Copied .env (email already configured)")
+        # Copy README and installation guide
     for readme_file in ["README.md", "INSTALLATION.md"]:
         readme_path = script_dir / readme_file
         if readme_path.exists():
