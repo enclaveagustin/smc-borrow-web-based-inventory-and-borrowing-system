@@ -2145,7 +2145,7 @@ function checkOverdueAndNotify() {
 function sendOverdueEmail(borrowerId) {
     const borrower = appState.allBorrowers.find(b => b.id === borrowerId);
     if (!borrower || !borrower.email) {
-        showAlert('No email address found for this borrower', 'warning');
+        showAlert('No email address found for this borrower. Please add an email in the borrower details.', 'warning');
         return;
     }
     const tool = appState.allTools.find(t => t.id === borrower.tool_id);
@@ -2166,7 +2166,19 @@ function sendOverdueEmail(borrowerId) {
             days_overdue: overdueDays
         })
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok && res.status === 404) {
+            throw new Error('Email API endpoint not found. Make sure you are running the app using launcher.py (not app-simple.py).');
+        }
+        return res.text();
+    })
+    .then(text => {
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error('Server returned an invalid response. Make sure the backend is running properly.');
+        }
+    })
     .then(data => {
         hideLoadingState(loadingId);
         if (data.success) {
@@ -2176,13 +2188,17 @@ function sendOverdueEmail(borrowerId) {
             showAlert(`Overdue notification sent to ${borrower.email}!`, 'success');
             renderBorrowers();
         } else {
-            showAlert(`Failed to send email: ${data.message}`, 'danger');
+            showAlert(`Email not sent: ${data.message}`, 'danger');
         }
     })
     .catch(err => {
         hideLoadingState(loadingId);
-        showAlert('Failed to send email. Check server console for details.', 'danger');
         console.error('Email send error:', err);
+        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+            showAlert('Cannot connect to the server. Please make sure the application is running (python launcher.py).', 'danger');
+        } else {
+            showAlert(err.message || 'An error occurred while sending the email.', 'danger');
+        }
     });
 }
 

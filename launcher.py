@@ -249,6 +249,33 @@ def health_check():
 
 # ==================== EMAIL API ====================
 
+@app.route('/api/email-status', methods=['GET'])
+def email_status():
+    """Check if email is properly configured and SMTP is reachable"""
+    sender_email = os.environ.get('EMAIL_SENDER', '')
+    app_password = os.environ.get('EMAIL_APP_PASSWORD', '')
+    smtp_host = os.environ.get('EMAIL_SMTP_HOST', 'smtp.gmail.com')
+    smtp_port = int(os.environ.get('EMAIL_SMTP_PORT', 587))
+
+    if not sender_email or not app_password:
+        return jsonify({
+            'configured': False,
+            'message': 'Email credentials not set. Add EMAIL_SENDER and EMAIL_APP_PASSWORD to your .env file.'
+        }), 200
+
+    # Quick SMTP connectivity test
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(sender_email, app_password)
+        return jsonify({'configured': True, 'message': 'Email service is ready.', 'sender': sender_email}), 200
+    except smtplib.SMTPAuthenticationError:
+        return jsonify({'configured': False, 'message': 'SMTP authentication failed. Your App Password may be invalid or revoked. Generate a new one at https://myaccount.google.com/apppasswords'}), 200
+    except Exception as e:
+        return jsonify({'configured': False, 'message': f'Cannot connect to SMTP server: {str(e)}'}), 200
+
 @app.route('/api/send-overdue-email', methods=['POST'])
 def send_overdue_email():
     """Send overdue notification email via Gmail SMTP"""
@@ -275,7 +302,7 @@ def send_overdue_email():
         smtp_port = int(os.environ.get('EMAIL_SMTP_PORT', 587))
 
         if not sender_email or not app_password:
-            return jsonify({'success': False, 'message': 'Email credentials not configured in .env file'}), 500
+            return jsonify({'success': False, 'message': 'Email not configured. Please set EMAIL_SENDER and EMAIL_APP_PASSWORD in your .env file.'}), 200
 
         # Build the email
         msg = MIMEMultipart('alternative')
@@ -338,26 +365,44 @@ St. Mary's College of Tagum, Inc.
         msg.attach(MIMEText(text_body, 'plain'))
         msg.attach(MIMEText(html_body, 'html'))
 
-        # Send the email via SMTP
-        with smtplib.SMTP(smtp_host, smtp_port) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(sender_email, app_password)
-            server.sendmail(sender_email, to_email, msg.as_string())
+        # Send the email via SMTP with timeout and retry
+        max_retries = 2
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as server:
+                    server.ehlo()
+                    server.starttls()
+                    server.ehlo()
+                    server.login(sender_email, app_password)
+                    server.sendmail(sender_email, to_email, msg.as_string())
 
-        print(f'  ✉ Overdue email sent to {to_email} for "{tool_name}"')
-        return jsonify({'success': True, 'message': f'Overdue notification sent to {to_email}'}), 200
+                print(f'  \u2709 Overdue email sent to {to_email} for "{tool_name}"')
+                return jsonify({'success': True, 'message': f'Overdue notification sent to {to_email}'}), 200
+            except (smtplib.SMTPServerDisconnected, ConnectionError, TimeoutError) as e:
+                last_error = e
+                print(f'  \u2717 SMTP attempt {attempt+1} failed: {str(e)}, retrying...')
+                time.sleep(1)
+                continue
+            except smtplib.SMTPAuthenticationError:
+                print(f'  \u2717 SMTP Auth Error - App Password may be invalid or expired')
+                return jsonify({'success': False, 'message': 'Email login failed. Your Gmail App Password may be invalid or expired. Go to https://myaccount.google.com/apppasswords to create a new one, then update EMAIL_APP_PASSWORD in your .env file.'}), 200
+            except smtplib.SMTPRecipientsRefused:
+                print(f'  \u2717 Recipient refused: {to_email}')
+                return jsonify({'success': False, 'message': f'The email address "{to_email}" was rejected by the mail server. Please verify the borrower email address.'}), 200
+            except smtplib.SMTPException as e:
+                last_error = e
+                print(f'  \u2717 SMTP Error: {str(e)}')
+                break
 
-    except smtplib.SMTPAuthenticationError:
-        print(f'  ✗ SMTP Auth Error - Check EMAIL_APP_PASSWORD in .env')
-        return jsonify({'success': False, 'message': 'Email authentication failed. Check App Password in .env'}), 500
-    except smtplib.SMTPException as e:
-        print(f'  ✗ SMTP Error: {str(e)}')
-        return jsonify({'success': False, 'message': f'SMTP error: {str(e)}'}), 500
+        # All retries exhausted or non-retryable SMTP error
+        error_msg = str(last_error) if last_error else 'Unknown error'
+        print(f'  \u2717 Email failed after {max_retries} attempts: {error_msg}')
+        return jsonify({'success': False, 'message': f'Could not send email after {max_retries} attempts. Error: {error_msg}'}), 200
+
     except Exception as e:
-        print(f'  ✗ Email Error: {str(e)}')
-        return jsonify({'success': False, 'message': f'Failed to send email: {str(e)}'}), 500
+        print(f'  \u2717 Email Error: {str(e)}')
+        return jsonify({'success': False, 'message': f'Unexpected error: {str(e)}'}), 200
 
 # ==================== ERROR HANDLERS ====================
 
