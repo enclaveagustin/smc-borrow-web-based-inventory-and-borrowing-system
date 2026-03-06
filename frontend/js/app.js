@@ -11,6 +11,7 @@ const appState = {
     activityLog: [],
     damageReports: [],
     toolMovements: [],
+    registeredStudents: [],
     lastUpdate: null,
     isProcessing: false,
     isLoggedIn: false,
@@ -119,10 +120,20 @@ function handleLogin() {
         const password = document.getElementById('loginPassword').value.trim();
         if (!email || !password) { showAlert('Please enter both email and password', 'warning'); return; }
         if (!email.includes('@')) { showAlert('Please enter a valid email address', 'warning'); return; }
-        const validEmail = 'admin@smcborrow.com';
-        const validPassword = 'password123';
-        if (email !== validEmail || password !== validPassword) {
-            showAlert('Invalid email or password. Use admin@smcborrow.com / password123', 'danger');
+
+        // Check against stored users first
+        const savedUsers = JSON.parse(localStorage.getItem('users')) || [];
+        let matchedUser = savedUsers.find(u => u.email === email && u.password === password);
+
+        // Fallback to default admin credentials
+        if (!matchedUser) {
+            if (email === 'admin@smcborrow.com' && password === 'password123') {
+                matchedUser = { name: 'Admin', email: email, role: 'Admin' };
+            }
+        }
+
+        if (!matchedUser) {
+            showAlert('Invalid email or password.', 'danger');
             return;
         }
         appState.isLoggedIn = true;
@@ -185,6 +196,7 @@ function loadApplicationState() {
     appState.activityLog = JSON.parse(localStorage.getItem('activity')) || [];
     appState.damageReports = JSON.parse(localStorage.getItem('damageReports')) || [];
     appState.toolMovements = JSON.parse(localStorage.getItem('toolMovements')) || [];
+    appState.registeredStudents = JSON.parse(localStorage.getItem('registeredStudents')) || [];
     appState.lastUpdate = localStorage.getItem('lastUpdate');
 }
 
@@ -195,6 +207,7 @@ function saveApplicationState() {
     localStorage.setItem('activity', JSON.stringify(appState.activityLog));
     localStorage.setItem('damageReports', JSON.stringify(appState.damageReports));
     localStorage.setItem('toolMovements', JSON.stringify(appState.toolMovements));
+    localStorage.setItem('registeredStudents', JSON.stringify(appState.registeredStudents));
     localStorage.setItem('lastUpdate', new Date().toISOString());
 }
 
@@ -225,6 +238,7 @@ function updateDashboard() {
     initMonthlyRecordMonth();
     renderMonthlyRecord();
     renderTopBorrowersByCourseChart();
+    renderStudentBorrowersChart();
     checkOverdueAndNotify();
 }
 
@@ -597,6 +611,7 @@ function saveBorrower() {
             borrow_date: document.getElementById('borrowDate').value,
             return_date: document.getElementById('returnDate').value,
             reason: document.getElementById('borrowReason').value.trim(),
+            quantity: parseInt(document.getElementById('borrowerQuantity')?.value) || 1,
             returned: false,
             returned_date: null,
             return_remarks: '',
@@ -605,11 +620,13 @@ function saveBorrower() {
 
         if (!borrowerData.borrower_name) { hideLoadingState(loadingId); showAlert('Borrower name is required', 'warning'); return false; }
         if (new Date(borrowerData.return_date) <= new Date(borrowerData.borrow_date)) { hideLoadingState(loadingId); showAlert('Return date must be after borrow date', 'warning'); return false; }
+        if (tool.quantity < borrowerData.quantity) { hideLoadingState(loadingId); showAlert(`Insufficient quantity. Only ${tool.quantity} available.`, 'warning'); return false; }
 
         setTimeout(() => {
-            tool.quantity -= 1;
+            tool.quantity -= borrowerData.quantity;
             appState.allBorrowers.push(borrowerData);
-            addActivity(`${borrowerData.borrower_name} borrowed "${tool.name}"`);
+            registerStudent(borrowerData.student_id, borrowerData.borrower_name, borrowerData.email, borrowerData.course, borrowerData.year);
+            addActivity(`${borrowerData.borrower_name} borrowed ${borrowerData.quantity}x "${tool.name}"`);
             saveApplicationState();
             hideLoadingState(loadingId);
             form.reset();
@@ -625,10 +642,11 @@ function returnBorrower(borrowerId, returnRemarks, returnCondition) {
     const borrower = appState.allBorrowers.find(b => b.id === borrowerId);
     if (!borrower || borrower.returned) return;
     const tool = appState.allTools.find(t => t.id === borrower.tool_id);
+    const qty = borrower.quantity || 1;
     borrower.returned = true;
     borrower.returned_date = new Date().toISOString();
     borrower.return_remarks = returnRemarks || '';
-    if (tool) tool.quantity += 1;
+    if (tool) tool.quantity += qty;
     // If returned damaged, auto-file a damage report
     if (returnCondition && returnCondition !== 'Good Condition' && tool) {
         appState.damageReports.push({
@@ -721,6 +739,7 @@ function renderFilteredBorrowers(borrowers) {
         const overdueDays = isOverdue ? calculateOverdueDays(borrower.return_date) : 0;
         let status = borrower.returned ? 'Returned' : isOverdue ? 'Overdue' : 'Active';
         let badgeClass = borrower.returned ? 'badge-success' : isOverdue ? 'badge-danger' : 'badge-warning';
+        const qty = borrower.quantity || 1;
 
         return `
             <div class="borrower-card">
@@ -731,7 +750,7 @@ function renderFilteredBorrowers(borrowers) {
                         <div class="detail-row"><span class="detail-label">Email:</span><span class="detail-value">${escapeHtml(borrower.email) || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Course:</span><span class="detail-value">${escapeHtml(borrower.course) || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Year:</span><span class="detail-value">${escapeHtml(borrower.year) || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Tool:</span><span class="detail-value">${escapeHtml(tool?.name) || 'Unknown'}</span></div>
+                        <div class="detail-row"><span class="detail-label">Tool:</span><span class="detail-value">${escapeHtml(tool?.name) || 'Unknown'} <span class="badge bg-primary">x${qty}</span></span></div>
                         <div class="detail-row"><span class="detail-label">Borrow Date:</span><span class="detail-value">${new Date(borrower.borrow_date).toLocaleDateString()}</span></div>
                         <div class="detail-row"><span class="detail-label">Return Date:</span><span class="detail-value">${returnDate.toLocaleDateString()}</span></div>
                         ${isOverdue ? `<div class="detail-row"><span class="detail-label" style="color:red;">Days Overdue:</span><span class="detail-value" style="color:red; font-weight:bold;">${overdueDays} day(s)</span></div>` : ''}
@@ -740,6 +759,7 @@ function renderFilteredBorrowers(borrowers) {
                         ${!borrower.returned ? `
                         <div class="action-buttons">
                             <button class="btn btn-success btn-small" onclick="confirmReturn(${borrower.id})"><i class="fas fa-check"></i> Mark Returned</button>
+                            <button class="btn btn-primary btn-small" onclick="openEditBorrowing(${borrower.id})"><i class="fas fa-edit"></i> Edit / Add Item</button>
                             ${isOverdue ? `<button class="btn btn-warning btn-small" onclick="openAdjustOverdue(${borrower.id})"><i class="fas fa-calendar-alt"></i> Adjust Date</button>` : ''}
                             ${isOverdue && borrower.email ? `<button class="btn btn-danger btn-small" onclick="sendOverdueEmail(${borrower.id})"><i class="fas fa-envelope"></i> Send Overdue Notice</button>` : ''}
                         </div>
@@ -760,13 +780,16 @@ function saveUser() {
     const form = document.getElementById('userForm');
     if (!form.checkValidity()) { showAlert('Please fill in all required fields', 'warning'); return false; }
     const username = document.getElementById('userUsername').value.trim();
+    const password = document.getElementById('userPassword').value.trim();
     if (appState.allUsers.some(u => u.username === username)) { showAlert('Username already exists', 'danger'); return false; }
+    if (!password || password.length < 6) { showAlert('Password must be at least 6 characters', 'warning'); return false; }
 
     const userData = {
         id: getNextId(appState.allUsers),
         name: document.getElementById('userName').value.trim(),
         email: document.getElementById('userEmail').value.trim(),
         username: username,
+        password: password,
         role: document.getElementById('userRole').value,
         createdDate: new Date().toISOString()
     };
@@ -789,6 +812,7 @@ function editUserForm(userId) {
     document.getElementById('editUserEmail').value = user.email;
     document.getElementById('editUserUsername').value = user.username;
     document.getElementById('editUserRole').value = user.role;
+    document.getElementById('editUserPassword').value = '';
 }
 
 function updateUser() {
@@ -800,6 +824,11 @@ function updateUser() {
     user.email = document.getElementById('editUserEmail').value.trim();
     user.username = document.getElementById('editUserUsername').value.trim();
     user.role = document.getElementById('editUserRole').value;
+    const newPassword = document.getElementById('editUserPassword').value.trim();
+    if (newPassword) {
+        if (newPassword.length < 6) { showAlert('Password must be at least 6 characters', 'warning'); return false; }
+        user.password = newPassword;
+    }
 
     addActivity(`User "${user.name}" updated`);
     saveApplicationState();
@@ -1607,11 +1636,23 @@ function saveSettings() {
 }
 
 function exportData() {
+    // Check backup password if set
+    const savedBackupPw = localStorage.getItem('backupPassword');
+    if (savedBackupPw) {
+        const enteredPw = prompt('Enter backup password to export data:');
+        if (enteredPw !== savedBackupPw) {
+            showAlert('Incorrect backup password. Export denied.', 'danger');
+            return;
+        }
+    }
+
     const data = {
         tools: appState.allTools,
         borrowers: appState.allBorrowers,
         users: appState.allUsers,
         activity: appState.activityLog,
+        registeredStudents: appState.registeredStudents || [],
+        damageReports: appState.damageReports || [],
         exportedAt: new Date().toISOString()
     };
     const jsonString = JSON.stringify(data, null, 2);
@@ -1691,6 +1732,8 @@ function autoFillBorrowingForm(tool) {
     document.getElementById('inline-borrower-form').style.display = 'block';
     closeBarcodeScanner();
     document.getElementById('inlineBorrowerTool').value = tool.id;
+    const qtyEl = document.getElementById('inlineBorrowerQty');
+    if (qtyEl) qtyEl.value = '1';
     document.getElementById('inlineBorrowDate').valueAsDate = new Date();
     const returnDate = new Date(); returnDate.setDate(returnDate.getDate() + 7);
     document.getElementById('inlineReturnDate').valueAsDate = returnDate;
@@ -1713,9 +1756,15 @@ function saveInlineBorrower() {
     const borrowDate = document.getElementById('inlineBorrowDate').value;
     const returnDate = document.getElementById('inlineReturnDate').value;
     const borrowReason = document.getElementById('inlineBorrowReason').value;
+    const qty = parseInt(document.getElementById('inlineBorrowerQty')?.value) || 1;
 
     if (!toolId || !studentId || !email || !borrowerName || !course || !year || !borrowDate || !returnDate) {
         showAlert('Please fill in all required fields (including Student ID and Email)', 'warning'); return;
+    }
+
+    const tool = appState.allTools.find(t => t.id === parseInt(toolId));
+    if (!tool || tool.quantity < qty) {
+        showAlert(`Insufficient quantity. Only ${tool?.quantity || 0} available.`, 'warning'); return;
     }
 
     const newBorrower = {
@@ -1723,16 +1772,17 @@ function saveInlineBorrower() {
         tool_id: parseInt(toolId), student_id: studentId, email: email,
         borrower_name: borrowerName, course, year,
         borrow_date: borrowDate, return_date: returnDate, reason: borrowReason,
+        quantity: qty,
         returned: false, returned_date: null, return_remarks: '', overdue_notified: false
     };
 
-    const tool = appState.allTools.find(t => t.id === parseInt(toolId));
-    if (tool) tool.quantity -= 1;
+    tool.quantity -= qty;
     appState.allBorrowers.push(newBorrower);
+    registerStudent(studentId, borrowerName, email, course, year);
     saveApplicationState();
     closeInlineForm();
     renderBorrowers(); renderTools(); updateDashboard(); updateToolSelect(); updateInlineToolSelect();
-    showAlert(`Borrowing recorded for ${borrowerName}!`, 'success');
+    showAlert(`Borrowing recorded: ${qty}x "${tool.name}" for ${borrowerName}!`, 'success');
 }
 
 // ==================== BARCODE EXPORT ====================
@@ -1835,6 +1885,8 @@ function saveDamageReport() {
     const damageType = document.getElementById('damageType').value;
     const severity = document.getElementById('damageSeverity').value;
     const description = document.getElementById('damageDescription').value.trim();
+    const location = document.getElementById('damageLocation')?.value || '';
+    const damageQty = parseInt(document.getElementById('damageQuantity')?.value) || 1;
 
     if (!toolId || !reportedBy || !damageType || !description) {
         showAlert('Please fill in all required fields', 'warning'); return;
@@ -1851,6 +1903,8 @@ function saveDamageReport() {
         damage_type: damageType,
         severity: severity,
         description: description,
+        location: location || tool.location || '',
+        quantity_damaged: damageQty,
         date_reported: new Date().toISOString(),
         status: 'Pending',
         resolution_notes: '',
@@ -1864,24 +1918,28 @@ function saveDamageReport() {
     else if (damageType === 'For Repair') tool.condition = 'Needs Repair';
     else if (damageType === 'Lost') tool.condition = 'Lost';
 
+    // Auto-decrease tool quantity when damaged
+    tool.quantity = Math.max(0, tool.quantity - damageQty);
+
     // Record as tool movement
     appState.toolMovements.push({
         id: getNextId(appState.toolMovements),
         tool_id: tool.id,
         tool_name: tool.name,
         movement_type: 'Pulled Out',
-        quantity_changed: 0,
+        quantity_changed: damageQty,
         reason: `Damage Report: ${damageType}`,
         remarks: description,
         movement_date: new Date().toISOString()
     });
 
-    addActivity(`Damage Report filed: "${tool.name}" - ${damageType} (${severity}) by ${reportedBy}`);
+    addActivity(`Damage Report filed: "${tool.name}" x${damageQty} - ${damageType} (${severity}) by ${reportedBy}`);
     saveApplicationState();
     document.getElementById('damageReportForm').reset();
     bootstrap.Modal.getInstance(document.getElementById('addDamageReportModal')).hide();
-    showAlert('Damage report submitted successfully!', 'success');
+    showAlert('Damage report submitted successfully! Tool quantity decreased by ' + damageQty, 'success');
     renderDamageReports();
+    renderTools();
     updateDashboard();
 }
 
@@ -1920,6 +1978,8 @@ function renderFilteredDamageReports(reports) {
                         <th>#</th>
                         <th>Date Reported</th>
                         <th>Tool</th>
+                        <th>Qty</th>
+                        <th>Location</th>
                         <th>Reported By</th>
                         <th>Type</th>
                         <th>Severity</th>
@@ -1939,6 +1999,8 @@ function renderFilteredDamageReports(reports) {
                             <td>${idx + 1}</td>
                             <td>${new Date(r.date_reported).toLocaleString()}</td>
                             <td><strong>${escapeHtml(r.tool_name)}</strong></td>
+                            <td>${r.quantity_damaged || 1}</td>
+                            <td>${escapeHtml(r.location || 'N/A')}</td>
                             <td>${escapeHtml(r.reported_by)}</td>
                             <td><span class="badge bg-danger">${escapeHtml(r.damage_type)}</span></td>
                             <td><span class="badge ${severityBadge}">${escapeHtml(r.severity)}</span></td>
@@ -1963,6 +2025,16 @@ function openUpdateDamageStatus(reportId) {
     document.getElementById('updateDamageId').value = report.id;
     document.getElementById('updateDamageStatus').value = report.status;
     document.getElementById('updateDamageNotes').value = report.resolution_notes || '';
+    // Reset replacement section
+    const replSection = document.getElementById('replacementSection');
+    if (replSection) replSection.style.display = 'none';
+    const replType = document.getElementById('replacementType');
+    if (replType) replType.value = 'same_model';
+    const sameSection = document.getElementById('sameModelSection');
+    if (sameSection) sameSection.style.display = 'block';
+    const diffSection = document.getElementById('differentModelSection');
+    if (diffSection) diffSection.style.display = 'none';
+    onDamageStatusChange(); // Show/hide based on current status
     bootstrap.Modal.getOrCreateInstance(document.getElementById('updateDamageStatusModal')).show();
 }
 
@@ -1970,21 +2042,63 @@ function updateDamageReportStatus() {
     const reportId = parseInt(document.getElementById('updateDamageId').value);
     const report = appState.damageReports.find(r => r.id === reportId);
     if (!report) return;
-    report.status = document.getElementById('updateDamageStatus').value;
+    const newStatus = document.getElementById('updateDamageStatus').value;
+    report.status = newStatus;
     report.resolution_notes = document.getElementById('updateDamageNotes').value.trim();
-    if (report.status === 'Repaired' || report.status === 'Replaced' || report.status === 'Written Off') {
+
+    const tool = appState.allTools.find(t => t.id === report.tool_id);
+    const damageQty = report.quantity_damaged || 1;
+
+    if (newStatus === 'Repaired') {
         report.resolved_date = new Date().toISOString();
-        // Optionally restore tool condition if repaired/replaced
-        if (report.status === 'Repaired' || report.status === 'Replaced') {
-            const tool = appState.allTools.find(t => t.id === report.tool_id);
-            if (tool) tool.condition = 'Good Condition';
+        if (tool) {
+            tool.condition = 'Good Condition';
+            tool.quantity += damageQty; // Restore quantity
+        }
+    } else if (newStatus === 'Replaced') {
+        report.resolved_date = new Date().toISOString();
+        const replacementType = document.getElementById('replacementType')?.value || 'same_model';
+        const replacementQty = parseInt(document.getElementById('replacementQty')?.value) || damageQty;
+
+        if (tool) {
+            // Mark original as Disposed in inventory
+            tool.actionSincePrev = 'Disposed';
+        }
+
+        if (replacementType === 'same_model') {
+            // Same model: auto-add replacement to inventory
+            if (tool) {
+                tool.quantity += replacementQty;
+                tool.condition = 'Good Condition';
+                tool.actionSincePrev = 'Newly Acquired';
+            }
+            addActivity(`Replaced ${damageQty}x "${report.tool_name}" with same model (qty +${replacementQty})`);
+        } else {
+            // Different model: deduct from original, prompt Add Item form
+            if (tool) {
+                tool.condition = 'Damaged';
+                tool.actionSincePrev = 'Disposed';
+            }
+            addActivity(`"${report.tool_name}" marked as Disposed. Opening Add Item form for replacement...`);
+            // Close current modal and open Add Tool modal
+            setTimeout(() => {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('addToolModal')).show();
+                showAlert('Enter the replacement item details in the Add Tool form', 'info');
+            }, 500);
+        }
+    } else if (newStatus === 'Removed' || newStatus === 'Disposed' || newStatus === 'Transferred') {
+        report.resolved_date = new Date().toISOString();
+        if (tool) {
+            tool.actionSincePrev = newStatus === 'Removed' ? 'Removed' : newStatus === 'Disposed' ? 'Disposed' : 'Transferred';
         }
     }
-    addActivity(`Damage Report #${report.id} for "${report.tool_name}" updated to "${report.status}"`);
+
+    addActivity(`Damage Report #${report.id} for "${report.tool_name}" updated to "${newStatus}"`);
     saveApplicationState();
     bootstrap.Modal.getInstance(document.getElementById('updateDamageStatusModal')).hide();
     showAlert('Damage report status updated!', 'success');
     renderDamageReports();
+    renderTools();
     updateDashboard();
 }
 
@@ -2243,7 +2357,6 @@ function processStudentIdScan() {
         document.getElementById('scannedStudentIdDisplay').textContent = studentId;
         showAlert(`Student ${activeBorrowing.borrower_name} has active borrowing: "${tool?.name || 'item'}". Opening return form...`, 'info');
         closeStudentIdScanner();
-        // Open the return modal
         confirmReturn(activeBorrowing.id);
     } else {
         // No active borrowing - open borrow form with student ID pre-filled
@@ -2255,7 +2368,18 @@ function processStudentIdScan() {
         document.getElementById('inlineBorrowDate').valueAsDate = new Date();
         const returnDate = new Date(); returnDate.setDate(returnDate.getDate() + 7);
         document.getElementById('inlineReturnDate').valueAsDate = returnDate;
-        showAlert(`Student ID "${studentId}" scanned. Fill in borrower details.`, 'success');
+
+        // Auto-fill from registered students
+        const registered = (appState.registeredStudents || []).find(s => s.student_id === studentId);
+        if (registered) {
+            document.getElementById('inlineBorrowerName').value = registered.name || '';
+            document.getElementById('inlineBorrowerEmail').value = registered.email || '';
+            document.getElementById('inlineBorrowerCourse').value = registered.course || '';
+            document.getElementById('inlineBorrowerYear').value = registered.year || '';
+            showAlert(`Student ID "${studentId}" recognized: ${registered.name}. Info auto-filled!`, 'success');
+        } else {
+            showAlert(`Student ID "${studentId}" scanned. Fill in borrower details.`, 'success');
+        }
         setTimeout(() => { document.getElementById('inlineBorrowerName')?.focus(); }, 100);
     }
     input.value = '';
@@ -2277,4 +2401,355 @@ function processReturnScan() {
         document.getElementById('returnScanResult').style.display = 'block';
         document.getElementById('returnScanResult').innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> No active borrowing found for this Student ID.</div>';
     }
+}
+
+// ==================== REGISTERED STUDENTS ====================
+function registerStudent(studentId, name, email, course, year) {
+    if (!appState.registeredStudents) appState.registeredStudents = [];
+    const existing = appState.registeredStudents.find(s => s.student_id === studentId);
+    if (!existing) {
+        appState.registeredStudents.push({
+            id: getNextId(appState.registeredStudents),
+            student_id: studentId,
+            name: name,
+            email: email,
+            course: course,
+            year: year,
+            registered_date: new Date().toISOString()
+        });
+        addActivity(`Student "${name}" (ID: ${studentId}) registered as borrower`);
+    } else {
+        existing.name = name;
+        existing.email = email;
+        existing.course = course;
+        existing.year = year;
+    }
+}
+
+// ==================== SAVE & ADD MORE ITEMS ====================
+function saveAndAddMoreItems() {
+    const toolId = document.getElementById('inlineBorrowerTool').value;
+    const studentId = document.getElementById('inlineStudentId').value.trim();
+    const email = document.getElementById('inlineBorrowerEmail').value.trim();
+    const name = document.getElementById('inlineBorrowerName').value.trim();
+    const course = document.getElementById('inlineBorrowerCourse').value;
+    const year = document.getElementById('inlineBorrowerYear').value;
+    const borrowDate = document.getElementById('inlineBorrowDate').value;
+    const returnDate = document.getElementById('inlineReturnDate').value;
+    const reason = document.getElementById('inlineBorrowReason')?.value || '';
+    const qty = parseInt(document.getElementById('inlineBorrowerQty')?.value) || 1;
+
+    if (!toolId || !studentId || !email || !name || !course || !year || !borrowDate || !returnDate) {
+        showAlert('Please fill in all required fields first', 'warning');
+        return;
+    }
+
+    const tool = appState.allTools.find(t => t.id === parseInt(toolId));
+    if (!tool || tool.quantity < qty) {
+        showAlert(`Insufficient quantity for "${tool?.name || 'Unknown'}". Only ${tool?.quantity || 0} available.`, 'warning');
+        return;
+    }
+
+    const newBorrower = {
+        id: getNextId(appState.allBorrowers),
+        tool_id: parseInt(toolId), student_id: studentId, email: email,
+        borrower_name: name, course, year,
+        borrow_date: borrowDate, return_date: returnDate, reason: reason,
+        quantity: qty,
+        returned: false, returned_date: null, return_remarks: '', overdue_notified: false
+    };
+
+    tool.quantity -= qty;
+    appState.allBorrowers.push(newBorrower);
+    registerStudent(studentId, name, email, course, year);
+    saveApplicationState();
+    showAlert(`Added ${qty}x "${tool.name}". Select next item.`, 'success');
+    renderBorrowers(); renderTools(); updateDashboard(); updateToolSelect(); updateInlineToolSelect();
+
+    // Keep form open, keep student info, reset tool selection
+    document.getElementById('inlineBorrowerTool').value = '';
+    document.getElementById('inlineBorrowerQty').value = '1';
+    updateInlineToolSelect();
+    document.getElementById('inlineBorrowerTool').focus();
+}
+
+// ==================== EDIT BORROWING (ADD MORE ITEMS) ====================
+function openEditBorrowing(borrowerId) {
+    const borrower = appState.allBorrowers.find(b => b.id === borrowerId);
+    if (!borrower) return;
+
+    document.getElementById('editBorrowingId').value = borrowerId;
+    document.getElementById('editBorrowingBorrower').value = `${borrower.borrower_name} (ID: ${borrower.student_id})`;
+
+    // Show current borrowed items for this student
+    const studentItems = appState.allBorrowers.filter(b =>
+        b.student_id === borrower.student_id && !b.returned
+    );
+    const currentItemsHtml = studentItems.map(b => {
+        const t = appState.allTools.find(tool => tool.id === b.tool_id);
+        return `<span class="badge bg-primary me-1 mb-1">${escapeHtml(t?.name || 'Unknown')} x${b.quantity || 1}</span>`;
+    }).join('');
+    document.getElementById('editBorrowingCurrentItems').innerHTML = currentItemsHtml || '<em>No items</em>';
+
+    // Populate tool select
+    const toolSelect = document.getElementById('editBorrowingTool');
+    toolSelect.innerHTML = '<option value="">Select a tool</option>' +
+        appState.allTools.filter(t => t.quantity > 0).map(t =>
+            `<option value="${t.id}">${escapeHtml(t.name)} (Avail: ${t.quantity})</option>`
+        ).join('');
+
+    document.getElementById('editBorrowingQty').value = '1';
+    document.getElementById('editBorrowingRemarks').value = '';
+
+    new bootstrap.Modal(document.getElementById('editBorrowingModal')).show();
+}
+
+function saveAdditionalBorrowItem() {
+    const borrowerId = parseInt(document.getElementById('editBorrowingId').value);
+    const originalBorrower = appState.allBorrowers.find(b => b.id === borrowerId);
+    if (!originalBorrower) return;
+
+    const toolId = parseInt(document.getElementById('editBorrowingTool').value);
+    const qty = parseInt(document.getElementById('editBorrowingQty').value) || 1;
+    const remarks = document.getElementById('editBorrowingRemarks').value.trim();
+
+    if (!toolId) { showAlert('Please select a tool', 'warning'); return; }
+
+    const tool = appState.allTools.find(t => t.id === toolId);
+    if (!tool || tool.quantity < qty) {
+        showAlert(`Insufficient quantity. Only ${tool?.quantity || 0} available.`, 'warning');
+        return;
+    }
+
+    const newBorrower = {
+        id: getNextId(appState.allBorrowers),
+        tool_id: toolId, student_id: originalBorrower.student_id,
+        email: originalBorrower.email, borrower_name: originalBorrower.borrower_name,
+        course: originalBorrower.course, year: originalBorrower.year,
+        borrow_date: originalBorrower.borrow_date, return_date: originalBorrower.return_date,
+        reason: remarks || originalBorrower.reason,
+        quantity: qty,
+        returned: false, returned_date: null, return_remarks: '', overdue_notified: false
+    };
+
+    tool.quantity -= qty;
+    appState.allBorrowers.push(newBorrower);
+    saveApplicationState();
+    addActivity(`Additional item: ${qty}x "${tool.name}" added to ${originalBorrower.borrower_name}'s borrowing`);
+
+    bootstrap.Modal.getInstance(document.getElementById('editBorrowingModal')).hide();
+    renderBorrowers(); renderTools(); updateDashboard(); updateToolSelect(); updateInlineToolSelect();
+    showAlert(`Added ${qty}x "${tool.name}" to ${originalBorrower.borrower_name}'s borrowing!`, 'success');
+}
+
+// ==================== DAMAGE REPORT UI HANDLERS ====================
+function onDamageStatusChange() {
+    const status = document.getElementById('updateDamageStatus').value;
+    const replacementSection = document.getElementById('replacementSection');
+    if (replacementSection) {
+        replacementSection.style.display = status === 'Replaced' ? 'block' : 'none';
+    }
+}
+
+function onReplacementTypeChange() {
+    const type = document.getElementById('replacementType').value;
+    const sameSection = document.getElementById('sameModelSection');
+    const diffSection = document.getElementById('differentModelSection');
+    if (sameSection) sameSection.style.display = type === 'same_model' ? 'block' : 'none';
+    if (diffSection) diffSection.style.display = type === 'different_model' ? 'block' : 'none';
+}
+
+// ==================== SETTINGS: PASSWORD & SECURITY ====================
+function changeProfilePassword() {
+    const currentPw = document.getElementById('settingCurrentPassword').value;
+    const newPw = document.getElementById('settingNewPassword').value;
+    const confirmPw = document.getElementById('settingConfirmPassword').value;
+
+    if (!currentPw || !newPw || !confirmPw) {
+        showAlert('Please fill in all password fields', 'warning'); return;
+    }
+    if (newPw.length < 6) {
+        showAlert('New password must be at least 6 characters', 'warning'); return;
+    }
+    if (newPw !== confirmPw) {
+        showAlert('New password and confirmation do not match', 'danger'); return;
+    }
+
+    // Check current password against logged-in user
+    const currentEmail = appState.currentUser;
+    const savedUsers = JSON.parse(localStorage.getItem('users')) || [];
+    let user = savedUsers.find(u => u.email === currentEmail);
+
+    if (user) {
+        if (user.password !== currentPw) {
+            showAlert('Current password is incorrect', 'danger'); return;
+        }
+        user.password = newPw;
+        localStorage.setItem('users', JSON.stringify(savedUsers));
+        // Also update allUsers
+        const stateUser = appState.allUsers.find(u => u.email === currentEmail);
+        if (stateUser) stateUser.password = newPw;
+        saveApplicationState();
+    } else {
+        // Default admin - check against default password
+        if (currentPw !== 'password123') {
+            showAlert('Current password is incorrect', 'danger'); return;
+        }
+        // Create user entry with new password
+        const newUser = {
+            id: getNextId(appState.allUsers),
+            name: 'Admin', email: 'admin@smcborrow.com',
+            username: 'admin', role: 'Admin', password: newPw
+        };
+        appState.allUsers.push(newUser);
+        saveApplicationState();
+    }
+
+    document.getElementById('settingCurrentPassword').value = '';
+    document.getElementById('settingNewPassword').value = '';
+    document.getElementById('settingConfirmPassword').value = '';
+    showAlert('Password changed successfully!', 'success');
+}
+
+function setBackupPassword() {
+    const pw = document.getElementById('backupPassword').value;
+    const confirmPw = document.getElementById('confirmBackupPassword').value;
+    if (!pw) { showAlert('Please enter a backup password', 'warning'); return; }
+    if (pw !== confirmPw) { showAlert('Passwords do not match', 'danger'); return; }
+    if (pw.length < 4) { showAlert('Backup password must be at least 4 characters', 'warning'); return; }
+
+    localStorage.setItem('backupPassword', pw);
+    document.getElementById('backupPassword').value = '';
+    document.getElementById('confirmBackupPassword').value = '';
+    showAlert('Backup password set successfully! This password will be required for data export.', 'success');
+}
+
+function setRecoveryEmail() {
+    const email = document.getElementById('recoveryEmail').value.trim();
+    if (!email) { showAlert('Please enter a recovery email', 'warning'); return; }
+    if (!email.includes('@')) { showAlert('Please enter a valid email address', 'warning'); return; }
+
+    localStorage.setItem('recoveryEmail', email);
+    showAlert('Recovery email saved: ' + email, 'success');
+}
+
+// ==================== DASHBOARD: STUDENT BORROWERS CHART ====================
+let studentBorrowersChartInstance = null;
+
+function renderStudentBorrowersChart() {
+    const canvas = document.getElementById('studentBorrowersChart');
+    if (!canvas) return;
+
+    // Build student data from borrowers
+    const studentMap = {};
+    appState.allBorrowers.forEach(b => {
+        if (!b.student_id) return;
+        if (!studentMap[b.student_id]) {
+            studentMap[b.student_id] = {
+                student_id: b.student_id,
+                name: b.borrower_name || 'Unknown',
+                year: b.year || 'N/A',
+                course: b.course || 'N/A',
+                totalBorrowed: 0,
+                activeBorrowed: 0
+            };
+        }
+        studentMap[b.student_id].totalBorrowed += (b.quantity || 1);
+        if (!b.returned) studentMap[b.student_id].activeBorrowed += (b.quantity || 1);
+    });
+
+    const students = Object.values(studentMap).sort((a, b) => b.totalBorrowed - a.totalBorrowed).slice(0, 15);
+
+    if (students.length === 0) {
+        canvas.style.display = 'none';
+        const listDiv = document.getElementById('studentBorrowersList');
+        if (listDiv) listDiv.innerHTML = '<div class="empty-state"><i class="fas fa-user-graduate"></i><h4>No Student Borrowers Yet</h4><p>Student data will appear here when borrowing records are created.</p></div>';
+        return;
+    }
+    canvas.style.display = 'block';
+
+    if (studentBorrowersChartInstance) studentBorrowersChartInstance.destroy();
+
+    const labels = students.map(s => `${s.student_id} - ${s.name}`);
+    const totalData = students.map(s => s.totalBorrowed);
+    const activeData = students.map(s => s.activeBorrowed);
+
+    studentBorrowersChartInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Total Borrowed',
+                    data: totalData,
+                    backgroundColor: 'rgba(37, 99, 235, 0.7)',
+                    borderColor: 'rgba(37, 99, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Currently Active',
+                    data: activeData,
+                    backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: { display: true, text: 'Student Borrowing Activity', font: { size: 16 } },
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 }, title: { display: true, text: 'Items' } },
+                x: { ticks: { maxRotation: 45, minRotation: 25 } }
+            }
+        }
+    });
+
+    // Render table below chart
+    const listDiv = document.getElementById('studentBorrowersList');
+    if (listDiv) {
+        listDiv.innerHTML = '<div class="table-responsive"><table class="table table-bordered table-striped table-sm"><thead class="table-primary"><tr><th>ID Number</th><th>Full Name</th><th>Course</th><th>Year Level</th><th>Total Borrowed</th><th>Active</th></tr></thead><tbody>' +
+            students.map(s => `<tr>
+                <td><code>${escapeHtml(s.student_id)}</code></td>
+                <td>${escapeHtml(s.name)}</td>
+                <td>${escapeHtml(s.course)}</td>
+                <td>${escapeHtml(s.year)}</td>
+                <td><span class="badge bg-primary">${s.totalBorrowed}</span></td>
+                <td>${s.activeBorrowed > 0 ? `<span class="badge bg-danger">${s.activeBorrowed}</span>` : '<span class="badge bg-success">0</span>'}</td>
+            </tr>`).join('') + '</tbody></table></div>';
+    }
+}
+
+// ==================== STUDENT BARCODE ====================
+function downloadStudentBarcode(studentId) {
+    const student = (appState.registeredStudents || []).find(s => s.student_id === studentId);
+    if (!student) { showAlert('Student not found', 'warning'); return; }
+
+    const modal = document.getElementById('studentBarcodeModal');
+    if (modal) {
+        document.getElementById('studentBarcodeNameDisplay').textContent = `${student.name} (${student.student_id})`;
+        document.getElementById('studentBarcodeIdDisplay').textContent = student.student_id;
+        const canvas = document.getElementById('studentBarcodeCanvas');
+        try {
+            JsBarcode(canvas, student.student_id, {
+                format: 'CODE128', width: 2, height: 80,
+                displayValue: true, text: `${student.student_id} - ${student.name}`,
+                fontSize: 14, margin: 10
+            });
+        } catch(e) { console.error('Barcode generation error:', e); }
+        new bootstrap.Modal(modal).show();
+    }
+}
+
+function saveStudentBarcodeImage() {
+    const canvas = document.getElementById('studentBarcodeCanvas');
+    if (!canvas) return;
+    const link = document.createElement('a');
+    link.download = `student-barcode-${Date.now()}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+    showAlert('Barcode image downloaded!', 'success');
 }
