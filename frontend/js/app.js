@@ -732,42 +732,96 @@ function renderFilteredBorrowers(borrowers) {
         return;
     }
 
-    borrowersList.innerHTML = borrowers.map(borrower => {
-        const tool = appState.allTools.find(t => t.id === borrower.tool_id);
-        const returnDate = new Date(borrower.return_date);
-        const isOverdue = returnDate < new Date() && !borrower.returned;
-        const overdueDays = isOverdue ? calculateOverdueDays(borrower.return_date) : 0;
-        let status = borrower.returned ? 'Returned' : isOverdue ? 'Overdue' : 'Active';
-        let badgeClass = borrower.returned ? 'badge-success' : isOverdue ? 'badge-danger' : 'badge-warning';
-        const qty = borrower.quantity || 1;
+    // Group borrowings by student_id (or borrower_name as fallback)
+    const grouped = {};
+    borrowers.forEach(b => {
+        const key = b.student_id || b.borrower_name;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(b);
+    });
+
+    borrowersList.innerHTML = Object.values(grouped).map(group => {
+        const first = group[0];
+        const activeItems = group.filter(b => !b.returned);
+        const returnedItems = group.filter(b => b.returned);
+        const hasOverdue = activeItems.some(b => new Date(b.return_date) < new Date());
+        const allReturned = activeItems.length === 0;
+        let groupStatus = allReturned ? 'Returned' : hasOverdue ? 'Overdue' : 'Active';
+        let groupBadge = allReturned ? 'badge-success' : hasOverdue ? 'badge-danger' : 'badge-warning';
+
+        // Build items table for active items
+        const activeItemsHtml = activeItems.length > 0 ? `
+            <table class="table table-sm table-bordered mt-2 mb-2" style="font-size:0.85rem;">
+                <thead class="table-light"><tr><th>Tool/Item</th><th>Qty</th><th>Borrow Date</th><th>Return Date</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                ${activeItems.map(b => {
+                    const tool = appState.allTools.find(t => t.id === b.tool_id);
+                    const rd = new Date(b.return_date);
+                    const isOverdue = rd < new Date();
+                    const overdueDays = isOverdue ? calculateOverdueDays(b.return_date) : 0;
+                    return `<tr>
+                        <td>${escapeHtml(tool?.name || 'Unknown')}</td>
+                        <td><span class="badge bg-primary">${b.quantity || 1}</span></td>
+                        <td>${new Date(b.borrow_date).toLocaleDateString()}</td>
+                        <td>${rd.toLocaleDateString()} ${isOverdue ? `<span class="badge bg-danger">${overdueDays}d overdue</span>` : ''}</td>
+                        <td><span class="badge ${isOverdue ? 'bg-danger' : 'bg-warning text-dark'}">${isOverdue ? 'Overdue' : 'Active'}</span></td>
+                        <td>
+                            <button class="btn btn-success btn-sm py-0 px-1" onclick="confirmReturn(${b.id})" title="Return"><i class="fas fa-check"></i></button>
+                            ${isOverdue ? `<button class="btn btn-warning btn-sm py-0 px-1" onclick="openAdjustOverdue(${b.id})" title="Adjust Date"><i class="fas fa-calendar-alt"></i></button>` : ''}
+                            ${isOverdue && b.email ? `<button class="btn btn-danger btn-sm py-0 px-1" onclick="sendOverdueEmail(${b.id})" title="Send Notice"><i class="fas fa-envelope"></i></button>` : ''}
+                        </td>
+                    </tr>`;
+                }).join('')}
+                </tbody>
+            </table>` : '';
+
+        // Returned items collapsible
+        const returnedItemsHtml = returnedItems.length > 0 ? `
+            <details class="mt-1"><summary class="text-muted" style="font-size:0.8rem; cursor:pointer;"><i class="fas fa-history"></i> ${returnedItems.length} returned item(s)</summary>
+            <table class="table table-sm table-bordered mt-1 mb-0" style="font-size:0.8rem; opacity:0.7;">
+                <thead class="table-light"><tr><th>Tool/Item</th><th>Qty</th><th>Borrowed</th><th>Returned</th><th>Remarks</th></tr></thead>
+                <tbody>
+                ${returnedItems.map(b => {
+                    const tool = appState.allTools.find(t => t.id === b.tool_id);
+                    return `<tr>
+                        <td>${escapeHtml(tool?.name || 'Unknown')}</td>
+                        <td>${b.quantity || 1}</td>
+                        <td>${new Date(b.borrow_date).toLocaleDateString()}</td>
+                        <td>${b.returned_date ? new Date(b.returned_date).toLocaleDateString() : '-'}</td>
+                        <td>${escapeHtml(b.return_remarks || '-')}</td>
+                    </tr>`;
+                }).join('')}
+                </tbody>
+            </table></details>` : '';
+
+        // Get any overdue day count for the group
+        const maxOverdueDays = activeItems.reduce((max, b) => {
+            const days = calculateOverdueDays(b.return_date);
+            return new Date(b.return_date) < new Date() && !b.returned ? Math.max(max, days) : max;
+        }, 0);
 
         return `
             <div class="borrower-card">
                 <div class="row">
                     <div class="col-md-8">
-                        <h4>${escapeHtml(borrower.borrower_name)}</h4>
-                        <div class="detail-row"><span class="detail-label">Student ID:</span><span class="detail-value"><code>${escapeHtml(borrower.student_id) || 'N/A'}</code></span></div>
-                        <div class="detail-row"><span class="detail-label">Email:</span><span class="detail-value">${escapeHtml(borrower.email) || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Course:</span><span class="detail-value">${escapeHtml(borrower.course) || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Year:</span><span class="detail-value">${escapeHtml(borrower.year) || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Tool:</span><span class="detail-value">${escapeHtml(tool?.name) || 'Unknown'} <span class="badge bg-primary">x${qty}</span></span></div>
-                        <div class="detail-row"><span class="detail-label">Borrow Date:</span><span class="detail-value">${new Date(borrower.borrow_date).toLocaleDateString()}</span></div>
-                        <div class="detail-row"><span class="detail-label">Return Date:</span><span class="detail-value">${returnDate.toLocaleDateString()}</span></div>
-                        ${isOverdue ? `<div class="detail-row"><span class="detail-label" style="color:red;">Days Overdue:</span><span class="detail-value" style="color:red; font-weight:bold;">${overdueDays} day(s)</span></div>` : ''}
-                        ${borrower.reason ? `<div class="detail-row"><span class="detail-label">Reason:</span><span class="detail-value">${escapeHtml(borrower.reason)}</span></div>` : ''}
-                        ${borrower.return_remarks ? `<div class="detail-row"><span class="detail-label">Return Remarks:</span><span class="detail-value"><em>${escapeHtml(borrower.return_remarks)}</em></span></div>` : ''}
-                        ${!borrower.returned ? `
-                        <div class="action-buttons">
-                            <button class="btn btn-success btn-small" onclick="confirmReturn(${borrower.id})"><i class="fas fa-check"></i> Mark Returned</button>
-                            <button class="btn btn-primary btn-small" onclick="openEditBorrowing(${borrower.id})"><i class="fas fa-edit"></i> Edit / Add Item</button>
-                            ${isOverdue ? `<button class="btn btn-warning btn-small" onclick="openAdjustOverdue(${borrower.id})"><i class="fas fa-calendar-alt"></i> Adjust Date</button>` : ''}
-                            ${isOverdue && borrower.email ? `<button class="btn btn-danger btn-small" onclick="sendOverdueEmail(${borrower.id})"><i class="fas fa-envelope"></i> Send Overdue Notice</button>` : ''}
-                        </div>
-                        ` : ''}
+                        <h4>${escapeHtml(first.borrower_name)}</h4>
+                        <div class="detail-row"><span class="detail-label">Student ID:</span><span class="detail-value"><code>${escapeHtml(first.student_id) || 'N/A'}</code></span></div>
+                        <div class="detail-row"><span class="detail-label">Email:</span><span class="detail-value">${escapeHtml(first.email) || 'N/A'}</span></div>
+                        <div class="detail-row"><span class="detail-label">Course:</span><span class="detail-value">${escapeHtml(first.course) || 'N/A'}</span></div>
+                        <div class="detail-row"><span class="detail-label">Year:</span><span class="detail-value">${escapeHtml(first.year) || 'N/A'}</span></div>
+                        ${first.reason ? `<div class="detail-row"><span class="detail-label">Reason:</span><span class="detail-value">${escapeHtml(first.reason)}</span></div>` : ''}
+                        <div class="detail-row"><span class="detail-label">Items (Active):</span><span class="detail-value"><span class="badge bg-primary">${activeItems.length}</span> item(s)</span></div>
+                        ${activeItemsHtml}
+                        ${returnedItemsHtml}
+                        ${activeItems.length > 0 ? `
+                        <div class="action-buttons mt-2">
+                            <button class="btn btn-primary btn-small" onclick="openEditBorrowing(${activeItems[0].id})"><i class="fas fa-plus"></i> Add More Items</button>
+                        </div>` : ''}
                     </div>
                     <div class="col-md-4 text-end">
-                        <span class="badge ${badgeClass}">${status}</span>
-                        ${isOverdue ? `<br><small style="color:red; font-weight:600;">${overdueDays} day(s) overdue</small>` : ''}
+                        <span class="badge ${groupBadge}">${groupStatus}</span>
+                        ${maxOverdueDays > 0 ? `<br><small style="color:red; font-weight:600;">${maxOverdueDays} day(s) overdue</small>` : ''}
+                        <div class="mt-2 text-muted" style="font-size:0.8rem;">Total: ${group.length} record(s)</div>
                     </div>
                 </div>
             </div>
@@ -891,15 +945,27 @@ function initReportYearFilter() {
     const sel = document.getElementById('reportYearFilter');
     if (!sel) return;
     const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1; // 1-12
+    // School year starts in August. If month >= 8, current SY is currentYear-(currentYear+1)
+    const startYear = currentMonth >= 8 ? currentYear : currentYear - 1;
     sel.innerHTML = '';
-    for (let y = currentYear; y >= currentYear - 10; y--) {
-        sel.innerHTML += `<option value="${y}">${y}</option>`;
+    for (let y = startYear; y >= startYear - 10; y--) {
+        sel.innerHTML += `<option value="${y}">${y}-${y + 1}</option>`;
+    }
+    // Auto-update SY text field
+    const syInput = document.getElementById('reportSY');
+    if (syInput) {
+        syInput.value = `${startYear}-${startYear + 1}`;
+        sel.addEventListener('change', function() {
+            const y = parseInt(this.value);
+            syInput.value = `${y}-${y + 1}`;
+        });
     }
 }
 
 function generateInventoryReport() {
     const period = document.getElementById('reportPeriodFilter').value;
-    const year = parseInt(document.getElementById('reportYearFilter').value);
+    const syStartYear = parseInt(document.getElementById('reportYearFilter').value);
     const officeLocation = document.getElementById('reportOfficeLocation').value;
 
     let filteredTools = appState.allTools;
@@ -909,6 +975,7 @@ function generateInventoryReport() {
         filteredTools = filteredTools.filter(tool => (tool.location || '') === officeLocation);
     }
 
+    // School year: Aug of syStartYear to Jul of syStartYear+1
     if (period !== 'all') {
         filteredTools = filteredTools.filter(tool => {
             if (!tool.yearAcquired && !tool.createdDate) return true;
@@ -917,35 +984,67 @@ function generateInventoryReport() {
             const toolYear = d.getFullYear();
             const toolMonth = d.getMonth() + 1; // 1-12
 
-            if (period === 'yearly') return toolYear === year;
-            if (period === '1st_sem') return toolYear === year && toolMonth >= 8 && toolMonth <= 12;
-            if (period === '2nd_sem') return toolYear === year && toolMonth >= 1 && toolMonth <= 5;
-            if (period === 'summer') return toolYear === year && (toolMonth === 6 || toolMonth === 7);
+            // Check if within school year range
+            const inSY = (toolYear === syStartYear && toolMonth >= 8) || (toolYear === syStartYear + 1 && toolMonth <= 7);
+            if (period === 'yearly') return inSY;
+            // 1st sem: Aug-Dec of start year
+            if (period === '1st_sem') return toolYear === syStartYear && toolMonth >= 8 && toolMonth <= 12;
+            // 2nd sem: Jan-May of next year
+            if (period === '2nd_sem') return toolYear === syStartYear + 1 && toolMonth >= 1 && toolMonth <= 5;
+            // Summer: Jun-Jul of next year
+            if (period === 'summer') return toolYear === syStartYear + 1 && (toolMonth === 6 || toolMonth === 7);
             return true;
         });
+    }
+
+    // Count status/action quantities per tool from damage reports
+    function getToolStatusCounts(toolId) {
+        const counts = { needsRepair: 0, lost: 0, damaged: 0, newlyAcquired: 0, removed: 0, transferred: 0, disposed: 0 };
+        (appState.damageReports || []).forEach(r => {
+            if (r.tool_id !== toolId) return;
+            const qty = r.quantity_damaged || 1;
+            const dtype = r.damage_type || '';
+            if (dtype === 'For Repair' || dtype === 'Needs Repair') counts.needsRepair += qty;
+            else if (dtype === 'Lost') counts.lost += qty;
+            else if (dtype === 'Damaged') counts.damaged += qty;
+            // Count action from resolved status
+            const st = r.status || '';
+            if (st === 'Replaced') counts.newlyAcquired += (r.quantity_damaged || 1);
+            if (st === 'Removed') counts.removed += qty;
+            if (st === 'Transferred') counts.transferred += qty;
+            if (st === 'Disposed') counts.disposed += qty;
+        });
+        return counts;
     }
 
     const tbody = document.getElementById('reportTableBody');
     if (filteredTools.length === 0) {
         tbody.innerHTML = '<tr><td colspan="12" class="text-center">No tools found for the selected criteria.</td></tr>';
     } else {
-        // SMCTI form format: Prev Qty | Items | Current Qty | Brand/Spec | Status checkmarks | Action checkmarks
         tbody.innerHTML = filteredTools.map(t => {
-            const cond = t.condition || 'Good Condition';
+            const sc = getToolStatusCounts(t.id);
+            // Good condition qty = current quantity (what's left and usable)
+            const goodQty = t.condition === 'Good Condition' ? t.quantity : 0;
+            // Also check tool-level action
             const action = t.actionSincePrev || '';
+            if (action === 'Newly Acquired') sc.newlyAcquired = Math.max(sc.newlyAcquired, t.quantity);
+            if (action === 'Removed' && sc.removed === 0) sc.removed = t.quantity;
+            if (action === 'Transferred' && sc.transferred === 0) sc.transferred = t.quantity;
+            if (action === 'Disposed' && sc.disposed === 0) sc.disposed = t.quantity;
+
             return `<tr>
                 <td class="text-center">${t.previousQty || ''}</td>
                 <td><strong>${escapeHtml(t.name)}</strong></td>
                 <td class="text-center">${t.quantity}</td>
                 <td>${escapeHtml(t.brand || '')}${t.description ? ' ' + escapeHtml(t.description) : ''}</td>
-                <td class="text-center">${cond === 'Good Condition' ? '✓' : ''}</td>
-                <td class="text-center">${cond === 'Needs Repair' ? '✓' : ''}</td>
-                <td class="text-center">${cond === 'Lost' ? '✓' : ''}</td>
-                <td class="text-center">${cond === 'Damaged' ? '✓' : ''}</td>
-                <td class="text-center">${action === 'Newly Acquired' ? '✓' : ''}</td>
-                <td class="text-center">${action === 'Removed' ? '✓' : ''}</td>
-                <td class="text-center">${action === 'Transferred' ? '✓' : ''}</td>
-                <td class="text-center">${action === 'Disposed' ? '✓' : ''}</td>
+                <td class="text-center">${goodQty || ''}</td>
+                <td class="text-center">${sc.needsRepair || ''}</td>
+                <td class="text-center">${sc.lost || ''}</td>
+                <td class="text-center">${sc.damaged || ''}</td>
+                <td class="text-center">${sc.newlyAcquired || ''}</td>
+                <td class="text-center">${sc.removed || ''}</td>
+                <td class="text-center">${sc.transferred || ''}</td>
+                <td class="text-center">${sc.disposed || ''}</td>
             </tr>`;
         }).join('');
     }
@@ -1113,8 +1212,8 @@ function exportReportToWord() {
                     <th rowspan="2" style="border:1px solid #000; padding:4px; text-align:center; background:#dce6f1; font-size:8pt; width:12%;">ITEMS</th>
                     <th rowspan="2" style="border:1px solid #000; padding:4px; text-align:center; background:#dce6f1; font-size:8pt; width:5%;">CUR-<br>RENT<br>QTY.</th>
                     <th rowspan="2" style="border:1px solid #000; padding:4px; text-align:center; background:#dce6f1; font-size:8pt; width:22%;">BRAND NAME / SPECIFICATION</th>
-                    <th colspan="4" style="border:1px solid #000; padding:4px; text-align:center; background:#dce6f1; font-size:8pt;">STATUS (✓)</th>
-                    <th colspan="4" style="border:1px solid #000; padding:4px; text-align:center; background:#dce6f1; font-size:7pt;">ACTIONS MADE SINCE<br>PREVIOUS INVENTORY (✓)</th>
+                    <th colspan="4" style="border:1px solid #000; padding:4px; text-align:center; background:#dce6f1; font-size:8pt;">STATUS (QTY)</th>
+                    <th colspan="4" style="border:1px solid #000; padding:4px; text-align:center; background:#dce6f1; font-size:7pt;">ACTIONS MADE SINCE<br>PREVIOUS INVENTORY (QTY)</th>
                 </tr>
                 <tr>
                     <th style="border:1px solid #000; padding:3px; text-align:center; background:#dce6f1; font-size:7pt; width:5%;">Good<br>Con-<br>dition</th>
