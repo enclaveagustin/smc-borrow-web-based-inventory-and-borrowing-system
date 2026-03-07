@@ -942,30 +942,52 @@ function renderFilteredUsers(users) {
 
 // ==================== INVENTORY REPORTING ====================
 function initReportYearFilter() {
-    const sel = document.getElementById('reportYearFilter');
-    if (!sel) return;
     const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1; // 1-12
-    // School year starts in August. If month >= 8, current SY is currentYear-(currentYear+1)
-    const startYear = currentMonth >= 8 ? currentYear : currentYear - 1;
-    sel.innerHTML = '';
-    for (let y = startYear; y >= startYear - 10; y--) {
-        sel.innerHTML += `<option value="${y}">${y}-${y + 1}</option>`;
+    const currentMonth = new Date().getMonth() + 1;
+    const defaultStart = currentMonth >= 8 ? currentYear : currentYear - 1;
+    const defaultEnd = defaultStart + 1;
+
+    function populateYearSelect(id, selectedYear) {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        sel.innerHTML = '';
+        for (let y = currentYear + 1; y >= currentYear - 10; y--) {
+            sel.innerHTML += `<option value="${y}" ${y === selectedYear ? 'selected' : ''}>${y}</option>`;
+        }
     }
-    // Auto-update SY text field
-    const syInput = document.getElementById('reportSY');
-    if (syInput) {
-        syInput.value = `${startYear}-${startYear + 1}`;
-        sel.addEventListener('change', function() {
-            const y = parseInt(this.value);
-            syInput.value = `${y}-${y + 1}`;
-        });
+
+    // Populate all 4 year selects (header SY pair + filter pair)
+    populateYearSelect('reportSYStart', defaultStart);
+    populateYearSelect('reportSYEnd', defaultEnd);
+    populateYearSelect('reportYearFilterStart', defaultStart);
+    populateYearSelect('reportYearFilterEnd', defaultEnd);
+
+    // Sync header SY pair with filter pair
+    const syStart = document.getElementById('reportSYStart');
+    const syEnd = document.getElementById('reportSYEnd');
+    const filterStart = document.getElementById('reportYearFilterStart');
+    const filterEnd = document.getElementById('reportYearFilterEnd');
+
+    if (syStart && filterStart) {
+        syStart.addEventListener('change', () => { if (filterStart) filterStart.value = syStart.value; });
+        filterStart.addEventListener('change', () => { if (syStart) syStart.value = filterStart.value; });
     }
+    if (syEnd && filterEnd) {
+        syEnd.addEventListener('change', () => { if (filterEnd) filterEnd.value = syEnd.value; });
+        filterEnd.addEventListener('change', () => { if (syEnd) syEnd.value = filterEnd.value; });
+    }
+}
+
+function getReportSY() {
+    const s = document.getElementById('reportSYStart')?.value || document.getElementById('reportYearFilterStart')?.value || '2025';
+    const e = document.getElementById('reportSYEnd')?.value || document.getElementById('reportYearFilterEnd')?.value || '2026';
+    return `${s}-${e}`;
 }
 
 function generateInventoryReport() {
     const period = document.getElementById('reportPeriodFilter').value;
-    const syStartYear = parseInt(document.getElementById('reportYearFilter').value);
+    const syStartYear = parseInt(document.getElementById('reportYearFilterStart')?.value);
+    const syEndYear = parseInt(document.getElementById('reportYearFilterEnd')?.value);
     const officeLocation = document.getElementById('reportOfficeLocation').value;
 
     let filteredTools = appState.allTools;
@@ -975,7 +997,7 @@ function generateInventoryReport() {
         filteredTools = filteredTools.filter(tool => (tool.location || '') === officeLocation);
     }
 
-    // School year: Aug of syStartYear to Jul of syStartYear+1
+    // Filter by selected year range
     if (period !== 'all') {
         filteredTools = filteredTools.filter(tool => {
             if (!tool.yearAcquired && !tool.createdDate) return true;
@@ -984,15 +1006,15 @@ function generateInventoryReport() {
             const toolYear = d.getFullYear();
             const toolMonth = d.getMonth() + 1; // 1-12
 
-            // Check if within school year range
-            const inSY = (toolYear === syStartYear && toolMonth >= 8) || (toolYear === syStartYear + 1 && toolMonth <= 7);
+            // Check if within school year range (Aug of start year to Jul of end year)
+            const inSY = (toolYear === syStartYear && toolMonth >= 8) || (toolYear === syEndYear && toolMonth <= 7) || (toolYear > syStartYear && toolYear < syEndYear);
             if (period === 'yearly') return inSY;
             // 1st sem: Aug-Dec of start year
             if (period === '1st_sem') return toolYear === syStartYear && toolMonth >= 8 && toolMonth <= 12;
-            // 2nd sem: Jan-May of next year
-            if (period === '2nd_sem') return toolYear === syStartYear + 1 && toolMonth >= 1 && toolMonth <= 5;
-            // Summer: Jun-Jul of next year
-            if (period === 'summer') return toolYear === syStartYear + 1 && (toolMonth === 6 || toolMonth === 7);
+            // 2nd sem: Jan-May of end year
+            if (period === '2nd_sem') return toolYear === syEndYear && toolMonth >= 1 && toolMonth <= 5;
+            // Summer: Jun-Jul of end year
+            if (period === 'summer') return toolYear === syEndYear && (toolMonth === 6 || toolMonth === 7);
             return true;
         });
     }
@@ -1068,7 +1090,7 @@ function exportReportToWord() {
     }
 
     // Get form header values
-    const sy = document.getElementById('reportSY')?.value || '2024-2025';
+    const sy = getReportSY();
     const division = document.getElementById('reportDivision')?.value || 'Administration';
     const deptLevel = document.getElementById('reportDeptLevel')?.value || 'Higher Education';
     const department = document.getElementById('reportDepartment')?.value || 'ICT/COLLEGE';
@@ -1299,7 +1321,7 @@ function exportReportToExcel() {
     }
 
     try {
-    const sy = document.getElementById('reportSY')?.value || '2024-2025';
+    const sy = getReportSY();
     const department = document.getElementById('reportDepartment')?.value || 'ICT_COLLEGE';
     const officeLocation = document.getElementById('reportOfficeLocation')?.value || 'ALL LOCATIONS';
     const division = document.getElementById('reportDivision')?.value || 'Administration';
