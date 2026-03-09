@@ -1054,8 +1054,12 @@ function generateInventoryReport() {
             if (action === 'Transferred' && sc.transferred === 0) sc.transferred = t.quantity;
             if (action === 'Disposed' && sc.disposed === 0) sc.disposed = t.quantity;
 
+            // Previous Qty = items without a damage report (total qty minus total reported qty)
+            const totalReported = sc.needsRepair + sc.lost + sc.damaged;
+            const prevQty = Math.max(0, t.quantity - totalReported);
+
             return `<tr>
-                <td class="text-center">${t.previousQty || ''}</td>
+                <td class="text-center">${prevQty}</td>
                 <td><strong>${escapeHtml(t.name)}</strong></td>
                 <td class="text-center">${t.quantity}</td>
                 <td>${escapeHtml(t.brand || '')}${t.description ? ' ' + escapeHtml(t.description) : ''}</td>
