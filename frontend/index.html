@@ -569,31 +569,107 @@
                         <!-- Report Result -->
                         <div id="inventoryReportResult" style="display:none;">
                             <hr>
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-sm" id="reportTable" style="font-size:0.82rem;">
-                                    <thead>
-                                        <tr class="table-primary text-center">
-                                            <th rowspan="2" style="vertical-align:middle;">PREV.<br>QTY.</th>
-                                            <th rowspan="2" style="vertical-align:middle;">ITEMS</th>
-                                            <th rowspan="2" style="vertical-align:middle;">CURRENT<br>QTY.</th>
-                                            <th rowspan="2" style="vertical-align:middle;">BRAND NAME / SPECIFICATION</th>
-                                            <th colspan="4" class="text-center">STATUS (QTY)</th>
-                                            <th colspan="4" class="text-center">ACTIONS MADE SINCE<br>PREVIOUS INVENTORY (QTY)</th>
-                                        </tr>
-                                        <tr class="table-primary text-center" style="font-size:0.75rem;">
-                                            <th>Good<br>Con-<br>dition</th>
-                                            <th>Needs<br>Repair</th>
-                                            <th>Lost</th>
-                                            <th>Dam-<br>age</th>
-                                            <th>Newly<br>Acquired</th>
-                                            <th>Re-<br>moved</th>
-                                            <th>Trans-<br>ferred</th>
-                                            <th>Dis-<br>posed</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="reportTableBody"></tbody>
+                            <!-- Full Form Preview (matches SMCTI Inventory Form docx format) -->
+                            <div id="reportFormPreview" style="background:#fff; border:1px solid #ccc; padding:30px 40px; max-width:1200px; margin:0 auto 20px auto; font-family:Arial,sans-serif; box-shadow:0 2px 8px rgba(0,0,0,.08);">
+
+                                <!-- HEADER -->
+                                <table style="width:100%; border:none; margin-bottom:10px; border-collapse:collapse;">
+                                    <tr>
+                                        <td style="border:none; width:10%; vertical-align:middle; text-align:center;">
+                                            <div style="width:60px; height:60px; border:2px solid #1a3a6b; border-radius:50%; text-align:center; line-height:56px; font-size:8pt; font-weight:bold; color:#1a3a6b; margin:0 auto;">SMCTI<br>SEAL</div>
+                                        </td>
+                                        <td style="border:none; width:65%; padding-left:10px;">
+                                            <div style="font-size:14pt; font-weight:bold;">ST. MARY'S COLLEGE OF TAGUM, INC</div>
+                                            <div style="font-size:9pt; font-weight:bold;">OFFICE OF THE PROPERTY CUSTODIAN</div>
+                                            <div style="font-size:8pt; color:#333;">National Highway, Tagum City, 8100 Davao del Norte, Philippines</div>
+                                            <div style="font-size:8pt; color:#333;">Email Address: propertycustodian@smctagum.edu.ph</div>
+                                            <div style="font-size:9pt; font-style:italic;"><em>Quality Transformative Ignacian Marian Education</em></div>
+                                        </td>
+                                        <td style="border:none; width:25%; text-align:right; vertical-align:middle;">
+                                            <div style="display:inline-block; border:2px solid #1a3a6b; padding:8px 15px; text-align:center;">
+                                                <div style="font-weight:bold; font-size:12pt; letter-spacing:3px; color:#1a3a6b;">S M C T I</div>
+                                                <div style="font-weight:bold; font-size:12pt; letter-spacing:3px; color:#1a3a6b;">Q T I M E</div>
+                                                <div style="font-size:7pt; color:#333; margin-top:3px;">Faith &bull; Excellence &bull; Service</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <!-- FORM TITLE -->
+                                <div style="text-align:center; font-size:12pt; font-weight:bold; margin:8px 0 3px 0;">INVENTORY FORM</div>
+                                <div id="previewSY" style="text-align:center; font-size:10pt; margin-bottom:10px;"></div>
+
+                                <!-- DIVISION / DEPARTMENT LINES -->
+                                <div id="previewDivision" style="font-size:9pt; margin-bottom:2px;"></div>
+                                <div id="previewDeptLevel" style="font-size:9pt; margin-bottom:8px;"></div>
+                                <table style="border:none; width:100%; font-size:9pt; margin-bottom:10px; border-collapse:collapse;">
+                                    <tr style="border:none;">
+                                        <td id="previewDept" style="border:none; width:60%;"></td>
+                                        <td id="previewDate" style="border:none; width:40%; text-align:right;"></td>
+                                    </tr>
+                                    <tr style="border:none;">
+                                        <td id="previewLocation" style="border:none;" colspan="2"></td>
+                                    </tr>
+                                </table>
+
+                                <!-- INVENTORY TABLE -->
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm" id="reportTable" style="font-size:0.82rem;">
+                                        <thead>
+                                            <tr class="table-primary text-center">
+                                                <th rowspan="2" style="vertical-align:middle;">PREV.<br>QTY.</th>
+                                                <th rowspan="2" style="vertical-align:middle;">ITEMS</th>
+                                                <th rowspan="2" style="vertical-align:middle;">CURRENT<br>QTY.</th>
+                                                <th rowspan="2" style="vertical-align:middle;">BRAND NAME / SPECIFICATION</th>
+                                                <th colspan="4" class="text-center">STATUS (QTY)</th>
+                                                <th colspan="4" class="text-center">ACTIONS MADE SINCE<br>PREVIOUS INVENTORY (QTY)</th>
+                                            </tr>
+                                            <tr class="table-primary text-center" style="font-size:0.75rem;">
+                                                <th>Good<br>Con-<br>dition</th>
+                                                <th>Needs<br>Repair</th>
+                                                <th>Lost</th>
+                                                <th>Dam-<br>age</th>
+                                                <th>Newly<br>Acquired</th>
+                                                <th>Re-<br>moved</th>
+                                                <th>Trans-<br>ferred</th>
+                                                <th>Dis-<br>posed</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="reportTableBody"></tbody>
+                                    </table>
+                                </div>
+
+                                <!-- SIGNATORIES -->
+                                <table style="border:none; width:100%; margin-top:30px; border-collapse:collapse;">
+                                    <tr style="border:none;">
+                                        <td style="border:none; text-align:center; width:33%; padding-top:40px;">
+                                            <div style="font-size:9pt;">Prepared By:</div>
+                                            <br><br>
+                                            <div style="border-top:1px solid #000; display:inline-block; padding-top:3px; min-width:200px;">
+                                                <strong id="previewPreparedBy" style="font-size:10pt;">________________________</strong>
+                                            </div>
+                                            <div id="previewPreparedByTitle" style="font-size:8pt; color:#666; margin-top:2px;"></div>
+                                        </td>
+                                        <td style="border:none; text-align:center; width:33%; padding-top:40px;">
+                                            <div style="font-size:9pt;">Verified By:</div>
+                                            <br><br>
+                                            <div style="border-top:1px solid #000; display:inline-block; padding-top:3px; min-width:200px;">
+                                                <strong id="previewVerifiedBy" style="font-size:10pt;">________________________</strong>
+                                            </div>
+                                            <div id="previewVerifiedByTitle" style="font-size:8pt; color:#666; margin-top:2px;"></div>
+                                        </td>
+                                        <td style="border:none; text-align:center; width:33%; padding-top:40px;">
+                                            <div style="font-size:9pt;">Noted By:</div>
+                                            <br><br>
+                                            <div style="border-top:1px solid #000; display:inline-block; padding-top:3px; min-width:200px;">
+                                                <strong id="previewNotedBy" style="font-size:10pt;">________________________</strong>
+                                            </div>
+                                            <div id="previewNotedByTitle" style="font-size:8pt; color:#666; margin-top:2px;"></div>
+                                        </td>
+                                    </tr>
                                 </table>
                             </div>
+
                             <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                                 <button class="btn btn-info mb-3" onclick="exportReportToWord()"><i class="fas fa-file-word"></i> Export to Word (.doc)</button>
                                 <button class="btn btn-success mb-3" onclick="exportReportToExcel()"><i class="fas fa-file-excel"></i> Export to Excel (.xlsx)</button>

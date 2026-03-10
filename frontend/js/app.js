@@ -1163,6 +1163,42 @@ function generateInventoryReport() {
         reportDateEl.value = new Date().toISOString().split('T')[0];
     }
 
+    // Populate form preview fields to match SMCTI Inventory Form format
+    const sy = getReportSY();
+    const division = document.getElementById('reportDivision')?.value || 'Administration';
+    const deptLevel = document.getElementById('reportDeptLevel')?.value || 'Higher Education';
+    const department = document.getElementById('reportDepartment')?.value || 'ICT/COLLEGE';
+    const reportDate = document.getElementById('reportDate')?.value || new Date().toISOString().split('T')[0];
+    const formattedDate = new Date(reportDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const divAdmin = division === 'Administration' ? '(✓)' : '( )';
+    const divAcademic = division === 'Academic' ? '(✓)' : '( )';
+    const divFinance = division === 'Finance' ? '(✓)' : '( )';
+    const deptHigher = deptLevel === 'Higher Education' ? '(✓)' : '( )';
+    const deptBasic = deptLevel === 'Basic Education' ? '(✓)' : '( )';
+
+    document.getElementById('previewSY').textContent = 'SY ' + sy;
+    document.getElementById('previewDivision').innerHTML = 'Division (✓):&nbsp;&nbsp; ' + divAdmin + ' Administration &nbsp;&nbsp; ' + divAcademic + ' Academic &nbsp;&nbsp; ' + divFinance + ' Finance';
+    document.getElementById('previewDeptLevel').innerHTML = 'Department (✓):&nbsp;&nbsp; ' + deptHigher + ' Higher Education &nbsp;&nbsp; ' + deptBasic + ' Basic Education';
+    document.getElementById('previewDept').innerHTML = 'Department: <strong><u>&nbsp;&nbsp;' + escapeHtml(department) + '&nbsp;&nbsp;</u></strong>';
+    document.getElementById('previewDate').innerHTML = 'Date: <strong><u>&nbsp;&nbsp;' + formattedDate + '&nbsp;&nbsp;</u></strong>';
+    document.getElementById('previewLocation').innerHTML = 'Office/Unit Location: <strong><u>&nbsp;&nbsp;' + (escapeHtml(officeLocation) || 'ALL LOCATIONS') + '&nbsp;&nbsp;</u></strong>';
+
+    // Populate signatories in preview
+    const preparedBy = document.getElementById('sigPreparedBy')?.value || '________________________';
+    const preparedByTitle = document.getElementById('sigPreparedByTitle')?.value || '';
+    const verifiedBy = document.getElementById('sigVerifiedBy')?.value || '________________________';
+    const verifiedByTitle = document.getElementById('sigVerifiedByTitle')?.value || '';
+    const notedBy = document.getElementById('sigNotedBy')?.value || '________________________';
+    const notedByTitle = document.getElementById('sigNotedByTitle')?.value || '';
+
+    document.getElementById('previewPreparedBy').textContent = preparedBy;
+    document.getElementById('previewPreparedByTitle').textContent = preparedByTitle;
+    document.getElementById('previewVerifiedBy').textContent = verifiedBy;
+    document.getElementById('previewVerifiedByTitle').textContent = verifiedByTitle;
+    document.getElementById('previewNotedBy').textContent = notedBy;
+    document.getElementById('previewNotedByTitle').textContent = notedByTitle;
+
     document.getElementById('inventoryReportResult').style.display = 'block';
     showAlert(`Inventory report generated: ${filteredTools.length} total items listed`, 'success');
 }
