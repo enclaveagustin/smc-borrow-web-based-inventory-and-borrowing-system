@@ -1003,6 +1003,27 @@
         </div>
     </div>
 
+    <!-- BORROWING QR CODE MODAL -->
+    <div class="modal fade" id="borrowingQRModal" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #6366f1, #4f46e5);"><h5 class="modal-title text-white"><i class="fas fa-qrcode"></i> Borrowing QR Code</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body text-center">
+                    <p class="mb-1"><strong id="qrBorrowerName"></strong></p>
+                    <p class="text-muted small mb-2" id="qrBorrowerInfo"></p>
+                    <div id="borrowingQRContainer" style="display:inline-block;"></div>
+                    <p class="text-muted small mt-2" id="qrTxnCode"></p>
+                    <p class="text-danger small mt-1"><i class="fas fa-exclamation-triangle"></i> Keep this QR code. It is required when returning items.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="downloadBorrowingQR()"><i class="fas fa-download"></i> Download</button>
+                    <button type="button" class="btn btn-success" onclick="printBorrowingQR()"><i class="fas fa-print"></i> Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- RETURN REMARKS MODAL - Two-Step Process -->
     <div class="modal fade" id="returnRemarksModal" tabindex="-1">
         <div class="modal-dialog">
@@ -1025,18 +1046,18 @@
                         <div class="mb-3"><label class="form-label">Return Remarks / Comments *</label><textarea class="form-control" id="returnRemarks" rows="3" required placeholder="E.g., Item returned in good condition / Item has scratches on surface..."></textarea></div>
                     </div>
                     
-                    <!-- Step 2: Display barcode and scan to confirm -->
+                    <!-- Step 2: Scan QR code to confirm -->
                     <div id="returnStep2" style="display: none;">
-                        <div class="alert alert-success mb-3"><i class="fas fa-check-circle"></i> <strong>Step 2:</strong> Scan the student barcode below to confirm the return.</div>
+                        <div class="alert alert-success mb-3"><i class="fas fa-check-circle"></i> <strong>Step 2:</strong> Scan the QR code that was issued during borrowing to confirm the return.</div>
                         <div class="text-center mb-3">
-                            <p class="mb-1"><strong>Student ID Barcode:</strong></p>
-                            <canvas id="returnStudentBarcode" style="max-width: 100%;"></canvas>
-                            <p class="text-muted small mt-2" id="returnStudentIdDisplay"></p>
+                            <p class="mb-1"><strong>Expected QR Code:</strong></p>
+                            <div id="returnExpectedQR" style="display:inline-block;"></div>
+                            <p class="text-muted small mt-2" id="returnQRCodeDisplay"></p>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-barcode"></i> Scan Student ID / Barcode *</label>
-                            <input type="text" class="form-control form-control-lg" id="returnStudentIdScan" placeholder="Scan the barcode above to confirm return..." autofocus autocomplete="off">
-                            <small class="text-muted">The scanned ID must match the borrower's Student ID</small>
+                            <label class="form-label"><i class="fas fa-qrcode"></i> Scan Borrowing QR Code *</label>
+                            <input type="text" class="form-control form-control-lg" id="returnQRScan" placeholder="Scan the QR code issued at borrowing time..." autofocus autocomplete="off">
+                            <small class="text-muted">The scanned QR must match the code issued when the item was borrowed</small>
                         </div>
                         <div id="returnScanFeedback"></div>
                     </div>

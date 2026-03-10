@@ -584,6 +584,85 @@ function importToolsFromExcel(event) {
     event.target.value = '';
 }
 
+// ==================== BORROWING QR CODE ====================
+function generateTxnCode(studentId) {
+    const ts = Date.now().toString(36).toUpperCase();
+    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `SMCB-${studentId}-${ts}-${rand}`;
+}
+
+function getOrCreateTxnCode(studentId) {
+    // Check if this student already has an active (unreturned) borrowing with a txn_code
+    const existing = appState.allBorrowers.find(b => b.student_id === studentId && !b.returned && b.txn_code);
+    return existing ? existing.txn_code : generateTxnCode(studentId);
+}
+
+function showBorrowingQR(txnCode, borrowerName, studentId) {
+    document.getElementById('qrBorrowerName').textContent = borrowerName || '';
+    document.getElementById('qrBorrowerInfo').textContent = `Student ID: ${studentId || 'N/A'}`;
+    document.getElementById('qrTxnCode').textContent = `Code: ${txnCode}`;
+
+    const container = document.getElementById('borrowingQRContainer');
+    container.innerHTML = '';
+    if (typeof QRCode !== 'undefined') {
+        new QRCode(container, { text: txnCode, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+    }
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('borrowingQRModal')).show();
+}
+
+function downloadBorrowingQR() {
+    const container = document.getElementById('borrowingQRContainer');
+    const canvas = container.querySelector('canvas');
+    if (!canvas) { showAlert('No QR code to download', 'warning'); return; }
+
+    const name = document.getElementById('qrBorrowerName').textContent || 'borrower';
+    const txn = document.getElementById('qrTxnCode').textContent || '';
+
+    // Create a larger canvas with label
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = 280;
+    exportCanvas.height = 340;
+    const ctx = exportCanvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 280, 340);
+    ctx.drawImage(canvas, 40, 20, 200, 200);
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(name, 140, 245);
+    ctx.font = '11px Arial';
+    ctx.fillText(txn, 140, 265);
+    ctx.fillStyle = '#cc0000';
+    ctx.font = '10px Arial';
+    ctx.fillText('Required for item return', 140, 290);
+
+    const link = document.createElement('a');
+    link.download = `borrowing-qr-${name.replace(/\s+/g, '-')}.png`;
+    link.href = exportCanvas.toDataURL('image/png');
+    link.click();
+}
+
+function printBorrowingQR() {
+    const container = document.getElementById('borrowingQRContainer');
+    const canvas = container.querySelector('canvas');
+    if (!canvas) { showAlert('No QR code to print', 'warning'); return; }
+
+    const name = document.getElementById('qrBorrowerName').textContent || '';
+    const info = document.getElementById('qrBorrowerInfo').textContent || '';
+    const txn = document.getElementById('qrTxnCode').textContent || '';
+
+    const printWin = window.open('', '_blank', 'width=400,height=500');
+    printWin.document.write(`<html><head><title>Borrowing QR</title><style>body{text-align:center;font-family:Arial,sans-serif;padding:20px;}img{margin:10px 0;}.warn{color:#cc0000;font-size:12px;margin-top:10px;}</style></head><body>`);
+    printWin.document.write(`<h3>${name}</h3><p>${info}</p>`);
+    printWin.document.write(`<img src="${canvas.toDataURL('image/png')}" width="200" height="200">`);
+    printWin.document.write(`<p>${txn}</p>`);
+    printWin.document.write(`<p class="warn"><strong>Keep this QR code. Required for returning items.</strong></p>`);
+    printWin.document.write(`</body></html>`);
+    printWin.document.close();
+    printWin.onload = () => { printWin.print(); };
+}
+
 // ==================== BORROWERS MANAGEMENT ====================
 function saveBorrower() {
     const form = document.getElementById('borrowerForm');
@@ -612,6 +691,7 @@ function saveBorrower() {
             return_date: document.getElementById('returnDate').value,
             reason: document.getElementById('borrowReason').value.trim(),
             quantity: parseInt(document.getElementById('borrowerQuantity')?.value) || 1,
+            txn_code: getOrCreateTxnCode(studentId),
             returned: false,
             returned_date: null,
             return_remarks: '',
@@ -633,6 +713,7 @@ function saveBorrower() {
             bootstrap.Modal.getInstance(document.getElementById('addBorrowerModal')).hide();
             showAlert('Borrowing recorded successfully!', 'success');
             renderBorrowers(); renderTools(); updateDashboard(); updateToolSelect(); updateInlineToolSelect();
+            setTimeout(() => showBorrowingQR(borrowerData.txn_code, borrowerData.borrower_name, borrowerData.student_id), 500);
         }, 400);
     } catch (error) { hideLoadingState(loadingId); handleError(error, 'Failed to record borrowing'); }
     return false;
@@ -822,6 +903,7 @@ function renderFilteredBorrowers(borrowers) {
                         <span class="badge ${groupBadge}">${groupStatus}</span>
                         ${maxOverdueDays > 0 ? `<br><small style="color:red; font-weight:600;">${maxOverdueDays} day(s) overdue</small>` : ''}
                         <div class="mt-2 text-muted" style="font-size:0.8rem;">Total: ${group.length} record(s)</div>
+                        ${activeItems.length > 0 && first.txn_code ? `<button class="btn btn-outline-primary btn-sm mt-2" onclick="showBorrowingQR('${first.txn_code}', '${escapeHtml(first.borrower_name)}', '${escapeHtml(first.student_id)}')"><i class="fas fa-qrcode"></i> View QR</button>` : ''}
                     </div>
                 </div>
             </div>
@@ -1492,10 +1574,10 @@ function confirmReturn(borrowerId) {
     
     // Set values
     document.getElementById('returnBorrowerId').value = borrower.id;
-    document.getElementById('returnStudentIdExpected').value = borrower.student_id || '';
+    document.getElementById('returnStudentIdExpected').value = borrower.txn_code || '';
     document.getElementById('returnBorrowerName').value = borrower.borrower_name;
     document.getElementById('returnToolName').value = tool?.name || 'Unknown';
-    document.getElementById('returnStudentIdScan').value = '';
+    document.getElementById('returnQRScan').value = '';
     document.getElementById('returnCondition').value = 'Good Condition';
     document.getElementById('returnRemarks').value = '';
     document.getElementById('returnScanFeedback').innerHTML = '';
@@ -1506,7 +1588,7 @@ function confirmReturn(borrowerId) {
 function proceedToReturnScan() {
     const returnCondition = document.getElementById('returnCondition').value;
     const returnRemarks = document.getElementById('returnRemarks').value.trim();
-    const expectedStudentId = document.getElementById('returnStudentIdExpected').value;
+    const expectedTxnCode = document.getElementById('returnStudentIdExpected').value;
     
     // Validate step 1 fields
     if (!returnRemarks) { 
@@ -1520,34 +1602,23 @@ function proceedToReturnScan() {
     document.getElementById('returnProceedBtn').style.display = 'none';
     document.getElementById('returnBackBtn').style.display = 'inline-block';
     
-    // Generate and display the student barcode
-    const barcodeCanvas = document.getElementById('returnStudentBarcode');
-    const studentIdDisplay = document.getElementById('returnStudentIdDisplay');
+    // Generate and display the expected QR code
+    const qrContainer = document.getElementById('returnExpectedQR');
+    const qrCodeDisplay = document.getElementById('returnQRCodeDisplay');
+    qrContainer.innerHTML = '';
     
-    if (expectedStudentId) {
-        try {
-            JsBarcode(barcodeCanvas, expectedStudentId, {
-                format: 'CODE128',
-                width: 2,
-                height: 80,
-                displayValue: true,
-                fontSize: 16,
-                margin: 10,
-                background: '#ffffff',
-                lineColor: '#000000'
-            });
-            studentIdDisplay.textContent = `Student ID: ${expectedStudentId}`;
-        } catch (err) {
-            console.error('Barcode generation error:', err);
-            studentIdDisplay.textContent = `Student ID: ${expectedStudentId} (Barcode generation failed)`;
+    if (expectedTxnCode) {
+        if (typeof QRCode !== 'undefined') {
+            new QRCode(qrContainer, { text: expectedTxnCode, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M });
         }
+        qrCodeDisplay.textContent = `Code: ${expectedTxnCode}`;
     } else {
-        barcodeCanvas.style.display = 'none';
-        studentIdDisplay.textContent = 'No Student ID on record - any ID will be accepted';
+        qrContainer.innerHTML = '<p class="text-warning"><i class="fas fa-exclamation-triangle"></i> No QR code on record</p>';
+        qrCodeDisplay.textContent = 'No QR code assigned - any code will be accepted';
     }
     
     // Setup auto-confirm listener on scan input
-    const scanInput = document.getElementById('returnStudentIdScan');
+    const scanInput = document.getElementById('returnQRScan');
     scanInput.value = '';
     scanInput.focus();
     
@@ -1570,19 +1641,18 @@ function proceedToReturnScan() {
         scanInput.removeEventListener('input', scanInput._inputListener);
     }
     scanInput._inputListener = function() {
-        const scannedId = scanInput.value.trim();
+        const scannedCode = scanInput.value.trim();
         const feedback = document.getElementById('returnScanFeedback');
-        if (scannedId && expectedStudentId) {
-            if (scannedId === expectedStudentId) {
-                feedback.innerHTML = '<div class="alert alert-success py-2"><i class="fas fa-check-circle"></i> ID matches! Press Enter or the scan will auto-confirm.</div>';
-                // Auto-confirm after a brief delay
+        if (scannedCode && expectedTxnCode) {
+            if (scannedCode === expectedTxnCode) {
+                feedback.innerHTML = '<div class="alert alert-success py-2"><i class="fas fa-check-circle"></i> QR code matches! Confirming return...</div>';
                 setTimeout(() => {
-                    if (scanInput.value.trim() === expectedStudentId) {
+                    if (scanInput.value.trim() === expectedTxnCode) {
                         executeReturnBorrower();
                     }
                 }, 500);
-            } else if (scannedId.length >= expectedStudentId.length) {
-                feedback.innerHTML = '<div class="alert alert-danger py-2"><i class="fas fa-times-circle"></i> ID does not match!</div>';
+            } else if (scannedCode.length >= expectedTxnCode.length) {
+                feedback.innerHTML = '<div class="alert alert-danger py-2"><i class="fas fa-times-circle"></i> QR code does not match!</div>';
             } else {
                 feedback.innerHTML = '';
             }
@@ -1606,22 +1676,22 @@ function executeReturnBorrower() {
     const borrower = appState.allBorrowers.find(b => b.id === borrowerId);
     if (!borrower) return;
     
-    const scannedId = document.getElementById('returnStudentIdScan').value.trim();
+    const scannedCode = document.getElementById('returnQRScan').value.trim();
     const returnCondition = document.getElementById('returnCondition').value;
     const returnRemarks = document.getElementById('returnRemarks').value.trim();
-    const expectedStudentId = document.getElementById('returnStudentIdExpected').value;
+    const expectedTxnCode = document.getElementById('returnStudentIdExpected').value;
     
-    if (!scannedId) { 
-        showAlert('Please scan the Student ID / Barcode to confirm return', 'warning'); 
-        document.getElementById('returnStudentIdScan').focus();
+    if (!scannedCode) { 
+        showAlert('Please scan the Borrowing QR Code to confirm return', 'warning'); 
+        document.getElementById('returnQRScan').focus();
         return; 
     }
     
-    if (expectedStudentId && scannedId !== expectedStudentId) {
-        showAlert(`Student ID mismatch! Expected "${expectedStudentId}" but got "${scannedId}". The same ID used for borrowing must be scanned.`, 'danger');
-        document.getElementById('returnScanFeedback').innerHTML = '<div class="alert alert-danger py-2"><i class="fas fa-times-circle"></i> ID mismatch! Please scan the correct Student ID.</div>';
-        document.getElementById('returnStudentIdScan').value = '';
-        document.getElementById('returnStudentIdScan').focus();
+    if (expectedTxnCode && scannedCode !== expectedTxnCode) {
+        showAlert('QR code mismatch! The scanned QR does not match the code issued at borrowing time.', 'danger');
+        document.getElementById('returnScanFeedback').innerHTML = '<div class="alert alert-danger py-2"><i class="fas fa-times-circle"></i> QR mismatch! Please scan the correct borrowing QR code.</div>';
+        document.getElementById('returnQRScan').value = '';
+        document.getElementById('returnQRScan').focus();
         return;
     }
     
@@ -1898,6 +1968,7 @@ function saveInlineBorrower() {
         borrower_name: borrowerName, course, year,
         borrow_date: borrowDate, return_date: returnDate, reason: borrowReason,
         quantity: qty,
+        txn_code: getOrCreateTxnCode(studentId),
         returned: false, returned_date: null, return_remarks: '', overdue_notified: false
     };
 
@@ -1908,6 +1979,7 @@ function saveInlineBorrower() {
     closeInlineForm();
     renderBorrowers(); renderTools(); updateDashboard(); updateToolSelect(); updateInlineToolSelect();
     showAlert(`Borrowing recorded: ${qty}x "${tool.name}" for ${borrowerName}!`, 'success');
+    setTimeout(() => showBorrowingQR(newBorrower.txn_code, borrowerName, studentId), 500);
 }
 
 // ==================== BARCODE EXPORT ====================
@@ -2581,6 +2653,7 @@ function saveAndAddMoreItems() {
         borrower_name: name, course, year,
         borrow_date: borrowDate, return_date: returnDate, reason: reason,
         quantity: qty,
+        txn_code: getOrCreateTxnCode(studentId),
         returned: false, returned_date: null, return_remarks: '', overdue_notified: false
     };
 
@@ -2654,6 +2727,7 @@ function saveAdditionalBorrowItem() {
         borrow_date: originalBorrower.borrow_date, return_date: originalBorrower.return_date,
         reason: remarks || originalBorrower.reason,
         quantity: qty,
+        txn_code: originalBorrower.txn_code || getOrCreateTxnCode(originalBorrower.student_id),
         returned: false, returned_date: null, return_remarks: '', overdue_notified: false
     };
 
