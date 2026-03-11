@@ -329,14 +329,21 @@
                             <div class="form-body">
                                 <form id="inlineBorrowerForm">
                                     <div class="row">
-                                        <div class="col-md-7 mb-3"><label class="form-label" for="inlineBorrowerTool">Tool *</label><select class="form-select" id="inlineBorrowerTool" required onchange="updateSelectedToolsList('inline')"><option value="">Select a tool</option></select></div>
+                                        <div class="col-md-7 mb-3 tool-search-wrapper">
+                                            <label class="form-label" for="inlineBorrowerToolSearch">Tool *</label>
+                                            <input type="text" class="form-control" id="inlineBorrowerToolSearch" placeholder="Search for a tool..." autocomplete="off" oninput="searchTools('inline')" onfocus="searchTools('inline')">
+                                            <div id="inlineToolSearchResults" class="tool-search-results"></div>
+                                            <input type="hidden" id="inlineBorrowerTool">
+                                        </div>
                                         <div class="col-md-3 mb-3"><label class="form-label" for="inlineBorrowerQty">Quantity *</label><input type="number" class="form-control" id="inlineBorrowerQty" min="1" value="1" required></div>
                                     </div>
                                     <div id="inlineSelectedToolsList" class="mb-3 hidden-initial"></div>
+                                    <div id="inlineSessionItemsList" class="mb-3 hidden-initial"></div>
                                     <div class="row">
-                                        <div class="col-md-6 mb-3"><label class="form-label" for="inlineStudentId">Student ID / Barcode *</label><input type="text" class="form-control" id="inlineStudentId" required placeholder="Scan or enter Student ID"></div>
+                                        <div class="col-md-6 mb-3"><label class="form-label" for="inlineStudentId">Student ID / Barcode *</label><input type="text" class="form-control" id="inlineStudentId" required placeholder="Scan or enter Student ID" onchange="showStudentActiveBorrowings('inline')" onblur="showStudentActiveBorrowings('inline')"></div>
                                         <div class="col-md-6 mb-3"><label class="form-label" for="inlineBorrowerEmail">Email Address *</label><input type="email" class="form-control" id="inlineBorrowerEmail" required placeholder="student@email.com"></div>
                                     </div>
+                                    <div id="inlineActiveBorrowings" class="mb-3 hidden-initial"></div>
                                     <div class="mb-3"><label class="form-label" for="inlineBorrowerName">Borrower Name *</label><input type="text" class="form-control" id="inlineBorrowerName" required></div>
                                     <div class="row">
                                         <div class="col-md-6 mb-3"><label class="form-label" for="inlineBorrowerCourse">Course *</label>
@@ -796,14 +803,20 @@
                 <div class="modal-body">
                     <form id="borrowerForm">
                         <div class="row">
-                            <div class="col-md-8 mb-3"><label class="form-label" for="borrowerTool">Tool *</label><select class="form-select" id="borrowerTool" required onchange="updateSelectedToolsList('modal')"><option value="">Select a tool</option></select></div>
+                            <div class="col-md-8 mb-3 tool-search-wrapper">
+                                <label class="form-label" for="borrowerToolSearch">Tool *</label>
+                                <input type="text" class="form-control" id="borrowerToolSearch" placeholder="Search for a tool..." autocomplete="off" oninput="searchTools('modal')" onfocus="searchTools('modal')">
+                                <div id="modalToolSearchResults" class="tool-search-results"></div>
+                                <input type="hidden" id="borrowerTool">
+                            </div>
                             <div class="col-md-4 mb-3"><label class="form-label" for="borrowerQuantity">Quantity *</label><input type="number" class="form-control" id="borrowerQuantity" min="1" value="1" required></div>
                         </div>
                         <div id="modalSelectedToolsList" class="mb-3 hidden-initial"></div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label" for="borrowerStudentId">Student ID / Barcode *</label><input type="text" class="form-control" id="borrowerStudentId" required placeholder="Scan or enter Student ID"></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="borrowerStudentId">Student ID / Barcode *</label><input type="text" class="form-control" id="borrowerStudentId" required placeholder="Scan or enter Student ID" onchange="showStudentActiveBorrowings('modal')" onblur="showStudentActiveBorrowings('modal')"></div>
                             <div class="col-md-6 mb-3"><label class="form-label" for="borrowerEmail">Email Address *</label><input type="email" class="form-control" id="borrowerEmail" required placeholder="student@email.com"></div>
                         </div>
+                        <div id="modalActiveBorrowings" class="mb-3 hidden-initial"></div>
                         <div class="mb-3"><label class="form-label" for="borrowerName">Borrower Name *</label><input type="text" class="form-control" id="borrowerName" required></div>
                         <div class="row">
                             <div class="col-md-6 mb-3"><label class="form-label" for="borrowerCourse">Course *</label>

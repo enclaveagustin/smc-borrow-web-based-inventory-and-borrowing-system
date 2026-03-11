@@ -1555,31 +1555,123 @@ function exportReportToExcel() {
 
 // ==================== TOOL SELECTS ====================
 function updateToolSelect() {
-    const selectTool = document.getElementById('borrowerTool');
-    if (!selectTool) return;
-    selectTool.innerHTML = '<option value="">Select a tool</option>';
-    appState.allTools.forEach(tool => {
-        if (tool.quantity > 0) {
-            const option = document.createElement('option');
-            option.value = tool.id;
-            option.textContent = `${tool.name} (${tool.quantity} available)`;
-            selectTool.appendChild(option);
-        }
-    });
+    // Keep for backward compatibility - now uses searchable input
 }
 
 function updateInlineToolSelect() {
-    const toolSelect = document.getElementById('inlineBorrowerTool');
-    if (!toolSelect) return;
-    toolSelect.innerHTML = '<option value="">Select a tool</option>';
-    appState.allTools.forEach(tool => {
-        if (tool.quantity > 0) {
-            const option = document.createElement('option');
-            option.value = tool.id;
-            option.textContent = `${tool.name} (${tool.quantity} available)`;
-            toolSelect.appendChild(option);
-        }
+    // Keep for backward compatibility - now uses searchable input
+}
+
+// ==================== SEARCHABLE TOOL INPUT ====================
+function searchTools(formType) {
+    const searchId = formType === 'inline' ? 'inlineBorrowerToolSearch' : 'borrowerToolSearch';
+    const resultsId = formType === 'inline' ? 'inlineToolSearchResults' : 'modalToolSearchResults';
+    const searchInput = document.getElementById(searchId);
+    const resultsDiv = document.getElementById(resultsId);
+    if (!searchInput || !resultsDiv) return;
+
+    const query = searchInput.value.trim().toLowerCase();
+    const availableTools = appState.allTools.filter(t => t.quantity > 0);
+
+    let matches;
+    if (!query) {
+        matches = availableTools.slice(0, 20);
+    } else {
+        matches = availableTools.filter(t =>
+            (t.name && t.name.toLowerCase().includes(query)) ||
+            (t.brand && t.brand.toLowerCase().includes(query)) ||
+            (t.location && t.location.toLowerCase().includes(query)) ||
+            (t.assetCode && t.assetCode.toLowerCase().includes(query))
+        );
+    }
+
+    if (matches.length === 0) {
+        resultsDiv.innerHTML = '<div class="tool-search-no-results">No tools found</div>';
+        resultsDiv.style.display = 'block';
+        return;
+    }
+
+    resultsDiv.innerHTML = matches.map(tool => `
+        <div class="tool-search-item" onmousedown="selectSearchTool(${tool.id}, '${formType}')">
+            <div><strong>${escapeHtml(tool.name)}</strong> — ${escapeHtml(tool.brand || 'N/A')} <span class="text-muted small">(${tool.quantity} available)</span></div>
+            <div class="text-muted small">${escapeHtml(tool.location || '')}</div>
+        </div>
+    `).join('');
+    resultsDiv.style.display = 'block';
+}
+
+function selectSearchTool(toolId, formType) {
+    const searchId = formType === 'inline' ? 'inlineBorrowerToolSearch' : 'borrowerToolSearch';
+    const hiddenId = formType === 'inline' ? 'inlineBorrowerTool' : 'borrowerTool';
+    const resultsId = formType === 'inline' ? 'inlineToolSearchResults' : 'modalToolSearchResults';
+
+    const tool = appState.allTools.find(t => t.id === toolId);
+    if (!tool) return;
+
+    document.getElementById(searchId).value = `${tool.name} (${tool.quantity} available)`;
+    document.getElementById(hiddenId).value = toolId;
+    document.getElementById(resultsId).style.display = 'none';
+    updateSelectedToolsList(formType);
+}
+
+// Close search results when clicking outside
+document.addEventListener('click', function(e) {
+    const inlineResults = document.getElementById('inlineToolSearchResults');
+    const modalResults = document.getElementById('modalToolSearchResults');
+    if (inlineResults && !e.target.closest('#inlineBorrowerToolSearch') && !e.target.closest('#inlineToolSearchResults')) {
+        inlineResults.style.display = 'none';
+    }
+    if (modalResults && !e.target.closest('#borrowerToolSearch') && !e.target.closest('#modalToolSearchResults')) {
+        modalResults.style.display = 'none';
+    }
+});
+
+// ==================== SHOW STUDENT ACTIVE BORROWINGS ====================
+function showStudentActiveBorrowings(formType) {
+    const studentIdField = formType === 'inline' ? 'inlineStudentId' : 'borrowerStudentId';
+    const containerId = formType === 'inline' ? 'inlineActiveBorrowings' : 'modalActiveBorrowings';
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const studentId = document.getElementById(studentIdField)?.value.trim();
+    if (!studentId) { container.style.display = 'none'; return; }
+
+    const activeItems = appState.allBorrowers.filter(b => b.student_id === studentId && !b.returned);
+    if (activeItems.length === 0) { container.style.display = 'none'; return; }
+
+    let html = `<div class="alert alert-warning py-2 mb-0">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <strong><i class="fas fa-exclamation-circle"></i> Currently Borrowed Items (${activeItems.length})</strong>
+        </div>
+        <div class="active-borrowings-list">`;
+    activeItems.forEach(b => {
+        const tool = appState.allTools.find(t => t.id === b.tool_id);
+        const isOverdue = new Date(b.return_date) < new Date();
+        html += `<div class="borrow-item">
+            <span>${escapeHtml(tool?.name || 'Unknown')} <span class="text-muted">x${b.quantity}</span></span>
+            <span class="${isOverdue ? 'text-danger fw-bold' : 'text-muted'}">${isOverdue ? 'OVERDUE' : 'Due: ' + b.return_date}</span>
+        </div>`;
     });
+    html += '</div></div>';
+    container.innerHTML = html;
+    container.style.display = 'block';
+}
+
+// ==================== SESSION ITEMS LIST (Save & Add More) ====================
+let currentSessionItems = [];
+
+function updateSessionItemsList() {
+    const container = document.getElementById('inlineSessionItemsList');
+    if (!container) return;
+    if (currentSessionItems.length === 0) { container.style.display = 'none'; return; }
+
+    let html = '<div class="alert alert-success py-2 mb-0"><strong><i class="fas fa-list"></i> Items in this session (' + currentSessionItems.length + '):</strong><div class="session-items-list mt-1">';
+    currentSessionItems.forEach(item => {
+        html += `<span class="session-item"><i class="fas fa-check-circle text-success"></i> ${escapeHtml(item.toolName)} x${item.qty}</span>`;
+    });
+    html += '</div></div>';
+    container.innerHTML = html;
+    container.style.display = 'block';
 }
 
 // ==================== CONFIRMATION DIALOGS ====================
@@ -1991,6 +2083,13 @@ function autoFillBorrowingForm(tool) {
 function closeInlineForm() {
     document.getElementById('inline-borrower-form').style.display = 'none';
     document.getElementById('inlineBorrowerForm').reset();
+    currentSessionItems = [];
+    const sessionList = document.getElementById('inlineSessionItemsList');
+    if (sessionList) sessionList.style.display = 'none';
+    const activeBorr = document.getElementById('inlineActiveBorrowings');
+    if (activeBorr) activeBorr.style.display = 'none';
+    const selectedList = document.getElementById('inlineSelectedToolsList');
+    if (selectedList) selectedList.style.display = 'none';
 }
 
 function saveInlineBorrower() {
@@ -2636,6 +2735,9 @@ function processStudentIdScan() {
             showAlert(`Student ID "${studentId}" scanned. Fill in borrower details.`, 'success');
         }
         setTimeout(() => { document.getElementById('inlineBorrowerName')?.focus(); }, 100);
+        showStudentActiveBorrowings('inline');
+        currentSessionItems = [];
+        updateSessionItemsList();
     }
     input.value = '';
 }
@@ -2719,14 +2821,18 @@ function saveAndAddMoreItems() {
     appState.allBorrowers.push(newBorrower);
     registerStudent(studentId, name, email, course, year);
     saveApplicationState();
+    currentSessionItems.push({ toolName: tool.name, qty: qty });
     showAlert(`Added ${qty}x "${tool.name}". Select next item.`, 'success');
-    renderBorrowers(); renderTools(); updateDashboard(); updateToolSelect(); updateInlineToolSelect();
+    renderBorrowers(); renderTools(); updateDashboard();
 
     // Keep form open, keep student info, reset tool selection
     document.getElementById('inlineBorrowerTool').value = '';
+    document.getElementById('inlineBorrowerToolSearch').value = '';
     document.getElementById('inlineBorrowerQty').value = '1';
-    updateInlineToolSelect();
-    document.getElementById('inlineBorrowerTool').focus();
+    document.getElementById('inlineSelectedToolsList').style.display = 'none';
+    updateSessionItemsList();
+    showStudentActiveBorrowings('inline');
+    document.getElementById('inlineBorrowerToolSearch').focus();
 }
 
 // ==================== EDIT BORROWING (ADD MORE ITEMS) ====================
