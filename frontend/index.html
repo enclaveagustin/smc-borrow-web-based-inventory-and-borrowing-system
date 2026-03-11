@@ -16,7 +16,7 @@
         <div class="login-box">
             <div class="login-header">
                 <div class="login-logo">
-                    <img src="SMCTI%20Logo.png" alt="SMCTI Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                    <img src="SMCTI%20Logo.png" alt="SMCTI Logo" class="logo-lg">
                 </div>
                 <h1>SMC-Borrow</h1>
                 <p>Web-Based Inventory and Borrowing System</p>
@@ -29,11 +29,11 @@
                     <small>Password: <code>password123</code></small>
                 </div>
                 <div class="form-group">
-                    <label class="form-label"><i class="fas fa-envelope"></i> Email</label>
+                    <label class="form-label" for="loginEmail"><i class="fas fa-envelope"></i> Email</label>
                     <input type="email" id="loginEmail" class="form-control" placeholder="admin@smcborrow.com" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label"><i class="fas fa-lock"></i> Password</label>
+                    <label class="form-label" for="loginPassword"><i class="fas fa-lock"></i> Password</label>
                     <div class="password-input-wrapper">
                         <input type="password" id="loginPassword" class="form-control" placeholder="password123" required>
                         <button class="password-toggle-btn" type="button" onclick="togglePasswordVisibility()" title="Show/Hide Password">
@@ -54,9 +54,9 @@
             </div>
             <div id="forgotPasswordForm" class="forgot-password-hidden">
                 <h2>Reset Password</h2>
-                <p style="color: #666; font-size: 0.9rem; margin-bottom: 1.5rem;">Enter your email to receive password reset instructions.</p>
+                <p class="text-muted-info">Enter your email to receive password reset instructions.</p>
                 <div class="form-group">
-                    <label class="form-label"><i class="fas fa-envelope"></i> Email Address</label>
+                    <label class="form-label" for="resetEmail"><i class="fas fa-envelope"></i> Email Address</label>
                     <input type="email" id="resetEmail" class="form-control" placeholder="your@email.com" required>
                 </div>
                 <div class="login-actions">
@@ -72,12 +72,12 @@
     </div>
 
     <!-- MAIN APPLICATION -->
-    <div class="main-container" id="mainApp" style="display: none;">
+    <div class="main-container hidden-initial" id="mainApp">
         <!-- SIDEBAR -->
         <div class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <img src="SMCTI%20Logo.png" alt="SMCTI Logo" style="width: 40px; height: 40px; object-fit: contain;">
+                    <img src="SMCTI%20Logo.png" alt="SMCTI Logo" class="logo-sm">
                     <div>
                         <h1>SMC-Borrow</h1>
                         <p>Inventory System</p>
@@ -125,27 +125,27 @@
                     </div>
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-icon" style="color: var(--primary);"><i class="fas fa-hammer"></i></div>
+                            <div class="stat-icon icon-primary"><i class="fas fa-hammer"></i></div>
                             <div class="stat-number" id="totalTools">0</div>
                             <div class="stat-label">Total Tools</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon" style="color: var(--info);"><i class="fas fa-hand-paper"></i></div>
+                            <div class="stat-icon icon-info"><i class="fas fa-hand-paper"></i></div>
                             <div class="stat-number" id="activeBorrowings">0</div>
                             <div class="stat-label">Active Borrowings</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon" style="color: var(--danger);"><i class="fas fa-exclamation-circle"></i></div>
+                            <div class="stat-icon icon-danger"><i class="fas fa-exclamation-circle"></i></div>
                             <div class="stat-number" id="overdueItems">0</div>
                             <div class="stat-label">Overdue Items</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon" style="color: var(--warning);"><i class="fas fa-tools"></i></div>
+                            <div class="stat-icon icon-warning"><i class="fas fa-tools"></i></div>
                             <div class="stat-number" id="defectiveTools">0</div>
                             <div class="stat-label">Needs Repair / Damaged</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon" style="color: var(--success);"><i class="fas fa-users"></i></div>
+                            <div class="stat-icon icon-success"><i class="fas fa-users"></i></div>
                             <div class="stat-number" id="totalUsers">0</div>
                             <div class="stat-label">Total Users</div>
                         </div>
@@ -157,32 +157,32 @@
                         </div>
                     </div>
                     <!-- MONTHLY RECORD REPORT -->
-                    <div class="monthly-record-section" style="padding: 2rem; border-top: 1px solid #e9ecef;">
+                    <div class="monthly-record-section section-bordered">
                         <h3><i class="fas fa-calendar-alt"></i> Monthly Record Report</h3>
                         <div class="row mb-3">
                             <div class="col-md-4">
-                                <label class="form-label">Select Month</label>
-                                <input type="month" class="form-control" id="monthlyRecordMonth" onchange="renderMonthlyRecord()">
+                                <label class="form-label" for="monthlyRecordMonth">Select Month</label>
+                                <input type="text" class="form-control" id="monthlyRecordMonth" title="Select month" placeholder="YYYY-MM" pattern="\d{4}-\d{2}" onchange="renderMonthlyRecord()">
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-4">
-                                <div class="stat-card" style="border-left: 4px solid var(--success);">
-                                    <div class="stat-icon" style="color: var(--success);"><i class="fas fa-plus-circle"></i></div>
+                                <div class="stat-card border-left-success">
+                                    <div class="stat-icon icon-success"><i class="fas fa-plus-circle"></i></div>
                                     <div class="stat-number" id="monthlyAdded">0</div>
                                     <div class="stat-label">Added Tools</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="stat-card" style="border-left: 4px solid var(--danger);">
-                                    <div class="stat-icon" style="color: var(--danger);"><i class="fas fa-tools"></i></div>
+                                <div class="stat-card border-left-danger">
+                                    <div class="stat-icon icon-danger"><i class="fas fa-tools"></i></div>
                                     <div class="stat-number" id="monthlyDamaged">0</div>
                                     <div class="stat-label">Damaged Tools</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="stat-card" style="border-left: 4px solid var(--warning);">
-                                    <div class="stat-icon" style="color: var(--warning);"><i class="fas fa-minus-circle"></i></div>
+                                <div class="stat-card border-left-warning">
+                                    <div class="stat-icon icon-warning"><i class="fas fa-minus-circle"></i></div>
                                     <div class="stat-number" id="monthlyPulledOut">0</div>
                                     <div class="stat-label">Pulled-out Tools</div>
                                 </div>
@@ -192,17 +192,17 @@
                     </div>
 
                     <!-- TOP BORROWERS BY COURSE -->
-                    <div class="top-borrowers-section" style="padding: 2rem; border-top: 1px solid #e9ecef;">
+                    <div class="top-borrowers-section section-bordered">
                         <h3><i class="fas fa-chart-bar"></i> Top Borrowers by Course</h3>
-                        <div style="max-width: 700px; margin: 1rem auto;">
+                        <div class="chart-container-sm">
                             <canvas id="topBorrowersCourseChart" width="700" height="350"></canvas>
                         </div>
                     </div>
 
                     <!-- STUDENT BORROWERS INFO -->
-                    <div class="top-borrowers-section" style="padding: 2rem; border-top: 1px solid #e9ecef;">
+                    <div class="top-borrowers-section section-bordered">
                         <h3><i class="fas fa-user-graduate"></i> Student Borrowers</h3>
-                        <div style="max-width: 800px; margin: 1rem auto;">
+                        <div class="chart-container-md">
                             <canvas id="studentBorrowersChart" width="800" height="400"></canvas>
                         </div>
                         <div id="studentBorrowersList" class="mt-3"></div>
@@ -218,7 +218,7 @@
             </div>
 
             <!-- TOOLS TAB -->
-            <div id="tools" class="tab-content" style="display: none;">
+            <div id="tools" class="tab-content hidden-initial">
                 <div class="page-header">
                     <div class="page-header-content">
                         <h2><i class="fas fa-hammer"></i> Tools Management</h2>
@@ -226,10 +226,10 @@
                     </div>
                 </div>
                 <div class="tools-container">
-                    <div class="tools-header" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <div class="tools-header flex-row-wrap">
                         <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addToolModal"><i class="fas fa-plus"></i> Add New Tool</button>
                         <button class="btn btn-success mb-3" onclick="document.getElementById('excelImportInput').click()"><i class="fas fa-file-excel"></i> Import from Excel</button>
-                        <input type="file" id="excelImportInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importToolsFromExcel(event)">
+                        <input type="file" id="excelImportInput" accept=".xlsx,.xls,.csv" aria-label="Import Excel file" class="hidden-initial" onchange="importToolsFromExcel(event)">
                     </div>
                     <div class="row mb-4">
                         <div class="col-md-4">
@@ -238,7 +238,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <select class="form-select" id="toolCategoryFilter" onchange="filterTools()">
+                            <select class="form-select" id="toolCategoryFilter" title="Filter by category" onchange="filterTools()">
                                 <option value="">All Categories</option>
                                 <option value="Computer Equipments">Computer Equipments</option>
                                 <option value="Equipments">Equipments</option>
@@ -247,7 +247,7 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <select class="form-select" id="toolLocationFilter" onchange="filterTools()">
+                            <select class="form-select" id="toolLocationFilter" title="Filter by location" onchange="filterTools()">
                                 <option value="">All Locations</option>
                                 <option value="CALL LAB RM. 116">CALL LAB RM. 116</option>
                                 <option value="Computer Laboratory 1 Rm. 105">Computer Laboratory 1 Rm. 105</option>
@@ -264,7 +264,7 @@
             </div>
 
             <!-- BORROWERS TAB -->
-            <div id="borrowers" class="tab-content" style="display: none;">
+            <div id="borrowers" class="tab-content hidden-initial">
                 <div class="page-header">
                     <div class="page-header-content">
                         <h2><i class="fas fa-handshake"></i> Borrowings</h2>
@@ -272,7 +272,7 @@
                     </div>
                 </div>
                 <div class="borrowers-container">
-                    <div id="barcode-scanner-section" style="display: none; margin-bottom: 2rem;">
+                    <div id="barcode-scanner-section" class="hidden-section">
                         <div class="scanner-card">
                             <div class="scanner-header">
                                 <h4><i class="fas fa-barcode"></i> Scan Tool Barcode</h4>
@@ -283,7 +283,7 @@
                                     <input type="text" id="barcodeInput" class="form-control form-control-lg" placeholder="Point your barcode scanner here or type the barcode code..." autofocus autocomplete="off">
                                     <small class="form-text text-muted"><i class="fas fa-info-circle"></i> Scanner will automatically detect and process barcodes</small>
                                 </div>
-                                <div id="scanned-barcode-details" style="display: none; margin-top: 2rem;">
+                                <div id="scanned-barcode-details" class="hidden-details">
                                     <div class="alert alert-success alert-dismissible fade show"><i class="fas fa-check-circle"></i> <strong>Tool Found!</strong></div>
                                     <div class="scanned-item-card">
                                         <div class="row">
@@ -302,7 +302,7 @@
                         </div>
                     </div>
                     <!-- STUDENT ID SCANNER SECTION -->
-                    <div id="student-id-scanner-section" style="display: none; margin-bottom: 2rem;">
+                    <div id="student-id-scanner-section" class="hidden-section">
                         <div class="scanner-card">
                             <div class="scanner-header">
                                 <h4><i class="fas fa-id-card"></i> Scan Student ID / Barcode</h4>
@@ -313,14 +313,14 @@
                                     <input type="text" id="studentIdScanInput" class="form-control form-control-lg" placeholder="Scan Student ID barcode or type the Student ID here..." autofocus autocomplete="off">
                                     <small class="form-text text-muted"><i class="fas fa-info-circle"></i> Scan or enter the Student ID to release or return an item</small>
                                 </div>
-                                <div id="student-id-scan-result" style="display: none; margin-top: 1rem;">
+                                <div id="student-id-scan-result" class="hidden-result">
                                     <div class="alert alert-info"><i class="fas fa-user"></i> <strong>Student ID: </strong><span id="scannedStudentIdDisplay"></span></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div id="inline-borrower-form" style="display: none; margin-bottom: 2rem;">
+                    <div id="inline-borrower-form" class="hidden-section">
                         <div class="borrower-form-card">
                             <div class="form-header">
                                 <h4><i class="fas fa-edit"></i> Record Borrowing</h4>
@@ -329,32 +329,33 @@
                             <div class="form-body">
                                 <form id="inlineBorrowerForm">
                                     <div class="row">
-                                        <div class="col-md-7 mb-3"><label class="form-label">Tool *</label><select class="form-select" id="inlineBorrowerTool" required><option value="">Select a tool</option></select></div>
-                                        <div class="col-md-3 mb-3"><label class="form-label">Quantity *</label><input type="number" class="form-control" id="inlineBorrowerQty" min="1" value="1" required></div>
+                                        <div class="col-md-7 mb-3"><label class="form-label" for="inlineBorrowerTool">Tool *</label><select class="form-select" id="inlineBorrowerTool" required onchange="updateSelectedToolsList('inline')"><option value="">Select a tool</option></select></div>
+                                        <div class="col-md-3 mb-3"><label class="form-label" for="inlineBorrowerQty">Quantity *</label><input type="number" class="form-control" id="inlineBorrowerQty" min="1" value="1" required></div>
                                     </div>
+                                    <div id="inlineSelectedToolsList" class="mb-3 hidden-initial"></div>
                                     <div class="row">
-                                        <div class="col-md-6 mb-3"><label class="form-label">Student ID / Barcode *</label><input type="text" class="form-control" id="inlineStudentId" required placeholder="Scan or enter Student ID"></div>
-                                        <div class="col-md-6 mb-3"><label class="form-label">Email Address *</label><input type="email" class="form-control" id="inlineBorrowerEmail" required placeholder="student@email.com"></div>
+                                        <div class="col-md-6 mb-3"><label class="form-label" for="inlineStudentId">Student ID / Barcode *</label><input type="text" class="form-control" id="inlineStudentId" required placeholder="Scan or enter Student ID"></div>
+                                        <div class="col-md-6 mb-3"><label class="form-label" for="inlineBorrowerEmail">Email Address *</label><input type="email" class="form-control" id="inlineBorrowerEmail" required placeholder="student@email.com"></div>
                                     </div>
-                                    <div class="mb-3"><label class="form-label">Borrower Name *</label><input type="text" class="form-control" id="inlineBorrowerName" required></div>
+                                    <div class="mb-3"><label class="form-label" for="inlineBorrowerName">Borrower Name *</label><input type="text" class="form-control" id="inlineBorrowerName" required></div>
                                     <div class="row">
-                                        <div class="col-md-6 mb-3"><label class="form-label">Course *</label>
+                                        <div class="col-md-6 mb-3"><label class="form-label" for="inlineBorrowerCourse">Course *</label>
                                             <select class="form-select" id="inlineBorrowerCourse" required>
                                                 <option value="">Select Course</option><option value="BS Business Administration">BS Business Administration</option><option value="BS Accountancy">BS Accountancy</option><option value="BS Computer Science">BS Computer Science</option><option value="BS Tourism Management">BS Tourism Management</option><option value="BS Hospitality Management">BS Hospitality Management</option><option value="BS Civil Engineering">BS Civil Engineering</option><option value="BS Secondary Education">BS Secondary Education</option><option value="BS Elementary Education">BS Elementary Education</option><option value="BS Criminology">BS Criminology</option><option value="BA Psychology">BA Psychology</option><option value="Senior High">Senior High</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-6 mb-3"><label class="form-label">Year *</label>
+                                        <div class="col-md-6 mb-3"><label class="form-label" for="inlineBorrowerYear">Year *</label>
                                             <select class="form-select" id="inlineBorrowerYear" required>
                                                 <option value="">Select Year</option><option value="1st Year">1st Year</option><option value="2nd Year">2nd Year</option><option value="3rd Year">3rd Year</option><option value="4th Year">4th Year</option><option value="Grade 11">Grade 11</option><option value="Grade 12">Grade 12</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-md-6 mb-3"><label class="form-label">Borrow Date *</label><input type="date" class="form-control" id="inlineBorrowDate" required></div>
-                                        <div class="col-md-6 mb-3"><label class="form-label">Expected Return *</label><input type="date" class="form-control" id="inlineReturnDate" required></div>
+                                        <div class="col-md-6 mb-3"><label class="form-label" for="inlineBorrowDate">Borrow Date *</label><input type="date" class="form-control" id="inlineBorrowDate" required></div>
+                                        <div class="col-md-6 mb-3"><label class="form-label" for="inlineReturnDate">Expected Return *</label><input type="date" class="form-control" id="inlineReturnDate" required></div>
                                     </div>
-                                    <div class="mb-3"><label class="form-label">Reason for Borrowing</label><textarea class="form-control" id="inlineBorrowReason" rows="2"></textarea></div>
-                                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                                    <div class="mb-3"><label class="form-label" for="inlineBorrowReason">Reason for Borrowing</label><textarea class="form-control" id="inlineBorrowReason" rows="2"></textarea></div>
+                                    <div class="flex-row-wrap">
                                         <button type="button" class="btn btn-primary mb-3" onclick="saveInlineBorrower()"><i class="fas fa-save"></i> Record Borrowing</button>
                                         <button type="button" class="btn btn-outline-success mb-3" onclick="saveAndAddMoreItems()"><i class="fas fa-plus"></i> Save & Add More Item</button>
                                     </div>
@@ -362,14 +363,14 @@
                             </div>
                         </div>
                     </div>
-                    <div class="tools-header" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <div class="tools-header flex-row-wrap">
                         <button class="btn btn-info mb-3" onclick="openStudentIdScanner()"><i class="fas fa-id-card"></i> Scan Student ID</button>
                         <button class="btn btn-success mb-3" onclick="openBarcodeScanner()"><i class="fas fa-barcode"></i> Scan Tool Barcode</button>
                     </div>
                     <div class="row mb-4">
                         <div class="col-md-6"><div class="search-box"><i class="fas fa-search"></i><input type="text" class="form-control" id="borrowerSearch" placeholder="Search borrowings..." onkeyup="filterBorrowers()"></div></div>
                         <div class="col-md-6">
-                            <select class="form-select" id="filterStatus" onchange="filterBorrowers()">
+                            <select class="form-select" id="filterStatus" title="Filter by status" onchange="filterBorrowers()">
                                 <option value="">All Status</option><option value="active">Active</option><option value="overdue">Overdue</option><option value="returned">Returned</option>
                             </select>
                         </div>
@@ -379,7 +380,7 @@
             </div>
 
             <!-- DAMAGE REPORTING TAB -->
-            <div id="damageReporting" class="tab-content" style="display: none;">
+            <div id="damageReporting" class="tab-content hidden-initial">
                 <div class="page-header">
                     <div class="page-header-content">
                         <h2><i class="fas fa-exclamation-triangle"></i> Damage Reports</h2>
@@ -387,7 +388,7 @@
                     </div>
                 </div>
                 <div class="damage-reporting-container">
-                    <div class="tools-header" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <div class="tools-header flex-row-wrap">
                         <button class="btn btn-danger mb-3" data-bs-toggle="modal" data-bs-target="#addDamageReportModal"><i class="fas fa-plus"></i> File Damage Report</button>
                     </div>
                     <div class="row mb-4">
@@ -397,7 +398,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <select class="form-select" id="damageTypeFilter" onchange="filterDamageReports()">
+                            <select class="form-select" id="damageTypeFilter" title="Filter by damage type" onchange="filterDamageReports()">
                                 <option value="">All Types</option>
                                 <option value="Damaged">Damaged</option>
                                 <option value="For Repair">For Repair</option>
@@ -405,7 +406,7 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <select class="form-select" id="damageStatusFilter" onchange="filterDamageReports()">
+                            <select class="form-select" id="damageStatusFilter" title="Filter by status" onchange="filterDamageReports()">
                                 <option value="">All Status</option>
                                 <option value="Pending">Pending</option>
                                 <option value="Under Review">Under Review</option>
@@ -422,7 +423,7 @@
             </div>
 
             <!-- USERS TAB -->
-            <div id="users" class="tab-content" style="display: none;">
+            <div id="users" class="tab-content hidden-initial">
                 <div class="page-header">
                     <div class="page-header-content">
                         <h2><i class="fas fa-users"></i> Users Management</h2>
@@ -437,7 +438,7 @@
             </div>
 
             <!-- SETTINGS TAB -->
-            <div id="settings" class="tab-content" style="display: none;">
+            <div id="settings" class="tab-content hidden-initial">
                 <div class="page-header">
                     <div class="page-header-content">
                         <h2><i class="fas fa-cog"></i> Settings</h2>
@@ -447,52 +448,52 @@
                 <div class="settings-container">
                     <div class="settings-section">
                         <h3><i class="fas fa-user"></i> User Profile</h3>
-                        <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-control" id="settingName" value="Administrator"></div>
-                        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="settingEmail" value="admin@smcborrow.com"></div>
+                        <div class="form-group"><label class="form-label" for="settingName">Full Name</label><input type="text" class="form-control" id="settingName" value="Administrator"></div>
+                        <div class="form-group"><label class="form-label" for="settingEmail">Email</label><input type="email" class="form-control" id="settingEmail" value="admin@smcborrow.com"></div>
                         <button class="btn btn-primary mb-3" onclick="updateProfile()"><i class="fas fa-save"></i> Save Changes</button>
                     </div>
 
                     <div class="settings-section">
                         <h3><i class="fas fa-key"></i> Change Password</h3>
-                        <p style="color:#666; font-size:0.9rem;">Change your login password.</p>
-                        <div class="form-group"><label class="form-label">Current Password *</label><input type="password" class="form-control" id="settingCurrentPassword" placeholder="Enter current password"></div>
-                        <div class="form-group"><label class="form-label">New Password *</label><input type="password" class="form-control" id="settingNewPassword" placeholder="Enter new password (min 6 characters)"></div>
-                        <div class="form-group"><label class="form-label">Confirm New Password *</label><input type="password" class="form-control" id="settingConfirmPassword" placeholder="Confirm new password"></div>
+                        <p class="text-muted-sm">Change your login password.</p>
+                        <div class="form-group"><label class="form-label" for="settingCurrentPassword">Current Password *</label><input type="password" class="form-control" id="settingCurrentPassword" placeholder="Enter current password"></div>
+                        <div class="form-group"><label class="form-label" for="settingNewPassword">New Password *</label><input type="password" class="form-control" id="settingNewPassword" placeholder="Enter new password (min 6 characters)"></div>
+                        <div class="form-group"><label class="form-label" for="settingConfirmPassword">Confirm New Password *</label><input type="password" class="form-control" id="settingConfirmPassword" placeholder="Confirm new password"></div>
                         <button class="btn btn-warning mb-3" onclick="changeProfilePassword()"><i class="fas fa-key"></i> Change Password</button>
                     </div>
 
                     <div class="settings-section">
                         <h3><i class="fas fa-shield-alt"></i> System Backup Password</h3>
-                        <p style="color:#666; font-size:0.9rem;">Set a general password to protect data export and system backup operations.</p>
-                        <div class="form-group"><label class="form-label">Backup Password</label><input type="password" class="form-control" id="backupPassword" placeholder="Set backup password"></div>
-                        <div class="form-group"><label class="form-label">Confirm Backup Password</label><input type="password" class="form-control" id="confirmBackupPassword" placeholder="Confirm backup password"></div>
+                        <p class="text-muted-sm">Set a general password to protect data export and system backup operations.</p>
+                        <div class="form-group"><label class="form-label" for="backupPassword">Backup Password</label><input type="password" class="form-control" id="backupPassword" placeholder="Set backup password"></div>
+                        <div class="form-group"><label class="form-label" for="confirmBackupPassword">Confirm Backup Password</label><input type="password" class="form-control" id="confirmBackupPassword" placeholder="Confirm backup password"></div>
                         <button class="btn btn-primary mb-3" onclick="setBackupPassword()"><i class="fas fa-save"></i> Set Backup Password</button>
                     </div>
 
                     <div class="settings-section">
                         <h3><i class="fas fa-undo"></i> Password Recovery</h3>
-                        <p style="color:#666; font-size:0.9rem;">Set a recovery email for password reset in case you forget your password.</p>
-                        <div class="form-group"><label class="form-label">Recovery Email</label><input type="email" class="form-control" id="recoveryEmail" placeholder="Recovery email address"></div>
+                        <p class="text-muted-sm">Set a recovery email for password reset in case you forget your password.</p>
+                        <div class="form-group"><label class="form-label" for="recoveryEmail">Recovery Email</label><input type="email" class="form-control" id="recoveryEmail" placeholder="Recovery email address"></div>
                         <button class="btn btn-info mb-3" onclick="setRecoveryEmail()"><i class="fas fa-envelope"></i> Save Recovery Email</button>
                     </div>
 
                     <!-- INVENTORY REPORT & EXPORT (SMCTI Form Format) -->
                     <div class="settings-section">
                         <h3><i class="fas fa-chart-bar"></i> Inventory Report & Export</h3>
-                        <p style="color:#666; margin-bottom:1rem;">Generate and export inventory reports matching the official SMCTI Inventory Form format. This report includes <strong>all tools</strong> in the system.</p>
+                        <p class="text-muted-mb">Generate and export inventory reports matching the official SMCTI Inventory Form format. This report includes <strong>all tools</strong> in the system.</p>
                         
                         <!-- Form Header Fields -->
                         <div class="row mb-3">
                             <div class="col-md-3">
-                                <label class="form-label">School Year (SY)</label>
+                                <label class="form-label" for="reportSYStart">School Year (SY)</label>
                                 <div class="d-flex align-items-center gap-1">
                                     <select class="form-select" id="reportSYStart"></select>
                                     <span>-</span>
-                                    <select class="form-select" id="reportSYEnd"></select>
+                                    <select class="form-select" id="reportSYEnd" title="School year end"></select>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Division</label>
+                                <label class="form-label" for="reportDivision">Division</label>
                                 <select class="form-select" id="reportDivision">
                                     <option value="Administration" selected>Administration</option>
                                     <option value="Academic">Academic</option>
@@ -500,20 +501,20 @@
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Department Level</label>
+                                <label class="form-label" for="reportDeptLevel">Department Level</label>
                                 <select class="form-select" id="reportDeptLevel">
                                     <option value="Higher Education" selected>Higher Education</option>
                                     <option value="Basic Education">Basic Education</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Department</label>
+                                <label class="form-label" for="reportDepartment">Department</label>
                                 <input type="text" class="form-control" id="reportDepartment" placeholder="e.g. ICT/COLLEGE" value="ICT/COLLEGE">
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-4">
-                                <label class="form-label">Office/Unit Location</label>
+                                <label class="form-label" for="reportOfficeLocation">Office/Unit Location</label>
                                 <select class="form-select" id="reportOfficeLocation">
                                     <option value="">All Locations</option>
                                     <option value="CALL LAB RM. 116">CALL LAB RM. 116</option>
@@ -526,7 +527,7 @@
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label">Report Period</label>
+                                <label class="form-label" for="reportPeriodFilter">Report Period</label>
                                 <select class="form-select" id="reportPeriodFilter">
                                     <option value="all">All Time</option>
                                     <option value="1st_sem">1st Semester</option>
@@ -536,95 +537,96 @@
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label">School Year</label>
+                                <label class="form-label" for="reportYearFilterStart">School Year</label>
                                 <div class="d-flex align-items-center gap-1">
                                     <select class="form-select" id="reportYearFilterStart"></select>
                                     <span>-</span>
-                                    <select class="form-select" id="reportYearFilterEnd"></select>
+                                    <select class="form-select" id="reportYearFilterEnd" title="School year filter end"></select>
                                 </div>
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label">Date</label>
-                                <input type="date" class="form-control" id="reportDate">
+                                <label class="form-label" for="reportDate">Date</label>
+                                <input type="date" class="form-control" id="reportDate" title="Report date">
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label">&nbsp;</label>
-                                <button class="btn btn-primary w-100" onclick="generateInventoryReport()"><i class="fas fa-file-alt"></i> Generate</button>
+                                <label class="form-label" aria-hidden="true">&nbsp;</label>
+                                <div>&nbsp;</div>
                             </div>
                         </div>
 
                         <!-- Signatories -->
-                        <h5 style="margin-top:1.5rem; margin-bottom:0.75rem;"><i class="fas fa-signature"></i> Signatories</h5>
+                        <h5 class="sig-heading"><i class="fas fa-signature"></i> Signatories</h5>
                         <div class="row mb-3">
-                            <div class="col-md-3"><label class="form-label">Prepared By (Name)</label><input type="text" class="form-control" id="sigPreparedBy" placeholder="Full Name"></div>
-                            <div class="col-md-3"><label class="form-label">Prepared By (Title)</label><input type="text" class="form-control" id="sigPreparedByTitle" placeholder="e.g. Property Custodian"></div>
-                            <div class="col-md-3"><label class="form-label">Verified By (Name)</label><input type="text" class="form-control" id="sigVerifiedBy" placeholder="Full Name"></div>
-                            <div class="col-md-3"><label class="form-label">Verified By (Title)</label><input type="text" class="form-control" id="sigVerifiedByTitle" placeholder="e.g. Department Head"></div>
+                            <div class="col-md-3"><label class="form-label" for="sigPreparedBy">Prepared By (Name)</label><input type="text" class="form-control" id="sigPreparedBy" placeholder="Full Name"></div>
+                            <div class="col-md-3"><label class="form-label" for="sigPreparedByTitle">Prepared By (Title)</label><input type="text" class="form-control" id="sigPreparedByTitle" placeholder="e.g. Property Custodian"></div>
+                            <div class="col-md-3"><label class="form-label" for="sigVerifiedBy">Verified By (Name)</label><input type="text" class="form-control" id="sigVerifiedBy" placeholder="Full Name"></div>
+                            <div class="col-md-3"><label class="form-label" for="sigVerifiedByTitle">Verified By (Title)</label><input type="text" class="form-control" id="sigVerifiedByTitle" placeholder="e.g. Department Head"></div>
                         </div>
                         <div class="row mb-3">
-                            <div class="col-md-3"><label class="form-label">Noted By (Name)</label><input type="text" class="form-control" id="sigNotedBy" placeholder="Full Name"></div>
-                            <div class="col-md-3"><label class="form-label">Noted By (Title)</label><input type="text" class="form-control" id="sigNotedByTitle" placeholder="e.g. VP for Administration"></div>
+                            <div class="col-md-3"><label class="form-label" for="sigNotedBy">Noted By (Name)</label><input type="text" class="form-control" id="sigNotedBy" placeholder="Full Name"></div>
+                            <div class="col-md-3"><label class="form-label" for="sigNotedByTitle">Noted By (Title)</label><input type="text" class="form-control" id="sigNotedByTitle" placeholder="e.g. VP for Administration"></div>
                         </div>
+                        <button class="btn btn-primary mb-3" onclick="generateInventoryReport()"><i class="fas fa-file-alt"></i> Generate Report</button>
 
                         <!-- Report Result -->
-                        <div id="inventoryReportResult" style="display:none;">
+                        <div id="inventoryReportResult" class="hidden-initial">
                             <hr>
                             <!-- Full Form Preview (matches SMCTI Inventory Form docx format) -->
-                            <div id="reportFormPreview" style="background:#fff; border:1px solid #ccc; padding:30px 40px; max-width:1200px; margin:0 auto 20px auto; font-family:Arial,sans-serif; box-shadow:0 2px 8px rgba(0,0,0,.08);">
+                            <div id="reportFormPreview" class="report-preview">
 
                                 <!-- HEADER -->
-                                <table style="width:100%; border:none; margin-bottom:10px; border-collapse:collapse;">
+                                <table class="report-header-table">
                                     <tr>
-                                        <td style="border:none; width:10%; vertical-align:middle; text-align:center;">
-                                            <div style="width:60px; height:60px; border:2px solid #1a3a6b; border-radius:50%; text-align:center; line-height:56px; font-size:8pt; font-weight:bold; color:#1a3a6b; margin:0 auto;">SMCTI<br>SEAL</div>
+                                        <td class="report-seal-cell">
+                                            <div class="report-seal">SMCTI<br>SEAL</div>
                                         </td>
-                                        <td style="border:none; width:65%; padding-left:10px;">
-                                            <div style="font-size:14pt; font-weight:bold;">ST. MARY'S COLLEGE OF TAGUM, INC</div>
-                                            <div style="font-size:9pt; font-weight:bold;">OFFICE OF THE PROPERTY CUSTODIAN</div>
-                                            <div style="font-size:8pt; color:#333;">National Highway, Tagum City, 8100 Davao del Norte, Philippines</div>
-                                            <div style="font-size:8pt; color:#333;">Email Address: propertycustodian@smctagum.edu.ph</div>
-                                            <div style="font-size:9pt; font-style:italic;"><em>Quality Transformative Ignacian Marian Education</em></div>
+                                        <td class="report-info-cell">
+                                            <div class="report-school-name">ST. MARY'S COLLEGE OF TAGUM, INC</div>
+                                            <div class="report-office-title">OFFICE OF THE PROPERTY CUSTODIAN</div>
+                                            <div class="report-address">National Highway, Tagum City, 8100 Davao del Norte, Philippines</div>
+                                            <div class="report-address">Email Address: propertycustodian@smctagum.edu.ph</div>
+                                            <div class="report-motto"><em>Quality Transformative Ignacian Marian Education</em></div>
                                         </td>
-                                        <td style="border:none; width:25%; text-align:right; vertical-align:middle;">
-                                            <div style="display:inline-block; border:2px solid #1a3a6b; padding:8px 15px; text-align:center;">
-                                                <div style="font-weight:bold; font-size:12pt; letter-spacing:3px; color:#1a3a6b;">S M C T I</div>
-                                                <div style="font-weight:bold; font-size:12pt; letter-spacing:3px; color:#1a3a6b;">Q T I M E</div>
-                                                <div style="font-size:7pt; color:#333; margin-top:3px;">Faith &bull; Excellence &bull; Service</div>
+                                        <td class="report-badge-cell">
+                                            <div class="report-badge">
+                                                <div class="report-badge-text">S M C T I</div>
+                                                <div class="report-badge-text">Q T I M E</div>
+                                                <div class="report-badge-sub">Faith &bull; Excellence &bull; Service</div>
                                             </div>
                                         </td>
                                     </tr>
                                 </table>
 
                                 <!-- FORM TITLE -->
-                                <div style="text-align:center; font-size:12pt; font-weight:bold; margin:8px 0 3px 0;">INVENTORY FORM</div>
-                                <div id="previewSY" style="text-align:center; font-size:10pt; margin-bottom:10px;"></div>
+                                <div class="report-form-title">INVENTORY FORM</div>
+                                <div id="previewSY" class="report-sy"></div>
 
                                 <!-- DIVISION / DEPARTMENT LINES -->
-                                <div id="previewDivision" style="font-size:9pt; margin-bottom:2px;"></div>
-                                <div id="previewDeptLevel" style="font-size:9pt; margin-bottom:8px;"></div>
-                                <table style="border:none; width:100%; font-size:9pt; margin-bottom:10px; border-collapse:collapse;">
-                                    <tr style="border:none;">
-                                        <td id="previewDept" style="border:none; width:60%;"></td>
-                                        <td id="previewDate" style="border:none; width:40%; text-align:right;"></td>
+                                <div id="previewDivision" class="report-division"></div>
+                                <div id="previewDeptLevel" class="report-dept-level"></div>
+                                <table class="report-meta-table">
+                                    <tr class="no-border">
+                                        <td id="previewDept" class="report-meta-left"></td>
+                                        <td id="previewDate" class="report-meta-right"></td>
                                     </tr>
-                                    <tr style="border:none;">
-                                        <td id="previewLocation" style="border:none;" colspan="2"></td>
+                                    <tr class="no-border">
+                                        <td id="previewLocation" class="no-border" colspan="2"></td>
                                     </tr>
                                 </table>
 
                                 <!-- INVENTORY TABLE -->
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-sm" id="reportTable" style="font-size:0.82rem;">
+                                    <table class="table table-bordered table-sm font-sm" id="reportTable">
                                         <thead>
                                             <tr class="table-primary text-center">
-                                                <th rowspan="2" style="vertical-align:middle;">PREV.<br>QTY.</th>
-                                                <th rowspan="2" style="vertical-align:middle;">ITEMS</th>
-                                                <th rowspan="2" style="vertical-align:middle;">CURRENT<br>QTY.</th>
-                                                <th rowspan="2" style="vertical-align:middle;">BRAND NAME / SPECIFICATION</th>
+                                                <th rowspan="2" class="valign-middle">PREV.<br>QTY.</th>
+                                                <th rowspan="2" class="valign-middle">ITEMS</th>
+                                                <th rowspan="2" class="valign-middle">CURRENT<br>QTY.</th>
+                                                <th rowspan="2" class="valign-middle">BRAND NAME / SPECIFICATION</th>
                                                 <th colspan="4" class="text-center">STATUS (QTY)</th>
                                                 <th colspan="4" class="text-center">ACTIONS MADE SINCE<br>PREVIOUS INVENTORY (QTY)</th>
                                             </tr>
-                                            <tr class="table-primary text-center" style="font-size:0.75rem;">
+                                            <tr class="table-primary text-center font-xs">
                                                 <th>Good<br>Con-<br>dition</th>
                                                 <th>Needs<br>Repair</th>
                                                 <th>Lost</th>
@@ -640,37 +642,37 @@
                                 </div>
 
                                 <!-- SIGNATORIES -->
-                                <table style="border:none; width:100%; margin-top:30px; border-collapse:collapse;">
-                                    <tr style="border:none;">
-                                        <td style="border:none; text-align:center; width:33%; padding-top:40px;">
-                                            <div style="font-size:9pt;">Prepared By:</div>
+                                <table class="report-sig-table">
+                                    <tr class="no-border">
+                                        <td class="report-sig-cell">
+                                            <div class="font-9pt">Prepared By:</div>
                                             <br><br>
-                                            <div style="border-top:1px solid #000; display:inline-block; padding-top:3px; min-width:200px;">
-                                                <strong id="previewPreparedBy" style="font-size:10pt;">________________________</strong>
+                                            <div class="report-sig-line">
+                                                <strong id="previewPreparedBy" class="font-10pt">________________________</strong>
                                             </div>
-                                            <div id="previewPreparedByTitle" style="font-size:8pt; color:#666; margin-top:2px;"></div>
+                                            <div id="previewPreparedByTitle" class="report-sig-title"></div>
                                         </td>
-                                        <td style="border:none; text-align:center; width:33%; padding-top:40px;">
-                                            <div style="font-size:9pt;">Verified By:</div>
+                                        <td class="report-sig-cell">
+                                            <div class="font-9pt">Verified By:</div>
                                             <br><br>
-                                            <div style="border-top:1px solid #000; display:inline-block; padding-top:3px; min-width:200px;">
-                                                <strong id="previewVerifiedBy" style="font-size:10pt;">________________________</strong>
+                                            <div class="report-sig-line">
+                                                <strong id="previewVerifiedBy" class="font-10pt">________________________</strong>
                                             </div>
-                                            <div id="previewVerifiedByTitle" style="font-size:8pt; color:#666; margin-top:2px;"></div>
+                                            <div id="previewVerifiedByTitle" class="report-sig-title"></div>
                                         </td>
-                                        <td style="border:none; text-align:center; width:33%; padding-top:40px;">
-                                            <div style="font-size:9pt;">Noted By:</div>
+                                        <td class="report-sig-cell">
+                                            <div class="font-9pt">Noted By:</div>
                                             <br><br>
-                                            <div style="border-top:1px solid #000; display:inline-block; padding-top:3px; min-width:200px;">
-                                                <strong id="previewNotedBy" style="font-size:10pt;">________________________</strong>
+                                            <div class="report-sig-line">
+                                                <strong id="previewNotedBy" class="font-10pt">________________________</strong>
                                             </div>
-                                            <div id="previewNotedByTitle" style="font-size:8pt; color:#666; margin-top:2px;"></div>
+                                            <div id="previewNotedByTitle" class="report-sig-title"></div>
                                         </td>
                                     </tr>
                                 </table>
                             </div>
 
-                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                            <div class="flex-row-wrap">
                                 <button class="btn btn-info mb-3" onclick="exportReportToWord()"><i class="fas fa-file-word"></i> Export to Word (.doc)</button>
                                 <button class="btn btn-success mb-3" onclick="exportReportToExcel()"><i class="fas fa-file-excel"></i> Export to Excel (.xlsx)</button>
                             </div>
@@ -679,9 +681,9 @@
 
                     <div class="settings-section">
                         <h3><i class="fas fa-palette"></i> Application Settings</h3>
-                        <div class="form-group"><label class="form-label">Application Name</label><input type="text" class="form-control" value="SMC-Borrow Inventory System"></div>
-                        <div class="form-group"><label class="form-label"><input type="checkbox" checked> Enable Notifications</label></div>
-                        <div class="form-group"><label class="form-label"><input type="checkbox" checked> Auto-save Data</label></div>
+                        <div class="form-group"><label class="form-label" for="appName">Application Name</label><input type="text" class="form-control" id="appName" value="SMC-Borrow Inventory System"></div>
+                        <div class="form-group"><label class="form-label" for="enableNotifications"><input type="checkbox" id="enableNotifications" checked> Enable Notifications</label></div>
+                        <div class="form-group"><label class="form-label" for="autoSaveData"><input type="checkbox" id="autoSaveData" checked> Auto-save Data</label></div>
                         <button class="btn btn-primary mb-3" onclick="saveSettings()"><i class="fas fa-save"></i> Save Settings</button>
                     </div>
 
@@ -706,16 +708,22 @@
     <div class="modal fade" id="addToolModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-hammer"></i> Add New Tool</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-hammer"></i> Add New Tool</h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <form id="toolForm">
-                        <div class="mb-3"><label class="form-label">Tool Name *</label><input type="text" class="form-control" id="toolName" required></div>
+                        <div class="mb-3"><label class="form-label" for="toolName">Tool Name *</label><input type="text" class="form-control" id="toolName" required></div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Brand</label><input type="text" class="form-control" id="toolBrand"></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Quantity *</label><input type="number" class="form-control" id="toolQuantity" min="1" required></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="toolBrand">Brand</label><input type="text" class="form-control" id="toolBrand"></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="toolQuantity">Quantity *</label><input type="number" class="form-control" id="toolQuantity" min="1" required></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="toolSpecsContainer">Specifications</label>
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="addSpecificationField('toolSpecsContainer')"><i class="fas fa-plus"></i> Add Specification</button>
+                            <div id="toolSpecsContainer" class="mt-2"></div>
+                            <small class="form-text text-muted">e.g. Processor, RAM, Storage, GPU, Operating System</small>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Category *</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="toolCategory">Category *</label>
                                 <select class="form-select" id="toolCategory" required>
                                     <option value="">Select Category</option>
                                     <option value="Computer Equipments">Computer Equipments</option>
@@ -724,7 +732,7 @@
                                     <option value="Sacred Images and Chapel">Sacred Images and Chapel</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Location *</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="toolLocation">Location *</label>
                                 <select class="form-select" id="toolLocation" required>
                                     <option value="">Select Location</option>
                                     <option value="CALL LAB RM. 116">CALL LAB RM. 116</option>
@@ -738,34 +746,34 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Year Acquired</label><input type="date" class="form-control" id="toolYearAcquired"></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Status / Condition</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="toolYearAcquired">Year Acquired</label><input type="date" class="form-control" id="toolYearAcquired"></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="toolCondition">Status / Condition</label>
                                 <select class="form-select" id="toolCondition">
                                     <option value="Good Condition">Good Condition</option><option value="Needs Repair">Needs Repair</option><option value="Lost">Lost</option><option value="Damaged">Damaged</option>
                                 </select>
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Previous Qty</label><input type="number" class="form-control" id="toolPreviousQty" min="0" placeholder="Previous inventory count"></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Action Since Previous Inventory</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="toolPreviousQty">Previous Qty</label><input type="number" class="form-control" id="toolPreviousQty" min="0" placeholder="Previous inventory count"></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="toolAction">Action Since Previous Inventory</label>
                                 <select class="form-select" id="toolAction">
                                     <option value="">None</option><option value="Newly Acquired">Newly Acquired</option><option value="Removed">Removed</option><option value="Transferred">Transferred</option><option value="Disposed">Disposed</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="mb-3"><label class="form-label">Asset Code / Barcode ID</label>
+                        <div class="mb-3"><label class="form-label" for="toolAssetCode">Asset Code / Barcode ID</label>
                             <div class="input-group">
                                 <input type="text" class="form-control" id="toolAssetCode" placeholder="Auto-generated if left blank" readonly>
                                 <button class="btn btn-outline-primary" type="button" onclick="generateAssetCode()"><i class="fas fa-random"></i> Generate</button>
                             </div>
                         </div>
-                        <div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" id="toolDescription" rows="3"></textarea></div>
-                        <div class="mb-3"><label class="form-label">Tool Image</label>
+                        <div class="mb-3"><label class="form-label" for="toolDescription">Description</label><textarea class="form-control" id="toolDescription" rows="3"></textarea></div>
+                        <div class="mb-3"><label class="form-label" for="toolImage">Tool Image</label>
                             <div class="image-upload-section">
                                 <input type="file" class="form-control" id="toolImage" accept="image/*" onchange="previewToolImage(event)">
                                 <small class="form-text text-muted">Supported: JPG, PNG, GIF (Max 5MB)</small>
-                                <div id="imagePreview" class="mt-2" style="display: none;">
-                                    <img id="previewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 5px; border: 1px solid #ddd;">
+                                <div id="imagePreview" class="mt-2 hidden-initial">
+                                    <img id="previewImg" src="" alt="Preview" class="is-1">
                                     <button type="button" class="btn btn-sm btn-danger mt-2" onclick="clearImagePreview()"><i class="fas fa-times"></i> Remove Image</button>
                                 </div>
                             </div>
@@ -784,35 +792,36 @@
     <div class="modal fade" id="addBorrowerModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-handshake"></i> Record Borrowing</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-handshake"></i> Record Borrowing</h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <form id="borrowerForm">
                         <div class="row">
-                            <div class="col-md-8 mb-3"><label class="form-label">Tool *</label><select class="form-select" id="borrowerTool" required><option value="">Select a tool</option></select></div>
-                            <div class="col-md-4 mb-3"><label class="form-label">Quantity *</label><input type="number" class="form-control" id="borrowerQuantity" min="1" value="1" required></div>
+                            <div class="col-md-8 mb-3"><label class="form-label" for="borrowerTool">Tool *</label><select class="form-select" id="borrowerTool" required onchange="updateSelectedToolsList('modal')"><option value="">Select a tool</option></select></div>
+                            <div class="col-md-4 mb-3"><label class="form-label" for="borrowerQuantity">Quantity *</label><input type="number" class="form-control" id="borrowerQuantity" min="1" value="1" required></div>
                         </div>
+                        <div id="modalSelectedToolsList" class="mb-3 hidden-initial"></div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Student ID / Barcode *</label><input type="text" class="form-control" id="borrowerStudentId" required placeholder="Scan or enter Student ID"></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Email Address *</label><input type="email" class="form-control" id="borrowerEmail" required placeholder="student@email.com"></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="borrowerStudentId">Student ID / Barcode *</label><input type="text" class="form-control" id="borrowerStudentId" required placeholder="Scan or enter Student ID"></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="borrowerEmail">Email Address *</label><input type="email" class="form-control" id="borrowerEmail" required placeholder="student@email.com"></div>
                         </div>
-                        <div class="mb-3"><label class="form-label">Borrower Name *</label><input type="text" class="form-control" id="borrowerName" required></div>
+                        <div class="mb-3"><label class="form-label" for="borrowerName">Borrower Name *</label><input type="text" class="form-control" id="borrowerName" required></div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Course *</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="borrowerCourse">Course *</label>
                                 <select class="form-select" id="borrowerCourse" required>
                                     <option value="">Select Course</option><option value="BS Business Administration">BS Business Administration</option><option value="BS Accountancy">BS Accountancy</option><option value="BS Computer Science">BS Computer Science</option><option value="BS Tourism Management">BS Tourism Management</option><option value="BS Hospitality Management">BS Hospitality Management</option><option value="BS Civil Engineering">BS Civil Engineering</option><option value="BS Secondary Education">BS Secondary Education</option><option value="BS Elementary Education">BS Elementary Education</option><option value="BS Criminology">BS Criminology</option><option value="BA Psychology">BA Psychology</option><option value="Senior High">Senior High</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Year *</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="borrowerYear">Year *</label>
                                 <select class="form-select" id="borrowerYear" required>
                                     <option value="">Select Year</option><option value="1st Year">1st Year</option><option value="2nd Year">2nd Year</option><option value="3rd Year">3rd Year</option><option value="4th Year">4th Year</option><option value="Grade 11">Grade 11</option><option value="Grade 12">Grade 12</option>
                                 </select>
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Borrow Date *</label><input type="date" class="form-control" id="borrowDate" required></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Expected Return *</label><input type="date" class="form-control" id="returnDate" required></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="borrowDate">Borrow Date *</label><input type="date" class="form-control" id="borrowDate" required></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="returnDate">Expected Return *</label><input type="date" class="form-control" id="returnDate" required></div>
                         </div>
-                        <div class="mb-3"><label class="form-label">Reason for Borrowing</label><textarea class="form-control" id="borrowReason" rows="2"></textarea></div>
+                        <div class="mb-3"><label class="form-label" for="borrowReason">Reason for Borrowing</label><textarea class="form-control" id="borrowReason" rows="2"></textarea></div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -827,15 +836,15 @@
     <div class="modal fade" id="addUserModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-user-plus"></i> Add New User</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-user-plus"></i> Add New User</h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <form id="userForm">
-                        <div class="mb-3"><label class="form-label">Name *</label><input type="text" class="form-control" id="userName" required></div>
-                        <div class="mb-3"><label class="form-label">Email *</label><input type="email" class="form-control" id="userEmail" required></div>
-                        <div class="mb-3"><label class="form-label">Password *</label><input type="password" class="form-control" id="userPassword" required placeholder="Enter login password"></div>
+                        <div class="mb-3"><label class="form-label" for="userName">Name *</label><input type="text" class="form-control" id="userName" required></div>
+                        <div class="mb-3"><label class="form-label" for="userEmail">Email *</label><input type="email" class="form-control" id="userEmail" required></div>
+                        <div class="mb-3"><label class="form-label" for="userPassword">Password *</label><input type="password" class="form-control" id="userPassword" required placeholder="Enter login password"></div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Username *</label><input type="text" class="form-control" id="userUsername" required></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Role *</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="userUsername">Username *</label><input type="text" class="form-control" id="userUsername" required></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="userRole">Role *</label>
                                 <select class="form-select" id="userRole" required>
                                     <option value="">Select Role</option><option value="Admin">Administrator</option><option value="Teacher">Teacher</option><option value="Assistant">Assistant</option>
                                 </select>
@@ -855,16 +864,16 @@
     <div class="modal fade" id="editUserModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-user-edit"></i> Edit User</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-user-edit"></i> Edit User</h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <form id="editUserForm">
                         <input type="hidden" id="editUserId">
-                        <div class="mb-3"><label class="form-label">Name *</label><input type="text" class="form-control" id="editUserName" required></div>
-                        <div class="mb-3"><label class="form-label">Email *</label><input type="email" class="form-control" id="editUserEmail" required></div>
-                        <div class="mb-3"><label class="form-label">Password</label><input type="password" class="form-control" id="editUserPassword" placeholder="Leave blank to keep current password"></div>
+                        <div class="mb-3"><label class="form-label" for="editUserName">Name *</label><input type="text" class="form-control" id="editUserName" required></div>
+                        <div class="mb-3"><label class="form-label" for="editUserEmail">Email *</label><input type="email" class="form-control" id="editUserEmail" required></div>
+                        <div class="mb-3"><label class="form-label" for="editUserPassword">Password</label><input type="password" class="form-control" id="editUserPassword" placeholder="Leave blank to keep current password"></div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Username *</label><input type="text" class="form-control" id="editUserUsername" required></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Role *</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editUserUsername">Username *</label><input type="text" class="form-control" id="editUserUsername" required></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editUserRole">Role *</label>
                                 <select class="form-select" id="editUserRole" required>
                                     <option value="">Select Role</option><option value="Admin">Administrator</option><option value="Teacher">Teacher</option><option value="Assistant">Assistant</option>
                                 </select>
@@ -884,23 +893,23 @@
     <div class="modal fade" id="editToolModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-hammer"></i> Edit Tool</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-hammer"></i> Edit Tool</h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <form id="editToolForm">
                         <input type="hidden" id="editToolId">
-                        <div class="mb-3"><label class="form-label">Tool Name *</label><input type="text" class="form-control" id="editToolName" required></div>
+                        <div class="mb-3"><label class="form-label" for="editToolName">Tool Name *</label><input type="text" class="form-control" id="editToolName" required></div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Brand</label><input type="text" class="form-control" id="editToolBrand"></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Quantity *</label><input type="number" class="form-control" id="editToolQuantity" min="1" required></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editToolBrand">Brand</label><input type="text" class="form-control" id="editToolBrand"></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editToolQuantity">Quantity *</label><input type="number" class="form-control" id="editToolQuantity" min="1" required></div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Category</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editToolCategory">Category</label>
                                 <select class="form-select" id="editToolCategory">
                                     <option value="">Select Category</option>
                                     <option value="Computer Equipments">Computer Equipments</option><option value="Equipments">Equipments</option><option value="Furniture and Fixture">Furniture and Fixture</option><option value="Sacred Images and Chapel">Sacred Images and Chapel</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Location</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editToolLocation">Location</label>
                                 <select class="form-select" id="editToolLocation">
                                     <option value="">Select Location</option>
                                     <option value="CALL LAB RM. 116">CALL LAB RM. 116</option><option value="Computer Laboratory 1 Rm. 105">Computer Laboratory 1 Rm. 105</option><option value="Computer Laboratory 2 Rm. 305">Computer Laboratory 2 Rm. 305</option><option value="Computer Science Laboratory Rm. 201">Computer Science Laboratory Rm. 201</option><option value="Engineering Computer Laboratory 1 Rm. 106">Engineering Computer Laboratory 1 Rm. 106</option><option value="Engineering Computer Laboratory 3 Rm. 104">Engineering Computer Laboratory 3 Rm. 104</option><option value="Networking Laboratory Rm. 202">Networking Laboratory Rm. 202</option>
@@ -908,22 +917,28 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Year Acquired</label><input type="date" class="form-control" id="editToolYearAcquired"></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Status / Condition</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editToolYearAcquired">Year Acquired</label><input type="date" class="form-control" id="editToolYearAcquired"></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editToolCondition">Status / Condition</label>
                                 <select class="form-select" id="editToolCondition">
                                     <option value="Good Condition">Good Condition</option><option value="Needs Repair">Needs Repair</option><option value="Lost">Lost</option><option value="Damaged">Damaged</option>
                                 </select>
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Previous Qty</label><input type="number" class="form-control" id="editToolPreviousQty" min="0"></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Action Since Previous Inventory</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editToolPreviousQty">Previous Qty</label><input type="number" class="form-control" id="editToolPreviousQty" min="0"></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editToolAction">Action Since Previous Inventory</label>
                                 <select class="form-select" id="editToolAction">
                                     <option value="">None</option><option value="Newly Acquired">Newly Acquired</option><option value="Removed">Removed</option><option value="Transferred">Transferred</option><option value="Disposed">Disposed</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="mb-3"><label class="form-label">Asset Code</label><input type="text" class="form-control" id="editToolAssetCode" readonly></div>
+                        <div class="mb-3">
+                            <label class="form-label" for="editToolSpecsContainer">Specifications</label>
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="addSpecificationField('editToolSpecsContainer')"><i class="fas fa-plus"></i> Add Specification</button>
+                            <div id="editToolSpecsContainer" class="mt-2"></div>
+                        </div>
+                        <div class="mb-3"><label class="form-label" for="editToolDescription">Description</label><textarea class="form-control" id="editToolDescription" rows="3"></textarea></div>
+                        <div class="mb-3"><label class="form-label" for="editToolAssetCode">Asset Code</label><input type="text" class="form-control" id="editToolAssetCode" readonly></div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -938,13 +953,13 @@
     <div class="modal fade" id="adjustOverdueModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-calendar-alt"></i> Adjust Return Date</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-calendar-alt"></i> Adjust Return Date</h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <form id="adjustOverdueForm">
                         <input type="hidden" id="adjustBorrowerId">
-                        <div class="mb-3"><label class="form-label">Current Return Date</label><input type="text" class="form-control" id="adjustCurrentDate" readonly></div>
-                        <div class="mb-3"><label class="form-label">Days Overdue</label><input type="text" class="form-control" id="adjustDaysOverdue" readonly style="color:red; font-weight:bold;"></div>
-                        <div class="mb-3"><label class="form-label">New Return Date *</label><input type="date" class="form-control" id="adjustNewDate" required></div>
+                        <div class="mb-3"><label class="form-label" for="adjustCurrentDate">Current Return Date</label><input type="text" class="form-control" id="adjustCurrentDate" readonly></div>
+                        <div class="mb-3"><label class="form-label" for="adjustDaysOverdue">Days Overdue</label><input type="text" class="form-control text-overdue" id="adjustDaysOverdue" readonly></div>
+                        <div class="mb-3"><label class="form-label" for="adjustNewDate">New Return Date *</label><input type="date" class="form-control" id="adjustNewDate" required></div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -959,8 +974,8 @@
     <div class="modal fade" id="imageViewerModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-image"></i> <span id="imageViewerTitle"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body text-center"><img id="imageViewerImg" src="" alt="Tool Image" style="max-width: 100%; max-height: 500px; border-radius: 5px;"></div>
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-image"></i> <span id="imageViewerTitle"></span></h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body text-center"><img id="imageViewerImg" src="" alt="Tool Image" class="img-viewer"></div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-info" onclick="downloadToolImage()"><i class="fas fa-download"></i> Download Image</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -973,25 +988,25 @@
     <div class="modal fade" id="addDamageReportModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626);"><h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> File Damage Report</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header modal-header-danger"><h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> File Damage Report</h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <form id="damageReportForm">
-                        <div class="mb-3"><label class="form-label">Tool *</label><select class="form-select" id="damageTool" required><option value="">Select a tool</option></select></div>
-                        <div class="mb-3"><label class="form-label">Reported By *</label><input type="text" class="form-control" id="damageReportedBy" required></div>
+                        <div class="mb-3"><label class="form-label" for="damageTool">Tool *</label><select class="form-select" id="damageTool" required onchange="filterDamageLocationsByTool()"><option value="">Select a tool</option></select></div>
+                        <div class="mb-3"><label class="form-label" for="damageReportedBy">Reported By *</label><input type="text" class="form-control" id="damageReportedBy" required></div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Damage Type *</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="damageType">Damage Type *</label>
                                 <select class="form-select" id="damageType" required>
                                     <option value="">Select Type</option><option value="Damaged">Damaged</option><option value="For Repair">For Repair</option><option value="Lost">Lost</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Severity *</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="damageSeverity">Severity *</label>
                                 <select class="form-select" id="damageSeverity" required>
                                     <option value="Minor">Minor</option><option value="Moderate">Moderate</option><option value="Severe">Severe</option>
                                 </select>
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Location</label>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="damageLocation">Location</label>
                                 <select class="form-select" id="damageLocation">
                                     <option value="">Select Location</option>
                                     <option value="CALL LAB RM. 116">CALL LAB RM. 116</option>
@@ -1003,9 +1018,9 @@
                                     <option value="Networking Laboratory Rm. 202">Networking Laboratory Rm. 202</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Quantity Damaged *</label><input type="number" class="form-control" id="damageQuantity" min="1" value="1" required></div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="damageQuantity">Quantity Damaged *</label><input type="number" class="form-control" id="damageQuantity" min="1" value="1" required></div>
                         </div>
-                        <div class="mb-3"><label class="form-label">Description of Damage *</label><textarea class="form-control" id="damageDescription" rows="3" required placeholder="Describe the damage in detail..."></textarea></div>
+                        <div class="mb-3"><label class="form-label" for="damageDescription">Description of Damage *</label><textarea class="form-control" id="damageDescription" rows="3" required placeholder="Describe the damage in detail..."></textarea></div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1020,31 +1035,31 @@
     <div class="modal fade" id="updateDamageStatusModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><h5 class="modal-title"><i class="fas fa-edit"></i> Update Report Status</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header modal-header-warning"><h5 class="modal-title"><i class="fas fa-edit"></i> Update Report Status</h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <form id="updateDamageForm">
                         <input type="hidden" id="updateDamageId">
-                        <div class="mb-3"><label class="form-label">New Status / Action *</label>
+                        <div class="mb-3"><label class="form-label" for="updateDamageStatus">New Status / Action *</label>
                             <select class="form-select" id="updateDamageStatus" required onchange="onDamageStatusChange()">
                                 <option value="Pending">Pending</option><option value="Under Review">Under Review</option><option value="Repaired">Repaired</option><option value="Replaced">Replaced</option><option value="Removed">Removed</option><option value="Disposed">Disposed</option><option value="Transferred">Transferred</option>
                             </select>
                         </div>
-                        <div id="replacementSection" style="display:none;">
+                        <div id="replacementSection" class="hidden-initial">
                             <div class="alert alert-info py-2"><i class="fas fa-info-circle"></i> Select how to replace the damaged item.</div>
-                            <div class="mb-3"><label class="form-label">Replacement Type *</label>
+                            <div class="mb-3"><label class="form-label" for="replacementType">Replacement Type *</label>
                                 <select class="form-select" id="replacementType" onchange="onReplacementTypeChange()">
                                     <option value="same_model">Same Model (auto-add to inventory)</option>
                                     <option value="different_model">Different Model (opens Add Item form)</option>
                                 </select>
                             </div>
                             <div id="sameModelSection">
-                                <div class="mb-3"><label class="form-label">Quantity to Add Back</label><input type="number" class="form-control" id="replacementQty" min="1" value="1"></div>
+                                <div class="mb-3"><label class="form-label" for="replacementQty">Quantity to Add Back</label><input type="number" class="form-control" id="replacementQty" min="1" value="1"></div>
                             </div>
-                            <div id="differentModelSection" style="display:none;">
+                            <div id="differentModelSection" class="hidden-initial">
                                 <p class="text-muted small"><i class="fas fa-info-circle"></i> After saving, the Add Item form will open automatically for the new replacement item.</p>
                             </div>
                         </div>
-                        <div class="mb-3"><label class="form-label">Resolution Notes</label><textarea class="form-control" id="updateDamageNotes" rows="3" placeholder="Notes about the resolution..."></textarea></div>
+                        <div class="mb-3"><label class="form-label" for="updateDamageNotes">Resolution Notes</label><textarea class="form-control" id="updateDamageNotes" rows="3" placeholder="Notes about the resolution..."></textarea></div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1055,21 +1070,69 @@
         </div>
     </div>
 
+    <!-- EDIT DAMAGE REPORT MODAL -->
+    <div class="modal fade" id="editDamageReportModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header modal-header-warning"><h5 class="modal-title"><i class="fas fa-edit"></i> Edit Damage Report</h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="editDamageReportForm">
+                        <input type="hidden" id="editDamageReportId">
+                        <div class="mb-3"><label class="form-label" for="editDamageTool">Tool *</label><select class="form-select" id="editDamageTool" required><option value="">Select a tool</option></select></div>
+                        <div class="mb-3"><label class="form-label" for="editDamageReportedBy">Reported By *</label><input type="text" class="form-control" id="editDamageReportedBy" required></div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editDamageType">Damage Type *</label>
+                                <select class="form-select" id="editDamageType" required>
+                                    <option value="">Select Type</option><option value="Damaged">Damaged</option><option value="For Repair">For Repair</option><option value="Lost">Lost</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editDamageSeverity">Severity *</label>
+                                <select class="form-select" id="editDamageSeverity" required>
+                                    <option value="Minor">Minor</option><option value="Moderate">Moderate</option><option value="Severe">Severe</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editDamageLocation">Location</label>
+                                <select class="form-select" id="editDamageLocation">
+                                    <option value="">Select Location</option>
+                                    <option value="CALL LAB RM. 116">CALL LAB RM. 116</option>
+                                    <option value="Computer Laboratory 1 Rm. 105">Computer Laboratory 1 Rm. 105</option>
+                                    <option value="Computer Laboratory 2 Rm. 305">Computer Laboratory 2 Rm. 305</option>
+                                    <option value="Computer Science Laboratory Rm. 201">Computer Science Laboratory Rm. 201</option>
+                                    <option value="Engineering Computer Laboratory 1 Rm. 106">Engineering Computer Laboratory 1 Rm. 106</option>
+                                    <option value="Engineering Computer Laboratory 3 Rm. 104">Engineering Computer Laboratory 3 Rm. 104</option>
+                                    <option value="Networking Laboratory Rm. 202">Networking Laboratory Rm. 202</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3"><label class="form-label" for="editDamageQuantity">Quantity Damaged *</label><input type="number" class="form-control" id="editDamageQuantity" min="1" value="1" required></div>
+                        </div>
+                        <div class="mb-3"><label class="form-label" for="editDamageDescription">Description of Damage *</label><textarea class="form-control" id="editDamageDescription" rows="3" required></textarea></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" onclick="saveEditedDamageReport()"><i class="fas fa-save"></i> Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- DELETE TOOL REASON MODAL -->
     <div class="modal fade" id="deleteToolReasonModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626);"><h5 class="modal-title"><i class="fas fa-trash"></i> Remove Tool - Reason Required</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header modal-header-danger"><h5 class="modal-title"><i class="fas fa-trash"></i> Remove Tool - Reason Required</h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <input type="hidden" id="deleteToolId">
                     <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> You are about to remove a tool from the inventory. Please provide a reason.</div>
-                    <div class="mb-3"><label class="form-label">Tool Name</label><input type="text" class="form-control" id="deleteToolName" readonly></div>
-                    <div class="mb-3"><label class="form-label">Reason for Removal *</label>
+                    <div class="mb-3"><label class="form-label" for="deleteToolName">Tool Name</label><input type="text" class="form-control" id="deleteToolName" readonly></div>
+                    <div class="mb-3"><label class="form-label" for="deleteToolReason">Reason for Removal *</label>
                         <select class="form-select" id="deleteToolReason" required>
                             <option value="">Select a reason</option><option value="Damaged">Damaged</option><option value="For Repair">For Repair</option><option value="Lost">Lost</option>
                         </select>
                     </div>
-                    <div class="mb-3"><label class="form-label">Additional Remarks</label><textarea class="form-control" id="deleteToolRemarks" rows="3" placeholder="Provide additional details..."></textarea></div>
+                    <div class="mb-3"><label class="form-label" for="deleteToolRemarks">Additional Remarks</label><textarea class="form-control" id="deleteToolRemarks" rows="3" placeholder="Provide additional details..."></textarea></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -1083,11 +1146,11 @@
     <div class="modal fade" id="borrowingQRModal" tabindex="-1">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #6366f1, #4f46e5);"><h5 class="modal-title text-white"><i class="fas fa-qrcode"></i> Borrowing QR Code</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header modal-header-purple"><h5 class="modal-title text-white"><i class="fas fa-qrcode"></i> Borrowing QR Code</h5><button type="button" class="btn-close btn-close-white" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body text-center">
                     <p class="mb-1"><strong id="qrBorrowerName"></strong></p>
                     <p class="text-muted small mb-2" id="qrBorrowerInfo"></p>
-                    <div id="borrowingQRContainer" style="display:inline-block;"></div>
+                    <div id="borrowingQRContainer" class="inline-block"></div>
                     <p class="text-muted small mt-2" id="qrTxnCode"></p>
                     <p class="text-danger small mt-1"><i class="fas fa-exclamation-triangle"></i> Keep this QR code. It is required when returning items.</p>
                 </div>
@@ -1104,7 +1167,7 @@
     <div class="modal fade" id="returnRemarksModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #10b981, #059669);"><h5 class="modal-title"><i class="fas fa-undo"></i> Return Item</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header modal-header-success"><h5 class="modal-title"><i class="fas fa-undo"></i> Return Item</h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <input type="hidden" id="returnBorrowerId">
                     <input type="hidden" id="returnStudentIdExpected">
@@ -1112,26 +1175,26 @@
                     <!-- Step 1: Fill in return details -->
                     <div id="returnStep1">
                         <div class="alert alert-info mb-3"><i class="fas fa-info-circle"></i> <strong>Step 1:</strong> Fill in the return details below, then click "Proceed to Scan" to confirm.</div>
-                        <div class="mb-3"><label class="form-label">Borrower</label><input type="text" class="form-control" id="returnBorrowerName" readonly></div>
-                        <div class="mb-3"><label class="form-label">Tool</label><input type="text" class="form-control" id="returnToolName" readonly></div>
-                        <div class="mb-3"><label class="form-label">Condition Upon Return *</label>
+                        <div class="mb-3"><label class="form-label" for="returnBorrowerName">Borrower</label><input type="text" class="form-control" id="returnBorrowerName" readonly></div>
+                        <div class="mb-3"><label class="form-label" for="returnToolName">Tool</label><input type="text" class="form-control" id="returnToolName" readonly></div>
+                        <div class="mb-3"><label class="form-label" for="returnCondition">Condition Upon Return *</label>
                             <select class="form-select" id="returnCondition" required>
                                 <option value="Good Condition">Good Condition</option><option value="Damaged">Damaged</option><option value="Needs Repair">Needs Repair</option>
                             </select>
                         </div>
-                        <div class="mb-3"><label class="form-label">Return Remarks / Comments *</label><textarea class="form-control" id="returnRemarks" rows="3" required placeholder="E.g., Item returned in good condition / Item has scratches on surface..."></textarea></div>
+                        <div class="mb-3"><label class="form-label" for="returnRemarks">Return Remarks / Comments *</label><textarea class="form-control" id="returnRemarks" rows="3" required placeholder="E.g., Item returned in good condition / Item has scratches on surface..."></textarea></div>
                     </div>
                     
                     <!-- Step 2: Scan QR code to confirm -->
-                    <div id="returnStep2" style="display: none;">
+                    <div id="returnStep2" class="hidden-initial">
                         <div class="alert alert-success mb-3"><i class="fas fa-check-circle"></i> <strong>Step 2:</strong> Scan the QR code that was issued during borrowing to confirm the return.</div>
                         <div class="text-center mb-3">
                             <p class="mb-1"><strong>Expected QR Code:</strong></p>
-                            <div id="returnExpectedQR" style="display:inline-block;"></div>
+                            <div id="returnExpectedQR" class="inline-block"></div>
                             <p class="text-muted small mt-2" id="returnQRCodeDisplay"></p>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-qrcode"></i> Scan Borrowing QR Code *</label>
+                            <label class="form-label" for="returnQRScan"><i class="fas fa-qrcode"></i> Scan Borrowing QR Code *</label>
                             <input type="text" class="form-control form-control-lg" id="returnQRScan" placeholder="Scan the QR code issued at borrowing time..." autofocus autocomplete="off">
                             <small class="text-muted">The scanned QR must match the code issued when the item was borrowed</small>
                         </div>
@@ -1141,7 +1204,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="returnProceedBtn" onclick="proceedToReturnScan()"><i class="fas fa-arrow-right"></i> Proceed to Scan</button>
-                    <button type="button" class="btn btn-outline-secondary" id="returnBackBtn" onclick="backToReturnStep1()" style="display: none;"><i class="fas fa-arrow-left"></i> Back</button>
+                    <button type="button" class="btn btn-outline-secondary hidden-initial" id="returnBackBtn" onclick="backToReturnStep1()"><i class="fas fa-arrow-left"></i> Back</button>
                 </div>
             </div>
         </div>
@@ -1151,10 +1214,10 @@
     <div class="modal fade" id="scanReturnModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-id-card"></i> Scan Student ID to Return</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-id-card"></i> Scan Student ID to Return</h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <div class="mb-3"><label class="form-label">Scan or Enter Student ID / Barcode</label><input type="text" class="form-control form-control-lg" id="returnScanStudentId" placeholder="Scan Student ID barcode..." autofocus autocomplete="off"></div>
-                    <div id="returnScanResult" style="display:none;" class="mt-3"></div>
+                    <div class="mb-3"><label class="form-label" for="returnScanStudentId">Scan or Enter Student ID / Barcode</label><input type="text" class="form-control form-control-lg" id="returnScanStudentId" placeholder="Scan Student ID barcode..." autofocus autocomplete="off"></div>
+                    <div id="returnScanResult" class="mt-3 hidden-initial"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -1168,18 +1231,18 @@
     <div class="modal fade" id="editBorrowingModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);"><h5 class="modal-title text-white"><i class="fas fa-edit"></i> Edit Borrowing - Add Items</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header modal-header-primary"><h5 class="modal-title text-white"><i class="fas fa-edit"></i> Edit Borrowing - Add Items</h5><button type="button" class="btn-close btn-close-white" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <input type="hidden" id="editBorrowingId">
-                    <div class="mb-3"><label class="form-label">Borrower</label><input type="text" class="form-control" id="editBorrowingBorrower" readonly></div>
-                    <div class="mb-3"><label class="form-label">Current Borrowed Items</label><div id="editBorrowingCurrentItems" class="border rounded p-2 mb-2"></div></div>
+                    <div class="mb-3"><label class="form-label" for="editBorrowingBorrower">Borrower</label><input type="text" class="form-control" id="editBorrowingBorrower" readonly></div>
+                    <div class="mb-3"><label class="form-label" for="editBorrowingTool">Current Borrowed Items</label><div id="editBorrowingCurrentItems" class="border rounded p-2 mb-2"></div></div>
                     <hr>
                     <h6><i class="fas fa-plus"></i> Add Additional Item</h6>
                     <div class="row">
-                        <div class="col-md-6 mb-3"><label class="form-label">Tool *</label><select class="form-select" id="editBorrowingTool"><option value="">Select a tool</option></select></div>
-                        <div class="col-md-3 mb-3"><label class="form-label">Quantity *</label><input type="number" class="form-control" id="editBorrowingQty" min="1" value="1"></div>
+                        <div class="col-md-6 mb-3"><label class="form-label" for="editBorrowingTool">Tool *</label><select class="form-select" id="editBorrowingTool"><option value="">Select a tool</option></select></div>
+                        <div class="col-md-3 mb-3"><label class="form-label" for="editBorrowingQty">Quantity *</label><input type="number" class="form-control" id="editBorrowingQty" min="1" value="1"></div>
                     </div>
-                    <div class="mb-3"><label class="form-label">Remarks</label><textarea class="form-control" id="editBorrowingRemarks" rows="2" placeholder="Additional remarks..."></textarea></div>
+                    <div class="mb-3"><label class="form-label" for="editBorrowingRemarks">Remarks</label><textarea class="form-control" id="editBorrowingRemarks" rows="2" placeholder="Additional remarks..."></textarea></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -1193,10 +1256,10 @@
     <div class="modal fade" id="studentBarcodeModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #10b981, #059669);"><h5 class="modal-title text-white"><i class="fas fa-id-card"></i> Student Barcode</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header modal-header-success"><h5 class="modal-title text-white"><i class="fas fa-id-card"></i> Student Barcode</h5><button type="button" class="btn-close btn-close-white" aria-label="Close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body text-center">
                     <p class="mb-2"><strong id="studentBarcodeNameDisplay"></strong></p>
-                    <canvas id="studentBarcodeCanvas" style="max-width: 100%;"></canvas>
+                    <canvas id="studentBarcodeCanvas" class="max-w-full"></canvas>
                     <p class="text-muted small mt-2" id="studentBarcodeIdDisplay"></p>
                 </div>
                 <div class="modal-footer">

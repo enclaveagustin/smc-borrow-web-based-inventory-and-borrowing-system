@@ -295,6 +295,7 @@ function saveTool() {
             name: document.getElementById('toolName').value.trim(),
             brand: document.getElementById('toolBrand').value.trim(),
             description: document.getElementById('toolDescription').value.trim(),
+            specifications: getSpecifications('toolSpecsContainer'),
             quantity: parseInt(document.getElementById('toolQuantity').value),
             category: category,
             location: location,
@@ -327,6 +328,8 @@ function saveTool() {
                 hideLoadingState(loadingId);
                 form.reset();
                 document.getElementById('toolAssetCode').value = '';
+                const specsContainer = document.getElementById('toolSpecsContainer');
+                if (specsContainer) specsContainer.innerHTML = '';
                 clearImagePreview();
                 bootstrap.Modal.getInstance(document.getElementById('addToolModal')).hide();
                 showAlert(`Tool "${toolData.name}" added successfully!`, 'success');
@@ -367,6 +370,17 @@ function editToolForm(toolId) {
     document.getElementById('editToolAssetCode').value = tool.assetCode || '';
     document.getElementById('editToolPreviousQty').value = tool.previousQty || 0;
     document.getElementById('editToolAction').value = tool.actionSincePrev || '';
+    // Populate description
+    const editDesc = document.getElementById('editToolDescription');
+    if (editDesc) editDesc.value = tool.description || '';
+    // Populate specifications
+    const editSpecsContainer = document.getElementById('editToolSpecsContainer');
+    if (editSpecsContainer) {
+        editSpecsContainer.innerHTML = '';
+        if (tool.specifications && tool.specifications.length > 0) {
+            tool.specifications.forEach(spec => addSpecificationField('editToolSpecsContainer', spec.label, spec.value));
+        }
+    }
 }
 
 function updateTool() {
@@ -383,6 +397,8 @@ function updateTool() {
     tool.condition = document.getElementById('editToolCondition').value;
     tool.previousQty = parseInt(document.getElementById('editToolPreviousQty').value) || 0;
     tool.actionSincePrev = document.getElementById('editToolAction').value || '';
+    tool.description = document.getElementById('editToolDescription')?.value?.trim() || '';
+    tool.specifications = getSpecifications('editToolSpecsContainer');
 
     addActivity(`Tool "${tool.name}" updated`);
     saveApplicationState();
@@ -2217,6 +2233,7 @@ function renderFilteredDamageReports(reports) {
                         <th>Type</th>
                         <th>Severity</th>
                         <th>Description</th>
+                        <th>Edit</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -2238,6 +2255,9 @@ function renderFilteredDamageReports(reports) {
                             <td><span class="badge bg-danger">${escapeHtml(r.damage_type)}</span></td>
                             <td><span class="badge ${severityBadge}">${escapeHtml(r.severity)}</span></td>
                             <td>${escapeHtml(r.description)}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info mb-1" onclick="openEditDamageReport(${r.id})" title="Edit Report"><i class="fas fa-pen"></i></button>
+                            </td>
                             <td><span class="badge ${statusBadge}">${escapeHtml(r.status)}</span></td>
                             <td>
                                 <button class="btn btn-sm btn-warning" onclick="openUpdateDamageStatus(${r.id})" title="Update Status"><i class="fas fa-edit"></i></button>
@@ -2282,38 +2302,40 @@ function updateDamageReportStatus() {
     const tool = appState.allTools.find(t => t.id === report.tool_id);
     const damageQty = report.quantity_damaged || 1;
 
+    // Prevent double quantity changes: check if already resolved
+    const wasAlreadyResolved = report._qtyRestored === true;
+
     if (newStatus === 'Repaired') {
         report.resolved_date = new Date().toISOString();
-        if (tool) {
+        if (tool && !wasAlreadyResolved) {
             tool.condition = 'Good Condition';
-            tool.quantity += damageQty; // Restore quantity
+            tool.quantity += damageQty;
+            report._qtyRestored = true;
+        } else if (tool) {
+            tool.condition = 'Good Condition';
         }
     } else if (newStatus === 'Replaced') {
         report.resolved_date = new Date().toISOString();
         const replacementType = document.getElementById('replacementType')?.value || 'same_model';
         const replacementQty = parseInt(document.getElementById('replacementQty')?.value) || damageQty;
 
-        if (tool) {
-            // Mark original as Disposed in inventory
-            tool.actionSincePrev = 'Disposed';
-        }
-
         if (replacementType === 'same_model') {
-            // Same model: auto-add replacement to inventory
-            if (tool) {
+            if (tool && !wasAlreadyResolved) {
                 tool.quantity += replacementQty;
+                tool.condition = 'Good Condition';
+                tool.actionSincePrev = 'Newly Acquired';
+                report._qtyRestored = true;
+            } else if (tool) {
                 tool.condition = 'Good Condition';
                 tool.actionSincePrev = 'Newly Acquired';
             }
             addActivity(`Replaced ${damageQty}x "${report.tool_name}" with same model (qty +${replacementQty})`);
         } else {
-            // Different model: deduct from original, prompt Add Item form
             if (tool) {
                 tool.condition = 'Damaged';
                 tool.actionSincePrev = 'Disposed';
             }
             addActivity(`"${report.tool_name}" marked as Disposed. Opening Add Item form for replacement...`);
-            // Close current modal and open Add Tool modal
             setTimeout(() => {
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('addToolModal')).show();
                 showAlert('Enter the replacement item details in the Add Tool form', 'info');
@@ -2778,6 +2800,142 @@ function saveAdditionalBorrowItem() {
 }
 
 // ==================== DAMAGE REPORT UI HANDLERS ====================
+
+// ==================== SELECTED TOOLS LIST (Borrowers) ====================
+function updateSelectedToolsList(formType) {
+    const selectId = formType === 'inline' ? 'inlineBorrowerTool' : 'borrowerTool';
+    const listId = formType === 'inline' ? 'inlineSelectedToolsList' : 'modalSelectedToolsList';
+    const toolSelect = document.getElementById(selectId);
+    const listDiv = document.getElementById(listId);
+    if (!toolSelect || !listDiv) return;
+    const toolId = parseInt(toolSelect.value);
+    if (!toolId) { listDiv.style.display = 'none'; return; }
+    const tool = appState.allTools.find(t => t.id === toolId);
+    if (!tool) { listDiv.style.display = 'none'; return; }
+    listDiv.style.display = 'block';
+    listDiv.innerHTML = `<div class="alert alert-info py-2 mb-0"><i class="fas fa-check-circle"></i> <strong>Selected:</strong> ${escapeHtml(tool.name)} — ${escapeHtml(tool.brand || 'N/A')} (${tool.quantity} available) <span class="text-muted small">${escapeHtml(tool.location || '')}</span></div>`;
+}
+
+// ==================== DAMAGE REPORT: FILTER LOCATIONS BY TOOL ====================
+function filterDamageLocationsByTool() {
+    const toolId = parseInt(document.getElementById('damageTool')?.value);
+    const locationSelect = document.getElementById('damageLocation');
+    if (!locationSelect) return;
+    if (!toolId) {
+        // Show all locations
+        Array.from(locationSelect.options).forEach(opt => opt.style.display = '');
+        return;
+    }
+    const tool = appState.allTools.find(t => t.id === toolId);
+    if (!tool) return;
+    // Find all locations where this tool exists (same name tools can be in multiple locations)
+    const toolLocations = appState.allTools.filter(t => t.name === tool.name).map(t => t.location).filter(Boolean);
+    Array.from(locationSelect.options).forEach(opt => {
+        if (!opt.value) { opt.style.display = ''; return; } // Keep "Select Location"
+        opt.style.display = toolLocations.includes(opt.value) ? '' : 'none';
+    });
+    // Pre-select if the tool only has one location
+    if (toolLocations.length === 1) locationSelect.value = toolLocations[0];
+}
+
+// ==================== SPECIFICATIONS (Tool Forms) ====================
+function addSpecificationField(containerId, label, value) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const row = document.createElement('div');
+    row.className = 'input-group mb-2 spec-row';
+    row.innerHTML = `<input type="text" class="form-control spec-label" placeholder="Label (e.g. Processor)" value="${escapeHtml(label || '')}">` +
+        `<input type="text" class="form-control spec-value" placeholder="Value (e.g. Intel i5)" value="${escapeHtml(value || '')}">` +
+        `<button class="btn btn-outline-danger" type="button" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
+    container.appendChild(row);
+}
+
+function getSpecifications(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return [];
+    const specs = [];
+    container.querySelectorAll('.spec-row').forEach(row => {
+        const label = row.querySelector('.spec-label')?.value?.trim();
+        const value = row.querySelector('.spec-value')?.value?.trim();
+        if (label || value) specs.push({ label: label || '', value: value || '' });
+    });
+    return specs;
+}
+
+// ==================== EDIT DAMAGE REPORT ====================
+function openEditDamageReport(reportId) {
+    const report = appState.damageReports.find(r => r.id === reportId);
+    if (!report) return;
+    document.getElementById('editDamageReportId').value = report.id;
+    // Populate tool select
+    const toolSelect = document.getElementById('editDamageTool');
+    toolSelect.innerHTML = '<option value="">Select a tool</option>';
+    appState.allTools.forEach(t => {
+        toolSelect.innerHTML += `<option value="${t.id}" ${t.id === report.tool_id ? 'selected' : ''}>${escapeHtml(t.name)} (${t.quantity} avail)</option>`;
+    });
+    document.getElementById('editDamageReportedBy').value = report.reported_by || '';
+    document.getElementById('editDamageType').value = report.damage_type || '';
+    document.getElementById('editDamageSeverity').value = report.severity || 'Minor';
+    document.getElementById('editDamageLocation').value = report.location || '';
+    document.getElementById('editDamageQuantity').value = report.quantity_damaged || 1;
+    document.getElementById('editDamageDescription').value = report.description || '';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('editDamageReportModal')).show();
+}
+
+function saveEditedDamageReport() {
+    const reportId = parseInt(document.getElementById('editDamageReportId').value);
+    const report = appState.damageReports.find(r => r.id === reportId);
+    if (!report) { showAlert('Report not found', 'danger'); return; }
+
+    const newToolId = parseInt(document.getElementById('editDamageTool').value);
+    const newQty = parseInt(document.getElementById('editDamageQuantity').value) || 1;
+    const newReportedBy = document.getElementById('editDamageReportedBy').value.trim();
+    const newType = document.getElementById('editDamageType').value;
+    const newSeverity = document.getElementById('editDamageSeverity').value;
+    const newLocation = document.getElementById('editDamageLocation').value;
+    const newDescription = document.getElementById('editDamageDescription').value.trim();
+
+    if (!newToolId || !newReportedBy || !newType || !newDescription) {
+        showAlert('Please fill in all required fields', 'warning'); return;
+    }
+
+    const oldToolId = report.tool_id;
+    const oldQty = report.quantity_damaged || 1;
+
+    // If tool or qty changed, adjust tool quantities
+    if (report.status === 'Pending' || report.status === 'Under Review') {
+        // Restore old tool qty
+        const oldTool = appState.allTools.find(t => t.id === oldToolId);
+        if (oldTool) oldTool.quantity += oldQty;
+        // Deduct new tool qty
+        const newTool = appState.allTools.find(t => t.id === newToolId);
+        if (newTool) {
+            if (newTool.quantity < newQty) {
+                // Revert old tool
+                if (oldTool) oldTool.quantity -= oldQty;
+                showAlert(`Insufficient quantity for "${newTool.name}". Only ${newTool.quantity} available.`, 'warning');
+                return;
+            }
+            newTool.quantity -= newQty;
+            report.tool_name = newTool.name;
+        }
+    }
+
+    report.tool_id = newToolId;
+    report.quantity_damaged = newQty;
+    report.reported_by = newReportedBy;
+    report.damage_type = newType;
+    report.severity = newSeverity;
+    report.location = newLocation;
+    report.description = newDescription;
+
+    addActivity(`Damage Report #${report.id} for "${report.tool_name}" edited`);
+    saveApplicationState();
+    bootstrap.Modal.getInstance(document.getElementById('editDamageReportModal')).hide();
+    showAlert('Damage report updated successfully!', 'success');
+    renderDamageReports(); renderTools(); updateDashboard();
+}
+
 function onDamageStatusChange() {
     const status = document.getElementById('updateDamageStatus').value;
     const replacementSection = document.getElementById('replacementSection');
