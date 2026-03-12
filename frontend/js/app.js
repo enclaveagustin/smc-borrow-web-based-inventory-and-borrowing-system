@@ -1129,7 +1129,7 @@ function generateInventoryReport() {
             else if (dtype === 'Damaged') counts.damaged += qty;
             // Count action from resolved status
             const st = r.status || '';
-            if (st === 'Replaced') counts.newlyAcquired += (r.quantity_damaged || 1);
+            if (st === 'Replaced' || st === 'Repaired') counts.newlyAcquired += (r.quantity_damaged || 1);
             if (st === 'Removed') counts.removed += qty;
             if (st === 'Transferred') counts.transferred += qty;
             if (st === 'Disposed') counts.disposed += qty;
@@ -2344,10 +2344,12 @@ function renderFilteredDamageReports(reports) {
                             r.status === 'Repaired' || r.status === 'Replaced' ? 'bg-success' : 'bg-secondary';
                         const severityBadge = r.severity === 'Minor' ? 'bg-info' :
                             r.severity === 'Moderate' ? 'bg-warning' : 'bg-danger';
+                        const linkedTool = appState.allTools.find(t => t.id === r.tool_id);
+                        const totalQty = linkedTool ? linkedTool.quantity : '?';
                         return `<tr>
                             <td>${idx + 1}</td>
                             <td>${new Date(r.date_reported).toLocaleString()}</td>
-                            <td><strong>${escapeHtml(r.tool_name)}</strong></td>
+                            <td><strong>${escapeHtml(r.tool_name)}</strong> <span style="opacity:0.5;font-size:0.85em">(${totalQty} total)</span></td>
                             <td>${r.quantity_damaged || 1}</td>
                             <td>${escapeHtml(r.location || 'N/A')}</td>
                             <td>${escapeHtml(r.reported_by)}</td>
