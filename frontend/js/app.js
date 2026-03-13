@@ -1119,7 +1119,7 @@ function generateInventoryReport() {
 
     // Count status/action quantities per tool from damage reports
     function getToolStatusCounts(toolId) {
-        const counts = { needsRepair: 0, lost: 0, damaged: 0, newlyAcquired: 0, removed: 0, transferred: 0, disposed: 0 };
+        const counts = { needsRepair: 0, lost: 0, damaged: 0, newlyAcquired: 0, repaired: 0, removed: 0, transferred: 0, disposed: 0 };
         (appState.damageReports || []).forEach(r => {
             if (r.tool_id !== toolId) return;
             const qty = r.quantity_damaged || 1;
@@ -1129,7 +1129,8 @@ function generateInventoryReport() {
             else if (dtype === 'Damaged') counts.damaged += qty;
             // Count action from resolved status
             const st = r.status || '';
-            if (st === 'Replaced' || st === 'Repaired') counts.newlyAcquired += (r.quantity_damaged || 1);
+            if (st === 'Replaced') counts.newlyAcquired += (r.quantity_damaged || 1);
+            if (st === 'Repaired') counts.repaired += (r.quantity_damaged || 1);
             if (st === 'Removed') counts.removed += qty;
             if (st === 'Transferred') counts.transferred += qty;
             if (st === 'Disposed') counts.disposed += qty;
@@ -1139,7 +1140,7 @@ function generateInventoryReport() {
 
     const tbody = document.getElementById('reportTableBody');
     if (filteredTools.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12" class="text-center">No tools found for the selected criteria.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" class="text-center">No tools found for the selected criteria.</td></tr>';
     } else {
         tbody.innerHTML = filteredTools.map(t => {
             const sc = getToolStatusCounts(t.id);
@@ -1148,6 +1149,7 @@ function generateInventoryReport() {
             // Also check tool-level action
             const action = t.actionSincePrev || '';
             if (action === 'Newly Acquired') sc.newlyAcquired = Math.max(sc.newlyAcquired, t.quantity);
+            if (action === 'Repaired') sc.repaired = Math.max(sc.repaired, t.quantity);
             if (action === 'Removed' && sc.removed === 0) sc.removed = t.quantity;
             if (action === 'Transferred' && sc.transferred === 0) sc.transferred = t.quantity;
             if (action === 'Disposed' && sc.disposed === 0) sc.disposed = t.quantity;
@@ -1166,6 +1168,7 @@ function generateInventoryReport() {
                 <td class="text-center">${sc.lost || ''}</td>
                 <td class="text-center">${sc.damaged || ''}</td>
                 <td class="text-center">${sc.newlyAcquired || ''}</td>
+                <td class="text-center">${sc.repaired || ''}</td>
                 <td class="text-center">${sc.removed || ''}</td>
                 <td class="text-center">${sc.transferred || ''}</td>
                 <td class="text-center">${sc.disposed || ''}</td>
@@ -1258,7 +1261,7 @@ function exportReportToWord() {
     const rows = reportBody.querySelectorAll('tr');
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
-        if (cells.length >= 12) {
+        if (cells.length >= 13) {
             tableRows += `<tr>
                 <td style="border:1px solid #000; padding:4px 6px; text-align:center; font-size:9pt;">${cells[0].textContent}</td>
                 <td style="border:1px solid #000; padding:4px 6px; font-size:9pt; font-weight:bold;">${cells[1].textContent}</td>
@@ -1272,6 +1275,7 @@ function exportReportToWord() {
                 <td style="border:1px solid #000; padding:4px 6px; text-align:center; font-size:9pt;">${cells[9].textContent}</td>
                 <td style="border:1px solid #000; padding:4px 6px; text-align:center; font-size:9pt;">${cells[10].textContent}</td>
                 <td style="border:1px solid #000; padding:4px 6px; text-align:center; font-size:9pt;">${cells[11].textContent}</td>
+                <td style="border:1px solid #000; padding:4px 6px; text-align:center; font-size:9pt;">${cells[12].textContent}</td>
             </tr>`;
         }
     });
@@ -1281,6 +1285,7 @@ function exportReportToWord() {
     for (let i = 0; i < emptyRowsNeeded; i++) {
         tableRows += `<tr>
             <td style="border:1px solid #000; padding:4px 6px; height:22px;">&nbsp;</td>
+            <td style="border:1px solid #000; padding:4px 6px;">&nbsp;</td>
             <td style="border:1px solid #000; padding:4px 6px;">&nbsp;</td>
             <td style="border:1px solid #000; padding:4px 6px;">&nbsp;</td>
             <td style="border:1px solid #000; padding:4px 6px;">&nbsp;</td>
@@ -1373,7 +1378,7 @@ function exportReportToWord() {
                     <th rowspan="2" style="border:1px solid #000; padding:4px; text-align:center; background:#dce6f1; font-size:8pt; width:5%;">CUR-<br>RENT<br>QTY.</th>
                     <th rowspan="2" style="border:1px solid #000; padding:4px; text-align:center; background:#dce6f1; font-size:8pt; width:22%;">BRAND NAME / SPECIFICATION</th>
                     <th colspan="4" style="border:1px solid #000; padding:4px; text-align:center; background:#dce6f1; font-size:8pt;">STATUS (QTY)</th>
-                    <th colspan="4" style="border:1px solid #000; padding:4px; text-align:center; background:#dce6f1; font-size:7pt;">ACTIONS MADE SINCE<br>PREVIOUS INVENTORY (QTY)</th>
+                    <th colspan="5" style="border:1px solid #000; padding:4px; text-align:center; background:#dce6f1; font-size:7pt;">ACTIONS MADE SINCE<br>PREVIOUS INVENTORY (QTY)</th>
                 </tr>
                 <tr>
                     <th style="border:1px solid #000; padding:3px; text-align:center; background:#dce6f1; font-size:7pt; width:5%;">Good<br>Con-<br>dition</th>
@@ -1381,6 +1386,7 @@ function exportReportToWord() {
                     <th style="border:1px solid #000; padding:3px; text-align:center; background:#dce6f1; font-size:7pt; width:4%;">Lost</th>
                     <th style="border:1px solid #000; padding:3px; text-align:center; background:#dce6f1; font-size:7pt; width:5%;">Dam-<br>age</th>
                     <th style="border:1px solid #000; padding:3px; text-align:center; background:#dce6f1; font-size:7pt; width:5%;">Newly<br>Acq-<br>uired</th>
+                    <th style="border:1px solid #000; padding:3px; text-align:center; background:#dce6f1; font-size:7pt; width:5%;">Re-<br>pair-<br>ed</th>
                     <th style="border:1px solid #000; padding:3px; text-align:center; background:#dce6f1; font-size:7pt; width:5%;">Re-<br>mo-<br>ved</th>
                     <th style="border:1px solid #000; padding:3px; text-align:center; background:#dce6f1; font-size:7pt; width:5%;">Trans-<br>fer-<br>red</th>
                     <th style="border:1px solid #000; padding:3px; text-align:center; background:#dce6f1; font-size:7pt; width:5%;">Dis-<br>po-<br>sed</th>
@@ -1485,13 +1491,13 @@ function exportReportToExcel() {
     // Table headers
     wsData.push(['PREV. QTY.', 'ITEMS', 'CURRENT QTY.', 'BRAND NAME / SPECIFICATION',
         'Good Condition', 'Needs Repair', 'Lost', 'Damaged',
-        'Newly Acquired', 'Removed', 'Transferred', 'Disposed']);
+        'Newly Acquired', 'Repaired', 'Removed', 'Transferred', 'Disposed']);
 
     // Table data from report
     const rows = reportBody.querySelectorAll('tr');
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
-        if (cells.length >= 12) {
+        if (cells.length >= 13) {
             wsData.push([
                 cells[0].textContent.trim(),
                 cells[1].textContent.trim(),
@@ -1504,7 +1510,8 @@ function exportReportToExcel() {
                 cells[8].textContent.trim(),
                 cells[9].textContent.trim(),
                 cells[10].textContent.trim(),
-                cells[11].textContent.trim()
+                cells[11].textContent.trim(),
+                cells[12].textContent.trim()
             ]);
         }
     });
@@ -1532,16 +1539,16 @@ function exportReportToExcel() {
     ws['!cols'] = [
         { wch: 10 }, { wch: 25 }, { wch: 12 }, { wch: 35 },
         { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 10 },
-        { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 10 }
+        { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }
     ];
 
     // Merge header cells
     ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } },
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 11 } },
-        { s: { r: 4, c: 0 }, e: { r: 4, c: 11 } },
-        { s: { r: 5, c: 0 }, e: { r: 5, c: 11 } },
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 12 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 12 } },
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 12 } },
+        { s: { r: 4, c: 0 }, e: { r: 4, c: 12 } },
+        { s: { r: 5, c: 0 }, e: { r: 5, c: 12 } },
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
@@ -2410,10 +2417,12 @@ function updateDamageReportStatus() {
         report.resolved_date = new Date().toISOString();
         if (tool && !wasAlreadyResolved) {
             tool.condition = 'Good Condition';
+            tool.actionSincePrev = 'Repaired';
             tool.quantity += damageQty;
             report._qtyRestored = true;
         } else if (tool) {
             tool.condition = 'Good Condition';
+            tool.actionSincePrev = 'Repaired';
         }
     } else if (newStatus === 'Replaced') {
         report.resolved_date = new Date().toISOString();
