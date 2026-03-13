@@ -1123,14 +1123,18 @@ function generateInventoryReport() {
         (appState.damageReports || []).forEach(r => {
             if (r.tool_id !== toolId) return;
             const qty = r.quantity_damaged || 1;
-            const dtype = r.damage_type || '';
-            if (dtype === 'For Repair' || dtype === 'Needs Repair') counts.needsRepair += qty;
-            else if (dtype === 'Lost') counts.lost += qty;
-            else if (dtype === 'Damaged') counts.damaged += qty;
-            // Count action from resolved status
             const st = r.status || '';
-            if (st === 'Replaced') counts.newlyAcquired += (r.quantity_damaged || 1);
-            if (st === 'Repaired') counts.repaired += (r.quantity_damaged || 1);
+            const resolved = st === 'Replaced' || st === 'Repaired' || st === 'Removed' || st === 'Transferred' || st === 'Disposed';
+            // Only count as damaged if not yet resolved
+            if (!resolved) {
+                const dtype = r.damage_type || '';
+                if (dtype === 'For Repair' || dtype === 'Needs Repair') counts.needsRepair += qty;
+                else if (dtype === 'Lost') counts.lost += qty;
+                else if (dtype === 'Damaged') counts.damaged += qty;
+            }
+            // Count action from resolved status
+            if (st === 'Replaced') counts.newlyAcquired += qty;
+            if (st === 'Repaired') counts.repaired += qty;
             if (st === 'Removed') counts.removed += qty;
             if (st === 'Transferred') counts.transferred += qty;
             if (st === 'Disposed') counts.disposed += qty;
