@@ -1144,8 +1144,8 @@ function generateInventoryReport() {
     } else {
         tbody.innerHTML = filteredTools.map(t => {
             const sc = getToolStatusCounts(t.id);
-            // Good condition qty = current quantity (what's left and usable)
-            const goodQty = t.condition === 'Good Condition' ? t.quantity : 0;
+            // Good condition qty = current quantity (damaged items already subtracted when reported)
+            const goodQty = t.quantity;
             // Also check tool-level action
             const action = t.actionSincePrev || '';
             if (action === 'Newly Acquired') sc.newlyAcquired = Math.max(sc.newlyAcquired, t.quantity);
